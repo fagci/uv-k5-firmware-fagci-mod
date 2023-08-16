@@ -14,19 +14,10 @@
  *     limitations under the License.
  */
 
-#pragma once
-#include "../driver/backlight.h"
-#include "../driver/bk4819.h"
-#include "../driver/keyboard.h"
-#include "../driver/st7565.h"
-#include "../driver/system.h"
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>
+#include "../modules/spectrum.h"
 
 static const uint8_t DrawingEndY = 42;
-static const uint16_t BarPos = 5 * 128;
+// static const uint16_t BarPos = 5 * 128;
 
 static const uint8_t ModesCount = 7;
 static const uint8_t LastLowBWModeIndex = 3;
@@ -63,8 +54,14 @@ bool resetBlacklist;
 void ResetPeak() { peakRssi = 0; }
 
 void SetBW() { BK4819_SetFilterBandwidth(mode <= LastLowBWModeIndex); }
-void MuteAF() { BK4819_WriteRegister(0x47, 0); }
 void RestoreOldAFSettings() { BK4819_WriteRegister(0x47, oldAFSettings); }
+void ToggleAFDAC(bool on) {
+  uint32_t Reg = BK4819_GetRegister(BK4819_REG_30);
+  Reg &= ~(1 << 9);
+  if (on)
+    Reg |= (1 << 9);
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+}
 uint16_t GetScanStep() { return modeScanStep[mode]; }
 uint32_t GetBW() { return modeHalfSpectrumBW[mode] << 1; }
 uint32_t GetFStart() { return currentFreq - modeHalfSpectrumBW[mode]; }
@@ -73,14 +70,23 @@ uint32_t GetFEnd() { return currentFreq + modeHalfSpectrumBW[mode]; }
 uint8_t GetMeasurementsCount() { return 128 >> modeXdiv[mode]; }
 
 void ResetRSSI() {
-  /* RadioDriver.ToggleRXDSP(false);
-  RadioDriver.ToggleRXDSP(true); */
+  uint32_t Reg = BK4819_GetRegister(BK4819_REG_30);
+  Reg &= ~1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+  Reg |= 1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+}
+
+void SetF(uint32_t f) {
+  BK4819_SetFrequency(f);
+  BK4819_WriteRegister(BK4819_REG_30, 0);
+  BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
 }
 
 uint8_t GetRssi() {
   ResetRSSI();
 
-  SYSTEM_DelayMs(scanDelay << (mode <= LastLowBWModeIndex));
+  SYSTICK_DelayUs(scanDelay << (mode <= LastLowBWModeIndex));
   uint16_t v = BK4819_GetRegister(0x67) & 0x1FF;
   return v < 255 ? v : 255;
 }
@@ -95,11 +101,29 @@ uint8_t Rssi2Y(uint8_t rssi) {
   return DrawingEndY - clamp(rssi - rssiMin, 0, DrawingEndY);
 }
 
+void PutPixel(uint8_t x, uint8_t y) { gFrameBuffer[y >> 3][x] |= 1 << (y % 8); }
+
+void DrawHLine(int sy, int ey, int nx) {
+  for (int i = sy; i <= ey; i++) {
+    if (i < 56 && nx < 128) {
+      PutPixel(nx, i);
+    }
+  }
+}
+
+void DrawLine(int sx, int ex, int ny) {
+  for (int i = sx; i <= ex; i++) {
+    if (i < 128 && ny < 56) {
+      PutPixel(i, ny);
+    }
+  }
+}
+
 void DrawSpectrum() {
   for (uint8_t x = 0; x < 128; ++x) {
     uint8_t v = rssiHistory[x >> modeXdiv[mode]];
     if (v != 255) {
-      // Display.DrawHLine(Rssi2Y(v), DrawingEndY, x);
+      DrawHLine(Rssi2Y(v), DrawingEndY, x);
     }
   }
 }
@@ -127,13 +151,13 @@ void DrawNums() {
 void DrawRssiTriggerLevel() {
   uint8_t y = Rssi2Y(rssiTriggerLevel);
   for (uint8_t x = 0; x < 126; x += 4) {
-    // Display.DrawLine(x, x + 2, y);
+    DrawLine(x, x + 2, y);
   }
 }
 
 void DrawTicks() {
   // center
-  gFrameBuffer[6][64] = 0b00111000;
+  gFrameBuffer[5][64] = 0b00111000;
 }
 
 uint8_t my_abs(signed v) { return v > 0 ? v : -v; }
@@ -142,7 +166,7 @@ void DrawArrow(uint8_t x) {
   for (signed i = -2; i <= 2; ++i) {
     signed v = x + i;
     if (!(v & 128)) {
-      gFrameBuffer[6][v] |= (0b01111000 << my_abs(i)) & 0b01111000;
+      gFrameBuffer[5][v] |= (0b01111000 << my_abs(i)) & 0b01111000;
     }
   }
 }
@@ -224,11 +248,10 @@ void OnKeyDown(uint8_t key) {
   ResetPeak();
 }
 
-void Init() {
-  currentFreq = BK4819_GetFrequency();
+void InitSpectrum() {
+  currentFreq = 43400000;
   oldAFSettings = BK4819_GetRegister(0x47);
   oldBWSettings = BK4819_GetRegister(0x43);
-  MuteAF();
   SetBW();
   ResetPeak();
   resetBlacklist = true;
@@ -236,8 +259,8 @@ void Init() {
   isInitialized = true;
 }
 
-void DeInit() {
-  BK4819_SetFrequency(currentFreq);
+void DeInitSpectrum() {
+  SetF(currentFreq);
   RestoreOldAFSettings();
   BK4819_WriteRegister(0x43, oldBWSettings);
   ToggleGreen(true);
@@ -248,7 +271,7 @@ bool HandleUserInput() {
   btnPrev = btn;
   btn = KEYBOARD_Poll();
   if (btn == KEY_EXIT) {
-    DeInit();
+    DeInitSpectrum();
     return false;
   }
 
@@ -283,8 +306,9 @@ void Scan() {
 
   fMeasure = GetFStart();
 
-  // RadioDriver.ToggleAFDAC(false);
-  MuteAF();
+  GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+  BK4819_SetAF(BK4819_AF_MUTE);
+  ToggleAFDAC(false);
 
   uint16_t scanStep = GetScanStep();
   uint8_t measurementsCount = GetMeasurementsCount();
@@ -295,7 +319,7 @@ void Scan() {
     if (!resetBlacklist && rssiHistory[i] == 255) {
       continue;
     }
-    BK4819_SetFrequency(fMeasure);
+    SetF(fMeasure);
     rssi = rssiHistory[i] = GetRssi();
     if (rssi > rssiMax) {
       rssiMax = rssi;
@@ -320,9 +344,11 @@ void Scan() {
 void Listen() {
   if (fMeasure != peakF) {
     fMeasure = peakF;
-    BK4819_SetFrequency(fMeasure);
+    SetF(fMeasure);
     RestoreOldAFSettings();
-    // RadioDriver.ToggleAFDAC(true);
+    BK4819_SetAF(BK4819_AF_OPEN);
+    ToggleAFDAC(true);
+    GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
   }
   for (uint8_t i = 0; i < 16 && KEYBOARD_Poll() == 255; ++i) {
     SYSTEM_DelayMs(64);
@@ -344,9 +370,9 @@ void Update() {
   }
 }
 
-void Handle() {
+void HandleSpectrum() {
   if (!isInitialized) {
-    Init();
+    InitSpectrum();
   }
 
   if (isInitialized && HandleUserInput()) {

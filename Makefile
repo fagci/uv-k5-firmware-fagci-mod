@@ -51,6 +51,7 @@ OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
+OBJS += modules/spectrum.o
 
 OBJS += main.o
 
