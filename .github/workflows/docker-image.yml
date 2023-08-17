@@ -1,6 +1,7 @@
 name: Docker Image CI
 
 on:
+  workflow_dispatch: true
   push:
     branches: [ "spectrum" ]
   pull_request:
