@@ -27,6 +27,8 @@
 #include "../driver/gpio.h"
 #include "../bsp/dp32g030/gpio.h"
 #include "../external/printf/printf.h"
+#include "../misc.h"
+#include "../gui.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
