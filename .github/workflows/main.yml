@@ -20,8 +20,9 @@ jobs:
     - name: Submodules
       run: git submodule update --init --recursive --depth 1
 
-    - name: Checkout spectrum
-      run: git checkout spectrum
+    - uses: actions/checkout@v3
+      with:
+        ref: spectrum
       
     - name: Configure CMake
       run: cmake .
