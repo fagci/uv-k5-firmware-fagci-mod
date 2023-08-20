@@ -55,6 +55,8 @@ uint16_t oldAFSettings;
 uint16_t oldBWSettings;
 uint32_t frequencyChangeStep = 80000;
 
+bool isAMOn = false;
+
 bool isInitialized;
 bool resetBlacklist;
 
@@ -109,8 +111,9 @@ uint8_t Rssi2Y(uint8_t rssi) {
 }
 
 void DrawSpectrum() {
+  uint8_t div = modeXdiv[mode];
   for (uint8_t x = 0; x < 128; ++x) {
-    uint8_t v = rssiHistory[x >> modeXdiv[mode]];
+    uint8_t v = rssiHistory[x >> div];
     if (v != 255) {
       DrawHLine(Rssi2Y(v), DrawingEndY, x);
     }
@@ -122,6 +125,9 @@ void DrawNums() {
 
   sprintf(String, "%3.3f", peakF * 1e-5);
   GUI_PrintString(String, 2, 127, 0, 8, 1);
+
+  sprintf(String, isAMOn ? "AM" : "FM");
+  GUI_DisplaySmallest(7, String, 0, 0);
 
   sprintf(String, "%1.2fM \xB1%3.0fk %2.0f", GetBW() * 1e-5,
           frequencyChangeStep * 1e-2, scanDelay * 1e-2);
@@ -136,8 +142,8 @@ void DrawNums() {
 
 void DrawRssiTriggerLevel() {
   uint8_t y = Rssi2Y(rssiTriggerLevel);
-  for (uint8_t x = 0; x < 126; x += 4) {
-    DrawLine(x, x + 2, y);
+  for (uint8_t x = 0; x < 126; x += 2) {
+    PutPixel(x, y);
   }
 }
 
@@ -245,6 +251,9 @@ void OnKeyDown(uint8_t key) {
     currentState = FREQ_INPUT;
     freqInputIndex = 0;
     break;
+  case KEY_4:
+    isAMOn = !isAMOn;
+    break;
   }
   ResetPeak();
 }
@@ -264,28 +273,17 @@ void OnKeyDownFreqInput(uint8_t key) {
     freqInputArr[freqInputIndex++] = key;
     break;
   case KEY_EXIT:
-    if (freqInputIndex > 0) {
-      freqInputIndex--;
-    } else {
+    if (freqInputIndex == 0) {
       currentState = SPECTRUM;
+      break;
     }
+    freqInputIndex--;
     break;
   case KEY_MENU:
     currentFreq = tempFreq;
     currentState = SPECTRUM;
     break;
   }
-}
-
-void InitSpectrum() {
-  currentFreq = 43400000;
-  oldAFSettings = BK4819_GetRegister(0x47);
-  oldBWSettings = BK4819_GetRegister(0x43);
-  SetBW();
-  ResetPeak();
-  resetBlacklist = true;
-  ToggleGreen(false);
-  isInitialized = true;
 }
 
 void DeInitSpectrum() {
@@ -348,6 +346,7 @@ void Scan() {
   fMeasure = GetFStart();
 
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+  BK4819_PickRXFilterPathBasedOnFrequency(currentFreq);
   BK4819_SetAF(BK4819_AF_MUTE);
   ToggleAFDAC(false);
 
@@ -386,8 +385,10 @@ void Listen() {
   if (fMeasure != peakF) {
     fMeasure = peakF;
     SetF(fMeasure);
-    RestoreOldAFSettings();
-    BK4819_SetAF(BK4819_AF_OPEN);
+    // RestoreOldAFSettings();
+    BK4819_PickRXFilterPathBasedOnFrequency(currentFreq);
+    BK4819_SetAF(isAMOn ? 0x7 : BK4819_AF_OPEN);
+    BK4819_WriteRegister(BK4819_REG_48, 0xb3a8);
     ToggleAFDAC(true);
     GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
   }
@@ -430,12 +431,8 @@ void Update() {
   }
 }
 
-void HandleSpectrum() {
-  if (!isInitialized) {
-    InitSpectrum();
-  }
-
-  if (isInitialized && HandleUserInput()) {
+void Tick() {
+  if (HandleUserInput()) {
     switch (currentState) {
     case SPECTRUM:
       Update();
@@ -447,5 +444,19 @@ void HandleSpectrum() {
       RenderFreqInput();
       break;
     }
+  }
+}
+
+void InitSpectrum() {
+  currentFreq = 43400000;
+  oldAFSettings = BK4819_GetRegister(0x47);
+  oldBWSettings = BK4819_GetRegister(0x43);
+  SetBW();
+  ResetPeak();
+  resetBlacklist = true;
+  ToggleGreen(false);
+  isInitialized = true;
+  while (isInitialized) {
+    Tick();
   }
 }

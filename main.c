@@ -180,7 +180,4 @@ void Main(void) {
   BK4819_RX_TurnOn();
 
   InitSpectrum();
-  while (1) {
-    HandleSpectrum();
-  }
 }

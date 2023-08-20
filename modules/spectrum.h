@@ -25,6 +25,7 @@
 #include "../driver/system.h"
 #include "../driver/systick.h"
 #include "../driver/gpio.h"
+#include "../radio.h"
 #include "../bsp/dp32g030/gpio.h"
 #include "../external/printf/printf.h"
 #include "../misc.h"

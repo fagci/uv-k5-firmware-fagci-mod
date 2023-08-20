@@ -229,8 +229,8 @@ static const unsigned char font_3x5[] = {
     0x05, 0x28, 0x1d  // 255 - ydieresis
 };
 
-void PutPixel(uint8_t x, uint8_t y) { gFrameBuffer[y >> 3][x] |= 1 << (y % 8); }
-void PutPixelStatus(uint8_t x, uint8_t y) { gStatusLine[x] |= 1 << (y % 8); }
+void PutPixel(uint8_t x, uint8_t y) { gFrameBuffer[y >> 3][x] |= 1 << (y & 7); }
+void PutPixelStatus(uint8_t x, uint8_t y) { gStatusLine[x] |= 1 << y; }
 
 void DrawHLine(int sy, int ey, int nx) {
   for (int i = sy; i <= ey; i++) {
