@@ -20,6 +20,7 @@
 enum State {
   SPECTRUM,
   FREQ_INPUT,
+  REGISTERS,
 } currentState = SPECTRUM;
 
 static const uint8_t DrawingEndY = 42;
@@ -39,7 +40,7 @@ uint8_t peakT = 0;
 uint8_t peakRssi = 0;
 uint8_t peakI = 0;
 uint32_t peakF = 0;
-uint8_t rssiMin = 255;
+uint8_t rssiMin = 255, rssiMax = 0;
 uint8_t btnCounter = 0;
 
 uint16_t scanDelay = 800;
@@ -62,7 +63,16 @@ bool resetBlacklist;
 
 void ResetPeak() { peakRssi = 0; }
 
-void SetBW() { BK4819_SetFilterBandwidth(mode <= LastLowBWModeIndex); }
+void SetBW() {
+  uint16_t step = modeScanStep[mode];
+  if (step < 1250) {
+    BK4819_WriteRegister(BK4819_REG_43, 0b0100000001011000);
+  } else if (step < 2500) {
+    BK4819_WriteRegister(BK4819_REG_43, 0x4048);
+  } else {
+    BK4819_WriteRegister(BK4819_REG_43, 0x3028);
+  }
+}
 void RestoreOldAFSettings() { BK4819_WriteRegister(0x47, oldAFSettings); }
 void ToggleAFDAC(bool on) {
   uint32_t Reg = BK4819_GetRegister(BK4819_REG_30);
@@ -106,6 +116,8 @@ int clamp(int v, int min, int max) {
   return v <= min ? min : (v >= max ? max : v);
 }
 
+int Rssi2dBm(uint8_t rssi) { return (rssi >> 1) - 160; }
+
 uint8_t Rssi2Y(uint8_t rssi) {
   return DrawingEndY - clamp(rssi - rssiMin, 0, DrawingEndY);
 }
@@ -121,17 +133,26 @@ void DrawSpectrum() {
 }
 
 void DrawNums() {
-  char String[16];
+  char String[32];
 
   sprintf(String, "%3.3f", peakF * 1e-5);
   GUI_PrintString(String, 2, 127, 0, 8, 1);
 
   sprintf(String, isAMOn ? "AM" : "FM");
-  GUI_DisplaySmallest(7, String, 0, 0);
+  GUI_DisplaySmallest(3, String, 0, 3);
 
-  sprintf(String, "%1.2fM \xB1%3.0fk %2.0f", GetBW() * 1e-5,
-          frequencyChangeStep * 1e-2, scanDelay * 1e-2);
-  GUI_DisplaySmallestStatus(16, String, 1, 2);
+  sprintf(String, "%3d", Rssi2dBm(rssiMax));
+  GUI_DisplaySmallest(5, String, 112, 3);
+
+  sprintf(String, "%3d", Rssi2dBm(rssiMin));
+  GUI_DisplaySmallest(5, String, 112, 9);
+
+  sprintf(String, "%3d", Rssi2dBm(rssiTriggerLevel));
+  GUI_DisplaySmallestStatus(5, String, 112, 2);
+
+  sprintf(String, "%1.2fM %2.2fk \xB1%3.0fk %1.1fms", GetBW() * 1e-5,
+          GetScanStep() * 1e-2, frequencyChangeStep * 1e-2, scanDelay * 1e-3);
+  GUI_DisplaySmallestStatus(32, String, 1, 2);
 
   sprintf(String, "%04.1f", GetFStart() * 1e-5);
   GUI_DisplaySmallest(7, String, 0, 49);
@@ -251,6 +272,14 @@ void OnKeyDown(uint8_t key) {
     currentState = FREQ_INPUT;
     freqInputIndex = 0;
     break;
+  case KEY_SIDE1:
+    currentState = REGISTERS;
+    SetF(currentFreq);
+    BK4819_SetAF(isAMOn ? 0x7 : BK4819_AF_OPEN);
+    BK4819_WriteRegister(BK4819_REG_48, 0xb3a8);
+    ToggleAFDAC(true);
+    GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+    break;
   case KEY_4:
     isAMOn = !isAMOn;
     break;
@@ -280,7 +309,81 @@ void OnKeyDownFreqInput(uint8_t key) {
     freqInputIndex--;
     break;
   case KEY_MENU:
-    currentFreq = tempFreq;
+    if (tempFreq >= 1800000 && tempFreq <= 130000000) {
+      currentFreq = tempFreq;
+      currentState = SPECTRUM;
+    }
+    break;
+  }
+}
+
+enum Registers {
+  R_AF,
+  R_AF_FILTER,
+  R_IF1,
+  R_IF2,
+  R_COMPANDER,
+} registersMenuIndex;
+
+uint8_t registersValues[] = {
+    0, // R_AF
+    0, 0, 0, 0, 0, 0, 0,
+};
+
+char *registersMenu[] = {
+    "AF",
+    "AF Filter",
+    "IF Selection 1",
+    "IF Selection 2",
+    "Compander (0/1)",
+};
+
+void ToggleRegister(bool next) {
+  // TODO: implement
+  if (next) {
+    registersValues[registersMenuIndex]++;
+  } else {
+    registersValues[registersMenuIndex]--;
+  }
+  uint8_t v = registersValues[registersMenuIndex];
+  switch (registersMenuIndex) {
+  case R_AF:
+    BK4819_SetAF(v);
+    break;
+  case R_AF_FILTER:
+    BK4819_WriteRegister(BK4819_REG_2B, v);
+    break;
+  case R_IF1:
+    BK4819_WriteRegister(0x3d, v);
+    break;
+  case R_IF2:
+    BK4819_WriteRegister(0x3d, v << 8);
+    break;
+  case R_COMPANDER:
+    BK4819_WriteRegister(0x31, (v & 1) << 3);
+    break;
+  }
+}
+
+void OnKeyDownRegisters(uint8_t key) {
+  switch (key) {
+  case KEY_4:
+    ToggleRegister(false);
+    break;
+  case KEY_6:
+    ToggleRegister(true);
+    break;
+  case KEY_UP:
+    if (registersMenuIndex > 0) {
+      registersMenuIndex--;
+    }
+    break;
+  case KEY_DOWN:
+    if (registersMenuIndex < 4) {
+      registersMenuIndex++;
+    }
+    break;
+  case KEY_EXIT:
     currentState = SPECTRUM;
     break;
   }
@@ -332,6 +435,9 @@ bool HandleUserInput() {
     case FREQ_INPUT:
       OnKeyDownFreqInput(btn);
       break;
+    case REGISTERS:
+      OnKeyDownRegisters(btn);
+      break;
     }
   }
 
@@ -339,10 +445,11 @@ bool HandleUserInput() {
 }
 
 void Scan() {
-  uint8_t rssi = 0, rssiMax = 0;
+  uint8_t rssi = 0;
   uint8_t iPeak = 0;
   uint32_t fPeak = currentFreq;
 
+  rssiMax = 0;
   fMeasure = GetFStart();
 
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
@@ -385,6 +492,7 @@ void Listen() {
   if (fMeasure != peakF) {
     fMeasure = peakF;
     SetF(fMeasure);
+    BK4819_SetFilterBandwidth(BK4819_FILTER_BW_WIDE);
     // RestoreOldAFSettings();
     BK4819_PickRXFilterPathBasedOnFrequency(currentFreq);
     BK4819_SetAF(isAMOn ? 0x7 : BK4819_AF_OPEN);
@@ -419,6 +527,30 @@ void RenderFreqInput() {
   ST7565_BlitFullScreen();
 }
 
+void RenderRegistersMenu() {
+  memset(gStatusLine, 0, sizeof(gStatusLine));
+  memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+
+  char String[32];
+
+  for (int i = 0; i < 5; i++) {
+    sprintf(String, i == registersMenuIndex ? "> %s" : "  %s",
+            registersMenu[i]);
+    GUI_DisplaySmallest(32, String, 2, i * 6);
+
+    uint8_t v = registersValues[i];
+    sprintf(String, "%c%c%c%c%c%c%c%c", (v & 0x80 ? '1' : '0'),
+            (v & 0x40 ? '1' : '0'), (v & 0x20 ? '1' : '0'),
+            (v & 0x10 ? '1' : '0'), (v & 0x08 ? '1' : '0'),
+            (v & 0x04 ? '1' : '0'), (v & 0x02 ? '1' : '0'),
+            (v & 0x01 ? '1' : '0'));
+    GUI_DisplaySmallest(16, String, 72, i * 6);
+  }
+
+  ST7565_BlitStatusLine();
+  ST7565_BlitFullScreen();
+}
+
 void Update() {
   if (peakRssi >= rssiTriggerLevel) {
     ToggleGreen(true);
@@ -427,6 +559,7 @@ void Update() {
   }
   if (peakRssi < rssiTriggerLevel) {
     ToggleGreen(false);
+    SetBW();
     Scan();
   }
 }
@@ -442,6 +575,9 @@ void Tick() {
       break;
     case FREQ_INPUT:
       RenderFreqInput();
+      break;
+    case REGISTERS:
+      RenderRegistersMenu();
       break;
     }
   }
