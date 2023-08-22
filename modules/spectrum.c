@@ -16,6 +16,8 @@
 
 #include "../modules/spectrum.h"
 #include "../modules/spectrum_gui.h"
+#include <stdint.h>
+#include <stdio.h>
 
 enum State {
   SPECTRUM,
@@ -316,53 +318,160 @@ void OnKeyDownFreqInput(uint8_t key) {
     break;
   }
 }
-
-enum Registers {
-  R_AF,
-  R_AF_FILTER,
-  R_IF1,
-  R_IF2,
-  R_COMPANDER,
-} registersMenuIndex;
-
-uint8_t registersValues[] = {
-    0, // R_AF
-    0, 0, 0, 0, 0, 0, 0,
+struct RegisterValue {
+  const char *name;
+  unsigned value;
 };
 
-char *registersMenu[] = {
-    "AF",
-    "AF Filter",
-    "IF Selection 1",
-    "IF Selection 2",
-    "Compander (0/1)",
+struct RegisterField {
+  const char *name;
+  uint8_t from;
+  uint8_t to;
 };
+
+struct RegisterName {
+  const char *name;
+  uint8_t number;
+  const struct RegisterField *fields;
+  uint8_t fieldsCount;
+};
+
+const struct RegisterField reg0x43[] = {
+    {"Gain after FM dem", 2, 2},
+    {"BW mode", 4, 5},
+    {"RF filter BW", 12, 14},
+    {"RF filter BW weak", 9, 11},
+};
+
+const struct RegisterField reg0x47[] = {
+    {"txFilterBypassAll", 0, 0},
+    {"afOutput", 8, 11},
+    {"afOutputInverse", 13, 13},
+};
+
+const struct RegisterField reg0x3D[] = {
+    {"IF Selection", 0, 15},
+};
+
+const struct RegisterField reg0x30[] = {
+    {"VCO Calibration Enable", 15, 15},
+    {"Rx Link Enable (LNA/MIXER/PGA/ADC)", 10, 13},
+    {"AF DAC Enable", 9, 9},
+    {"DISC Mode Disable", 8, 8},
+    {"PLL/VCO Enable", 4, 7},
+    {"PA Gain Enable", 3, 3},
+    {"MIC ADC Enable", 2, 2},
+    {"Tx DSP Enable", 1, 1},
+    {"Rx DSP Enable", 0, 0},
+};
+
+const struct RegisterField reg0x37[] = {
+    {"ANA LDO Bypass", 7, 7},  {"VCO LDO Bypass", 6, 6},
+    {"RF LDO Bypass", 5, 5},   {"PLL LDO Bypass", 4, 4},
+    {"DSP Enable", 2, 2},      {"XTAL Enable", 1, 1},
+    {"Band-Gap Enable", 0, 0},
+};
+
+const struct RegisterField reg0x2B[] = {
+    {"Disable AFRxHPF300filter", 10, 10},
+    {"Disable AF RxLPF3K filter", 9, 9},
+    {"Disable AF Rx de-emphasisfilter", 8, 8},
+};
+
+const struct RegisterField reg0x28[] = {
+    {"Expander AF Rx Ratio.", 14, 15},
+    {"Expander AF Rx 0 dB point(dB)", 7, 13},
+    {"Expander AF Rx noise point(dB)", 0, 6},
+};
+
+const struct RegisterField reg0x10[] = {
+    {"AGC table", 0, 15},
+};
+
+const struct RegisterField reg0x11[] = {
+    {"AGC table", 0, 15},
+};
+
+const struct RegisterField reg0x12[] = {
+    {"AGC table", 0, 15},
+};
+
+const struct RegisterField reg0x13[] = {
+    {"AGC table", 0, 15},
+};
+
+const struct RegisterField reg0x14[] = {
+    {"AGC table", 0, 15},
+};
+
+const struct RegisterField reg0x54[] = {
+    {"300Hz AF Response coef", 0, 15},
+};
+
+const struct RegisterField reg0x55[] = {
+    {"300Hz AF Response coef", 0, 15},
+};
+
+const struct RegisterField reg0x48[] = {
+    {"AF Rx Gain1", 10, 11},
+    {"AF Rx Gain2", 4, 9},
+    {"AF DAC Gain (after Gain1 and Gain2)", 0, 3},
+    {"AF Level Contr(ALC) Disable", 5, 5},
+};
+
+const struct RegisterField reg0x73[] = {
+    {"AFC Range Selection.", 11, 13},
+    {"AFC Disable", 4, 4},
+};
+
+const struct RegisterField reg0x7E[] = {
+    {"AGC Fix Mode.", 15, 15},
+    {"AGC Fix Index.", 12, 14},
+    {"DC Filter BW for Rx (IF In).", 0, 2},
+};
+
+const struct RegisterName registersMenu[] = {
+    {"AGC table 10", 0x10, reg0x10, 1},
+    {"AGC table 11", 0x11, reg0x11, 1},
+    {"AGC table 12", 0x12, reg0x12, 1},
+    {"AGC table 13", 0x13, reg0x13, 1},
+    {"AGC table 14", 0x14, reg0x14, 1},
+    {"AF Expander 28", 0x28, reg0x28, 3},
+    {"AF filters 2B", 0x2B, reg0x2B, 3},
+    {"PLL/VCO 30", 0x30, reg0x30, 9},
+    {"REG 37", 0x37, reg0x37, 7},
+    {"REG 3D", 0x3D, reg0x3D, 1},
+    {"REG 43", 0x43, reg0x43, 4},
+    {"AF 47", 0x47, reg0x47, 3},
+    {"AF 48", 0x48, reg0x48, 4},
+    {"300Hz resp coef 54", 0x54, reg0x54, 1},
+    {"300Hz resp coef 55", 0x55, reg0x55, 1},
+    {"Auto F correction 73", 0x73, reg0x73, 2},
+    {"AGC/DC 7E", 0x7E, reg0x7E, 3},
+};
+
+uint8_t registersMenuIndex = 0;
+uint8_t registerIndex = 0;
+uint8_t menuLevel = 0;
+
+uint16_t GetRegFieldMaxValue(struct RegisterField regField) {
+  return (1 << ((regField.to - regField.from) + 1)) - 1;
+}
 
 void ToggleRegister(bool next) {
-  // TODO: implement
-  if (next) {
-    registersValues[registersMenuIndex]++;
-  } else {
-    registersValues[registersMenuIndex]--;
+  struct RegisterName reg = registersMenu[registersMenuIndex];
+  struct RegisterField regField = reg.fields[registerIndex];
+  uint16_t maxValue = GetRegFieldMaxValue(regField);
+  uint16_t regValue = BK4819_GetRegister(reg.number);
+  uint16_t fieldValue = (regValue >> regField.from) & maxValue;
+  if (next && fieldValue < maxValue) {
+    fieldValue++;
   }
-  uint8_t v = registersValues[registersMenuIndex];
-  switch (registersMenuIndex) {
-  case R_AF:
-    BK4819_SetAF(v);
-    break;
-  case R_AF_FILTER:
-    BK4819_WriteRegister(BK4819_REG_2B, v);
-    break;
-  case R_IF1:
-    BK4819_WriteRegister(0x3d, v);
-    break;
-  case R_IF2:
-    BK4819_WriteRegister(0x3d, v << 8);
-    break;
-  case R_COMPANDER:
-    BK4819_WriteRegister(0x31, (v & 1) << 3);
-    break;
+  if (!next && fieldValue > 0) {
+    fieldValue--;
   }
+  regValue &= ~(maxValue << regField.from);
+  BK4819_WriteRegister(reg.number, regValue | (fieldValue << regField.from));
 }
 
 void OnKeyDownRegisters(uint8_t key) {
@@ -374,16 +483,35 @@ void OnKeyDownRegisters(uint8_t key) {
     ToggleRegister(true);
     break;
   case KEY_UP:
-    if (registersMenuIndex > 0) {
+    if (menuLevel == 0 && registersMenuIndex > 0) {
       registersMenuIndex--;
+    }
+    if (menuLevel == 1 && registerIndex > 0) {
+      registerIndex--;
     }
     break;
   case KEY_DOWN:
-    if (registersMenuIndex < 4) {
+    if (menuLevel == 0 &&
+        registersMenuIndex <
+            sizeof(registersMenu) / sizeof(struct RegisterName) - 1) {
       registersMenuIndex++;
+    }
+    if (menuLevel == 1 &&
+        registerIndex < registersMenu[registersMenuIndex].fieldsCount - 1) {
+      registerIndex++;
+    }
+    break;
+  case KEY_MENU:
+    if (menuLevel < 1) {
+      menuLevel++;
     }
     break;
   case KEY_EXIT:
+    if (menuLevel > 0) {
+      menuLevel--;
+      registerIndex = 0;
+      break;
+    }
     currentState = SPECTRUM;
     break;
   }
@@ -527,24 +655,59 @@ void RenderFreqInput() {
   ST7565_BlitFullScreen();
 }
 
+void ToBinary(char *output, uint16_t value, uint8_t size) {
+  for (int i = 0; i < size; i++) {
+    output[i] = value & 1 ? '1' : '0';
+    value >>= 1;
+  }
+  output[size] = '\0';
+}
+
 void RenderRegistersMenu() {
   memset(gStatusLine, 0, sizeof(gStatusLine));
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
   char String[32];
+  struct RegisterName reg = registersMenu[registersMenuIndex];
 
-  for (int i = 0; i < 5; i++) {
-    sprintf(String, i == registersMenuIndex ? "> %s" : "  %s",
-            registersMenu[i]);
-    GUI_DisplaySmallest(32, String, 2, i * 6);
+  if (menuLevel == 0) {
+    int offsetY = registersMenuIndex > 6 ? -(registersMenuIndex - 6) : 0;
+    for (int i = 0; i < sizeof(registersMenu) / sizeof(struct RegisterName);
+         i++) {
+      sprintf(String, i == registersMenuIndex ? "> %s" : "  %s",
+              registersMenu[i].name);
+      uint8_t y = (i + offsetY) * 6;
+      if (y > DrawingEndY)
+        continue;
+      GUI_DisplaySmallest(32, String, 2, y);
+    }
+  } else {
+    int offsetY = registerIndex > 4 ? -(registerIndex - 4) : 0;
+    sprintf(String, reg.name);
+    GUI_DisplaySmallestStatus(32, String, 2, 2);
 
-    uint8_t v = registersValues[i];
-    sprintf(String, "%c%c%c%c%c%c%c%c", (v & 0x80 ? '1' : '0'),
-            (v & 0x40 ? '1' : '0'), (v & 0x20 ? '1' : '0'),
-            (v & 0x10 ? '1' : '0'), (v & 0x08 ? '1' : '0'),
-            (v & 0x04 ? '1' : '0'), (v & 0x02 ? '1' : '0'),
-            (v & 0x01 ? '1' : '0'));
-    GUI_DisplaySmallest(16, String, 72, i * 6);
+    for (int i = 0; i < reg.fieldsCount; i++) {
+      sprintf(String, i == registerIndex ? "> %s" : "  %s", reg.fields[i].name);
+      uint8_t y = (i + offsetY) * 6;
+      if (y > DrawingEndY - 12)
+        continue;
+      GUI_DisplaySmallest(32, String, 2, y);
+    }
+    struct RegisterField regField = reg.fields[registerIndex];
+
+    uint16_t maxValue = GetRegFieldMaxValue(regField);
+    uint16_t regValue = BK4819_GetRegister(reg.number);
+    uint32_t v = (regValue >> regField.from) & maxValue;
+
+    sprintf(String, "VALUE(4/6):");
+    GUI_DisplaySmallest(16, String, 2, 40);
+
+    ToBinary(String, v, regField.to - regField.from + 1);
+    GUI_DisplaySmallest(16, String, 48, 40);
+
+    /* sprintf(String, "#%x, max: %d, sz: %d", reg.number, maxValue,
+            sizeof(&reg.fields));
+    GUI_DisplaySmallest(32, String, 2, 46); */
   }
 
   ST7565_BlitStatusLine();
