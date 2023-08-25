@@ -18,6 +18,8 @@
 #include "../modules/spectrum_gui.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "driver/eeprom.h"
+#include "settings.h"
 
 enum State {
   SPECTRUM,
@@ -215,6 +217,19 @@ void UpdateCurrentFreq(long int diff) {
   }
 }
 
+void SaveFrequency(uint32_t f) {
+  // EEPROM_WriteBuffer writes 8 bytes at a time; take account of this
+  // by reading 8 bytes in and only replacing 4 of them.
+  uint8_t VFOBuffer[8];
+  EEPROM_ReadBuffer(0xc80, VFOBuffer, 8);
+  // Flip endianness of currentFreq before writing it
+  uint32_t flippedFreq =
+      ((f & 0xff000000) >> 24) | ((f & 0x00ff0000) >> 8) |
+      ((f & 0x0000ff00) << 8) | ((f & 0x000000ff) << 24);
+  memcpy(VFOBuffer, (uint8_t *) &flippedFreq, 4);
+  EEPROM_WriteBuffer(0xc80, VFOBuffer);
+}
+
 void UpdateFreqChangeStep(long int diff) {
   frequencyChangeStep = clamp(frequencyChangeStep + diff, 10000, 200000);
 }
@@ -313,6 +328,7 @@ void OnKeyDownFreqInput(uint8_t key) {
   case KEY_MENU:
     if (tempFreq >= 1800000 && tempFreq <= 130000000) {
       currentFreq = tempFreq;
+      SaveFrequency(currentFreq);
       currentState = SPECTRUM;
     }
     break;
@@ -747,7 +763,13 @@ void Tick() {
 }
 
 void InitSpectrum() {
-  currentFreq = 43400000;
+  // Read EEPROM 0x0c80 into currentFreq
+  EEPROM_ReadBuffer(0xc80, (uint8_t *)&currentFreq, 4);
+  // Flip endianness in currentFreq
+  currentFreq = ((currentFreq & 0xff000000) >> 24) |
+                ((currentFreq & 0x00ff0000) >> 8) |
+                ((currentFreq & 0x0000ff00) << 8) |
+                ((currentFreq & 0x000000ff) << 24);
   oldAFSettings = BK4819_GetRegister(0x47);
   oldBWSettings = BK4819_GetRegister(0x43);
   SetBW();
