@@ -171,12 +171,12 @@ static const char gSubMenu_F_LOCK[6][4] = {
 GUI_DisplayType_t gScreenToDisplay;
 uint8_t g_200003C6;
 volatile uint8_t gCurrentStep;
-volatile int8_t g_20000390;
+GUI_DisplayType_t gRequestDisplayScreen;
 uint8_t g_200003BA;
 uint8_t g_200003BB;
 uint8_t gWasFKeyPressed;
 
-bool gAskForConfirmation;
+uint8_t gAskForConfirmation;
 bool gAskToSave;
 bool gAskToDelete;
 
@@ -313,7 +313,7 @@ void GUI_PasswordScreen(void)
 						break;
 					}
 				}
-				//DAT_2000042c = 0;
+				gKeyBeingHeld = false;
 			}
 		} else {
 			gDebounceCounter = 0;
@@ -1177,9 +1177,8 @@ static void DisplayMenu(void)
 		GUI_PrintString("MHz", 50, 127, 4, 8, true);
 	}
 
-	if ((gMenuCursor == MENU_RESET || gMenuCursor == MENU_MEM_CH || gMenuCursor == MENU_DEL_CH) && gAskForConfirmation != false) {
-		// TODO: Double check gAskForConfirmation
-		if (gAskForConfirmation == true) {
+	if ((gMenuCursor == MENU_RESET || gMenuCursor == MENU_MEM_CH || gMenuCursor == MENU_DEL_CH) && gAskForConfirmation) {
+		if (gAskForConfirmation == 1) {
 			strcpy(String, "SURE?");
 		} else {
 			strcpy(String, "WAIT!");
@@ -1213,7 +1212,6 @@ static void DisplayMenu(void)
 
 			NUMBER_ToDigits((uint8_t)gSubMenuSelection, String);
 			Offset = (gMenuCursor == MENU_D_LIST) ? 2 : 3;
-			// TODO: Double check r1
 			GUI_DisplaySmallDigits(Offset, String + (8 - Offset), 105, 0);
 	}
 
@@ -1266,10 +1264,10 @@ static void DisplayScanner(void)
 
 	if (gScanState < 2 || g_2000045C != 1) {
 		sprintf(String, "CTC:******");
-	} else if (g_2000045A == 1) {
-		sprintf(String, "CTC:%.1fHz", CTCSS_Options[g_2000045B + 1] * 0.1);
+	} else if (g_CxCSS_Type == 1) {
+		sprintf(String, "CTC:%.1fHz", CTCSS_Options[g_CxCSS_Index] * 0.1);
 	} else {
-		sprintf(String, "DCS:D%03oN", DCS_Options[g_2000045B]);
+		sprintf(String, "DCS:D%03oN", DCS_Options[g_CxCSS_Index]);
 	}
 	GUI_PrintString(String, 2, 127, 3, 8, 0);
 	memset(String, 0, sizeof(String));

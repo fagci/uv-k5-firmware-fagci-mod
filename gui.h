@@ -94,12 +94,12 @@ enum {
 extern GUI_DisplayType_t gScreenToDisplay;
 extern uint8_t g_200003C6;
 extern volatile uint8_t gCurrentStep;
-extern volatile int8_t g_20000390;
+extern GUI_DisplayType_t gRequestDisplayScreen;
 extern uint8_t g_200003BA;
 extern uint8_t g_200003BB;
 extern uint8_t gWasFKeyPressed;
 
-extern bool gAskForConfirmation;
+extern uint8_t gAskForConfirmation;
 extern bool gAskToSave;
 extern bool gAskToDelete;
 

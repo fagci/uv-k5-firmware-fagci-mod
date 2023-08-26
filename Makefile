@@ -35,6 +35,7 @@ OBJS += driver/uart.o
 
 # Main
 OBJS += aircopy.o
+OBJS += app.o
 OBJS += audio.o
 OBJS += battery.o
 OBJS += bitmaps.o
@@ -63,7 +64,7 @@ OBJCOPY = arm-none-eabi-objcopy
 SIZE = arm-none-eabi-size
 
 ASFLAGS = -mcpu=cortex-m0
-CFLAGS = -O2 -Wall -Werror -mcpu=cortex-m0 -fno-builtin -std=c11 -MMD
+CFLAGS = -O2 -Wall -Werror -mcpu=cortex-m0 -fno-builtin -fshort-enums -std=c11 -MMD
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 LDFLAGS = -mcpu=cortex-m0 -nostartfiles -Wl,-T,firmware.ld
 
