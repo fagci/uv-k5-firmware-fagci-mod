@@ -55,7 +55,7 @@ volatile uint16_t g_20000356;
 uint16_t g_20000362;
 uint8_t g_2000036B;
 uint8_t gKeyLockCountdown;
-uint8_t g_2000036D;
+uint8_t gRTTECountdown;
 uint8_t g_2000036E;
 uint8_t g_2000036F;
 uint8_t g_20000370;
@@ -75,10 +75,17 @@ volatile int8_t g_20000390;
 uint8_t g_20000393;
 bool g_20000394;
 uint8_t gKeypadLocked;
+uint8_t g_20000395;
+uint8_t g_20000396;
 uint8_t g_20000398;
+uint8_t g_2000039A;
+uint8_t g_2000039B;
 uint8_t g_2000039D;
 uint8_t g_2000039E;
 uint8_t g_200003A0;
+uint8_t g_200003A2;
+uint8_t g_200003A3;
+uint8_t g_200003A4;
 bool g_200003A5;
 bool gFlagSaveSettings;
 bool g_200003A7;
@@ -91,15 +98,17 @@ bool g_CxCSS_TAIL_Found;
 bool g_VOX_Lost;
 bool g_SquelchLost;
 uint8_t gFlashLightState;
-uint8_t g_200003B3;
+uint8_t g_200003B4;
 uint16_t g_200003B6;
 uint16_t g_200003B8;
 uint8_t g_200003BC;
 uint8_t g_200003BD;
 uint8_t g_200003BE;
+uint8_t g_200003C0;
 bool g_200003C1;
 uint8_t g_200003C3;
 uint8_t g_200003C4;
+uint8_t gDTMFChosenContact;
 uint16_t g_200003E2;
 volatile uint16_t gFlashLightBlinkCounter;
 uint8_t g_200003FD;
@@ -124,6 +133,7 @@ bool g_20000439;
 uint8_t gMenuListCount;
 uint8_t g_20000442;
 uint8_t g_20000458;
+uint8_t g_20000459;
 uint8_t g_CxCSS_Type;
 uint8_t g_CxCSS_Index;
 uint8_t g_2000045C;
@@ -221,5 +231,19 @@ void NUMBER_ToDigits(uint32_t Value, char *pDigits)
 		pDigits[7 - i] = Value - (Result * 10U);
 		Value = Result;
 	}
+}
+
+uint8_t NUMBER_AddWithWraparound(uint8_t Base, int8_t Add, uint8_t LowerLimit, uint8_t UpperLimit)
+{
+	Base += Add;
+	if (Base == 0xFF || Base < LowerLimit) {
+		return UpperLimit;
+	}
+
+	if (Base > UpperLimit) {
+		return LowerLimit;
+	}
+
+	return Base;
 }
 

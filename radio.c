@@ -746,7 +746,7 @@ LAB_00007c20:
 		}
 		gSystickFlag0 = 0;
 		g_200003FD = 0;
-		g_2000036D = 0;
+		gRTTECountdown = 0;
 	}
 	g_200003BE = 0;
 }
@@ -772,5 +772,39 @@ void RADIO_Something(void)
 	SYSTEM_DelayMs(200);
 	RADIO_EnableCxCSS();
 	RADIO_SetupRegisters(true);
+}
+
+void RADIO_Whatever(void)
+{
+	g_20000381 = 0;
+	RADIO_SetupRegisters(true);
+}
+
+void RADIO_SendEndOfTransmission(void)
+{
+	if (gEeprom.ROGER == ROGER_MODE_ROGER) {
+		BK4819_PlayRoger();
+	} else if (gEeprom.ROGER == ROGER_MODE_MDC) {
+		BK4819_PlayRogerMDC();
+	}
+	if (g_200003BC == 0 && (gCrossTxRadioInfo->DTMF_PTT_ID_TX_MODE == PTT_ID_EOT || gCrossTxRadioInfo->DTMF_PTT_ID_TX_MODE == PTT_ID_BOTH)) {
+		if (gEeprom.DTMF_SIDE_TONE) {
+			GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+			g_2000036B = 1;
+			SYSTEM_DelayMs(60);
+		}
+		BK4819_EnterDTMF_TX(gEeprom.DTMF_SIDE_TONE);
+		BK4819_PlayDTMFString(
+			gEeprom.DTMF_DOWN_CODE,
+			0,
+			gEeprom.DTMF_FIRST_CODE_PERSIST_TIME,
+			gEeprom.DTMF_HASH_CODE_PERSIST_TIME,
+			gEeprom.DTMF_CODE_PERSIST_TIME,
+			gEeprom.DTMF_CODE_INTERVAL_TIME
+			);
+		GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+		g_2000036B = 0;
+	}
+	BK4819_ExitDTMF_TX(true);
 }
 
