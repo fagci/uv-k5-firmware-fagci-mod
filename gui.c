@@ -876,6 +876,7 @@ static void DisplayFM(void)
 	char String[16];
 
 	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+
 	memset(String, 0, sizeof(String));
 	strcpy(String, "FM");
 
@@ -938,10 +939,12 @@ void GUI_DisplayMenu(void)
 	char Contact[8];
 	uint8_t i;
 
+	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+
 	for (i = 0; i < 3; i++) {
-		if (gMenuCursor && i) {
+		if (gMenuCursor || i) {
 			if ((gMenuListCount - 1) != gMenuCursor || (i != 2)) {
-				GUI_PrintString(MenuList[i], 0, 127, i * 2, 8, false);
+				GUI_PrintString(MenuList[gMenuCursor + i - 1], 0, 127, i * 2, 8, false);
 			}
 		}
 	}
@@ -1303,6 +1306,7 @@ static void DisplayAircopy(void)
 	char String[16];
 
 	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+
 	if (gAircopyState == AIRCOPY_READY) {
 		strcpy(String, "AIR COPY(RDY)");
 	} else if (gAircopyState == AIRCOPY_TRANSFER) {
@@ -1366,7 +1370,7 @@ void GUI_SelectNextDisplay(GUI_DisplayType_t Display)
 			gAskForConfirmation = 0;
 			g_200003BA = 0;
 			g_200003BB = 0;
-			gF_LOCK = 0;
+			gF_LOCK = false;
 			gAskToSave = false;
 			gAskToDelete = false;
 			if (gWasFKeyPressed) {
