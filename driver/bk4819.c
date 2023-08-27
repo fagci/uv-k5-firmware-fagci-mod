@@ -21,6 +21,11 @@
 #include "driver/system.h"
 #include "driver/systick.h"
 
+static const uint16_t FSK_RogerTable[7] = {
+	0xF1A2, 0x7446, 0x61A4, 0x6544,
+	0x4E8A, 0xE044, 0xEA84,
+};
+
 static uint16_t gBK4819_GpioOutState;
 
 bool gThisCanEnable_BK4819_Rxon;
@@ -817,5 +822,136 @@ uint8_t BK4819_CheckCDCSSCodeReceived(void)
 uint8_t BK4819_GetCTCSSPhaseShift(void)
 {
         return (BK4819_GetRegister(BK4819_REG_0C) >> 14) & 3;
+}
+
+void BK4819_SendFSKData(uint16_t *pData)
+{
+	uint8_t i;
+	uint8_t Timeout;
+
+	Timeout = 200;
+
+	SYSTEM_DelayMs(20);
+
+	BK4819_WriteRegister(BK4819_REG_3F, BK4819_REG_3F_FSK_TX_FINISHED);
+	BK4819_WriteRegister(BK4819_REG_59, 0x8068);
+	BK4819_WriteRegister(BK4819_REG_59, 0x0068);
+
+	for (i = 0; i < 36; i++) {
+		BK4819_WriteRegister(BK4819_REG_5F, pData[i]);
+	}
+
+	SYSTEM_DelayMs(20);
+
+	BK4819_WriteRegister(BK4819_REG_59,0x2868);
+
+	while (Timeout) {
+		if (BK4819_GetRegister(BK4819_REG_0C) & 1U) {
+			break;
+		}
+		SYSTEM_DelayMs(5);
+		Timeout--;
+	}
+
+	BK4819_WriteRegister(BK4819_REG_02, 0);
+	SYSTEM_DelayMs(20);
+	BK4819_ResetFSK();
+}
+
+void BK4819_PrepareFSKReceive(void)
+{
+	BK4819_ResetFSK();
+	BK4819_WriteRegister(BK4819_REG_02, 0);
+	BK4819_WriteRegister(BK4819_REG_3F, 0);
+	BK4819_RX_TurnOn();
+	BK4819_WriteRegister(BK4819_REG_3F, 0
+			| BK4819_REG_3F_FSK_RX_FINISHED
+			| BK4819_REG_3F_FSK_FIFO_ALMOST_FULL
+			);
+	// Clear RX FIFO
+	// FSK Preamble Length 7 bytes
+	// FSK SyncLength Selection
+	BK4819_WriteRegister(BK4819_REG_59, 0x4068);
+	// Enable FSK Scramble
+	// Enable FSK RX
+	// FSK Preamble Length 7 bytes
+	// FSK SyncLength Selection
+	BK4819_WriteRegister(BK4819_REG_59, 0x3068);
+}
+
+void BK4819_ConfiguresTone1ScramblingStuff(void)
+{
+	BK4819_EnterTxMute();
+	BK4819_SetAF(BK4819_AF_MUTE);
+	BK4819_WriteRegister(BK4819_REG_70, 0xE000);
+	BK4819_EnableTXLink();
+	SYSTEM_DelayMs(50);
+	BK4819_WriteRegister(BK4819_REG_71, 0x142A);
+	BK4819_ExitTxMute();
+	SYSTEM_DelayMs(80);
+	BK4819_EnterTxMute();
+	BK4819_WriteRegister(BK4819_REG_71, 0x1C3B);
+	BK4819_ExitTxMute();
+	SYSTEM_DelayMs(80);
+	BK4819_EnterTxMute();
+	BK4819_WriteRegister(BK4819_REG_70, 0x0000);
+	BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);
+}
+
+void BK4819_ConfigureFSK(void)
+{
+	uint8_t i;
+
+	BK4819_SetAF(BK4819_AF_MUTE);
+	BK4819_WriteRegister(BK4819_REG_58, 0x37C3);
+	BK4819_WriteRegister(BK4819_REG_72, 0x3065);
+	BK4819_WriteRegister(BK4819_REG_70, 0x00E0);
+	BK4819_WriteRegister(BK4819_REG_5D, 0x0D00);
+	BK4819_WriteRegister(BK4819_REG_59, 0x8068);
+	BK4819_WriteRegister(BK4819_REG_59, 0x0068);
+	BK4819_WriteRegister(BK4819_REG_5A, 0x5555);
+	BK4819_WriteRegister(BK4819_REG_5B, 0x55AA);
+	BK4819_WriteRegister(BK4819_REG_5C, 0xAA30);
+	for (i = 0; i < 7; i++) {
+		BK4819_WriteRegister(BK4819_REG_5F, FSK_RogerTable[i]);
+	}
+	SYSTEM_DelayMs(20);
+	BK4819_WriteRegister(BK4819_REG_59, 0x0868);
+	SYSTEM_DelayMs(180);
+	BK4819_WriteRegister(BK4819_REG_59, 0x0068);
+	BK4819_WriteRegister(BK4819_REG_70, 0x0000);
+	BK4819_WriteRegister(BK4819_REG_58, 0x0000);
+}
+
+void BK4819_Enable_AfDac_DiscMode_TxDsp(void)
+{
+	BK4819_WriteRegister(BK4819_REG_30, 0x0000);
+	BK4819_WriteRegister(BK4819_REG_30, 0x0302);
+}
+
+void BK4819_GetVoxAmp(uint16_t *pResult)
+{
+	*pResult =  BK4819_GetRegister(BK4819_REG_64) & 0x7FFF;
+}
+
+void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency)
+{
+        BK4819_WriteRegister(BK4819_REG_71, (uint16_t)(Frequency * 10.32444));
+}
+
+void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code)
+{
+        BK4819_EnableDTMF();
+        BK4819_EnterTxMute();
+        if (bLocalLoopback) {
+                BK4819_SetAF(BK4819_AF_BEEP);
+        } else {
+                BK4819_SetAF(BK4819_AF_MUTE);
+        }
+        BK4819_WriteRegister(BK4819_REG_70, 0xD3D3);
+        BK4819_EnableTXLink();
+        SYSTEM_DelayMs(50);
+        BK4819_PlayDTMF(Code);
+        BK4819_ExitTxMute();
 }
 

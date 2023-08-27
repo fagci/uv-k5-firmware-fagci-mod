@@ -83,7 +83,11 @@ extern uint16_t g_2000038E;
 extern volatile int8_t g_20000390;
 extern uint8_t g_20000393;
 extern bool g_20000394;
+extern uint8_t g_20000398;
+extern uint8_t g_2000039D;
+extern uint8_t g_2000039E;
 extern uint8_t gKeypadLocked;
+extern uint8_t g_200003A0;
 extern bool g_200003A5;
 extern bool gFlagSaveSettings;
 extern bool g_200003A7;
@@ -111,10 +115,13 @@ extern uint8_t g_20000400;
 extern uint8_t g_20000410;
 extern uint8_t g_20000411;
 extern uint8_t g_20000413;
+extern uint8_t g_20000414;
 extern uint8_t g_20000415;
 extern uint8_t g_20000416;
+extern uint32_t g_20000418;
 extern uint8_t g_2000041F;
 extern uint8_t g_20000420;
+extern uint16_t g_20000422;
 extern uint8_t g_20000427;
 extern bool gKeyBeingHeld;
 extern bool gPttIsPressed;
@@ -130,6 +137,7 @@ extern uint8_t g_CxCSS_Index;
 extern uint8_t g_2000045C;
 extern uint8_t g_2000045D;
 extern uint8_t g_2000045F;
+extern uint8_t gStepOffset;
 extern uint8_t g_20000461;
 extern uint8_t g_20000464;
 extern uint8_t gAircopySendCountdown;
@@ -176,7 +184,7 @@ extern volatile bool gSystickFlag11;
 
 extern volatile uint16_t ScanPauseDelayIn10msec;
 
-extern uint16_t gFM_FrequencyDeviation;
+extern int16_t gFM_FrequencyDeviation;
 
 extern uint16_t gCurrentRSSI;
 

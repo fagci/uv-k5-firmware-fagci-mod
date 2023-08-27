@@ -75,6 +75,10 @@ volatile int8_t g_20000390;
 uint8_t g_20000393;
 bool g_20000394;
 uint8_t gKeypadLocked;
+uint8_t g_20000398;
+uint8_t g_2000039D;
+uint8_t g_2000039E;
+uint8_t g_200003A0;
 bool g_200003A5;
 bool gFlagSaveSettings;
 bool g_200003A7;
@@ -103,10 +107,13 @@ uint8_t g_20000400;
 uint8_t g_20000410;
 uint8_t g_20000411;
 uint8_t g_20000413;
+uint8_t g_20000414;
 uint8_t g_20000415;
 uint8_t g_20000416;
+uint32_t g_20000418;
 uint8_t g_2000041F;
 uint8_t g_20000420;
+uint16_t g_20000422;
 uint8_t g_20000427;
 bool gKeyBeingHeld;
 bool gPttIsPressed;
@@ -122,6 +129,7 @@ uint8_t g_CxCSS_Index;
 uint8_t g_2000045C;
 uint8_t g_2000045D;
 uint8_t g_2000045F;
+uint8_t gStepOffset;
 uint8_t g_20000461;
 uint8_t g_20000464;
 uint8_t gAircopySendCountdown;
@@ -168,8 +176,8 @@ volatile bool gSystickFlag11;
 
 volatile uint16_t ScanPauseDelayIn10msec;
 
-// This probably should be signed! But Ghidra disgrees
-uint16_t gFM_FrequencyDeviation;
+// Doubts about whether this should be signed or not.
+int16_t gFM_FrequencyDeviation;
 
 uint16_t gCurrentRSSI;
 
