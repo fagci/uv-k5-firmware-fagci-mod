@@ -247,8 +247,8 @@ void FUN_0000773c(void)
 
 	if (g_20000413 != 1) {
 		if (g_20000410 < 200) {
-			gEeprom.EEPROM_0E81_0E84[gEeprom.RX_CHANNEL] = g_20000414;
-			gEeprom.VfoChannel[gEeprom.RX_CHANNEL] = Previous;
+			gEeprom.MrChannel[gEeprom.RX_CHANNEL] = g_20000414;
+			gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = Previous;
 			RADIO_ConfigureChannel(gEeprom.RX_CHANNEL, 2);
 		} else {
 			gInfoCHAN_A->DCS[0].Frequency = g_20000418;
@@ -463,7 +463,7 @@ void FUN_000069f8(FUNCTION_Type_t Function)
 			gInfoCHAN_A->CHANNEL_SAVE = gNoaaChannel + 207;
 			gInfoCHAN_A->pDCS_Current->Frequency = NoaaFrequencyTable[gNoaaChannel];
 			gInfoCHAN_A->pDCS_Reverse->Frequency = NoaaFrequencyTable[gNoaaChannel];
-			gEeprom.VfoChannel[gEeprom.RX_CHANNEL] = gInfoCHAN_A->CHANNEL_SAVE;
+			gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = gInfoCHAN_A->CHANNEL_SAVE;
 			g_20000356 = 500;
 			gSystickFlag8 = false;
 		}
@@ -500,22 +500,23 @@ void FUN_000069f8(FUNCTION_Type_t Function)
 	}
 }
 
-void APP_AddStepToFrequency(VFO_Info_t *pInfo, uint8_t Step)
+void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step)
 {
 	uint32_t Frequency;
 
 	Frequency = pInfo->DCS[0].Frequency + (Step * pInfo->StepFrequency);
-	if (Frequency >= gLowerLimitFrequencyBandTable[pInfo->Band] && Frequency <= gUpperLimitFrequencyBandTable[pInfo->Band]) {
-		Frequency = FREQUENCY_FloorToStep(gUpperLimitFrequencyBandTable[pInfo->Band], pInfo->StepFrequency, Frequency);
+	if (Frequency >= gUpperLimitFrequencyBandTable[pInfo->Band]) {
+		pInfo->DCS[0].Frequency = gLowerLimitFrequencyBandTable[pInfo->Band];
+	} else if (Frequency < gLowerLimitFrequencyBandTable[pInfo->Band]) {
+		pInfo->DCS[0].Frequency = FREQUENCY_FloorToStep(gUpperLimitFrequencyBandTable[pInfo->Band], pInfo->StepFrequency, gLowerLimitFrequencyBandTable[pInfo->Band]);
 	} else {
-		Frequency = gLowerLimitFrequencyBandTable[pInfo->Band];
+		pInfo->DCS[0].Frequency = Frequency;
 	}
-	pInfo->DCS[0].Frequency = Frequency;
 }
 
 void APP_MoreRadioStuff(void)
 {
-	APP_AddStepToFrequency(gInfoCHAN_A, gStepDirection);
+	APP_SetFrequencyByStep(gInfoCHAN_A, gStepDirection);
 	RADIO_ApplyOffset(gInfoCHAN_A);
 	RADIO_ConfigureSquelchAndOutputPower(gInfoCHAN_A);
 	RADIO_SetupRegisters(true);
@@ -561,8 +562,8 @@ void FUN_00007dd4(void)
 
 	g_20000410 = Ch;
 	if (PreviousCh != g_20000410) {
-		gEeprom.EEPROM_0E81_0E84[gEeprom.RX_CHANNEL] = g_20000410;
-		gEeprom.VfoChannel[gEeprom.RX_CHANNEL] = g_20000410;
+		gEeprom.MrChannel[gEeprom.RX_CHANNEL] = g_20000410;
+		gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = g_20000410;
 		RADIO_ConfigureChannel(gEeprom.RX_CHANNEL, 2);
 		RADIO_SetupRegisters(true);
 		gUpdateDisplay = true;
@@ -588,7 +589,7 @@ void NOAA_IncreaseChannel(void)
 void FUN_00007f4c(void)
 {
 	if (gIsNoaaMode) {
-		if (gEeprom.VfoChannel[0] < 207 || gEeprom.VfoChannel[1] < 207) {
+		if (gEeprom.ScreenChannel[0] < 207 || gEeprom.ScreenChannel[1] < 207) {
 			gEeprom.RX_CHANNEL = gEeprom.RX_CHANNEL == 0;
 		} else {
 			gEeprom.RX_CHANNEL = 0;
@@ -915,7 +916,7 @@ void APP_Update(void)
 		if (gEeprom.BATTERY_SAVE == 0 || gStepDirection || g_20000381 || gFmRadioMode || gPttIsPressed || gScreenToDisplay != DISPLAY_MAIN || gKeyBeingHeld || g_200003BC) {
 			g_2000032E = 1000;
 		} else {
-			if ((gEeprom.VfoChannel[0] < 207 && gEeprom.VfoChannel[1] < 207) || !gIsNoaaMode) {
+			if ((gEeprom.ScreenChannel[0] < 207 && gEeprom.ScreenChannel[1] < 207) || !gIsNoaaMode) {
 				FUNCTION_Select(FUNCTION_POWER_SAVE);
 			} else {
 				g_2000032E = 1000;
@@ -1434,7 +1435,7 @@ void FUN_000075b0(void)
 	g_20000464 = 0;
 }
 
-void APP_ChangeStepDirectionMaybe(bool bFlag, uint8_t Direction)
+void APP_ChangeStepDirectionMaybe(bool bFlag, int8_t Direction)
 {
 	RADIO_ConfigureTX();
 	g_20000410 = gInfoCHAN_A->CHANNEL_SAVE;
@@ -1446,7 +1447,7 @@ void APP_ChangeStepDirectionMaybe(bool bFlag, uint8_t Direction)
 		}
 		FUN_00007dd4();
 	} else {
-		if (bFlag == 1) {
+		if (bFlag) {
 			g_20000418 = gInfoCHAN_A->DCS[0].Frequency;
 		}
 		APP_MoreRadioStuff();
@@ -1625,7 +1626,7 @@ static void APP_ProcessKey_MAIN(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		MAIN_Key_EXIT(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_STAR:
-		//MAIN_Key_STAR(bKeyPressed, bKeyHeld);
+		MAIN_Key_STAR(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_F:
 		GENERIC_Key_F(bKeyPressed, bKeyHeld);

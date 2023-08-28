@@ -72,7 +72,7 @@ static const VOICE_ID_t MenuVoices[] = {
 	VOICE_ID_INVALID,
 };
 
-static void FUN_000074f8(uint8_t Direction)
+static void FUN_000074f8(int8_t Direction)
 {
 	g_20000381 = 1;
 	gMenuScrollDirection = Direction;
@@ -276,7 +276,7 @@ void MENU_AcceptSetting(void)
 	case MENU_MEM_CH:
 		gTxRadioInfo->CHANNEL_SAVE = gSubMenuSelection;
 		gRequestSaveChannel = 2;
-		gEeprom.EEPROM_0E81_0E84[0] = gSubMenuSelection;
+		gEeprom.MrChannel[0] = gSubMenuSelection;
 		return;
 
 	case MENU_SAVE:
@@ -311,10 +311,10 @@ void MENU_AcceptSetting(void)
 		return;
 
 	case MENU_WX:
-		if (206 < gEeprom.VfoChannel[0]) {
+		if (206 < gEeprom.ScreenChannel[0]) {
 			return;
 		}
-		if (206 < gEeprom.VfoChannel[1]) {
+		if (206 < gEeprom.ScreenChannel[1]) {
 			return;
 		}
 		gEeprom.CROSS_BAND_RX_TX = gSubMenuSelection;
@@ -631,7 +631,7 @@ void MENU_ShowCurrentSetting(void)
 		break;
 
 	case MENU_MEM_CH:
-		gSubMenuSelection = gEeprom.EEPROM_0E81_0E84[0];
+		gSubMenuSelection = gEeprom.MrChannel[0];
 		break;
 
 	case MENU_SAVE:
@@ -767,7 +767,7 @@ void MENU_ShowCurrentSetting(void)
 		break;
 
 	case MENU_DEL_CH:
-		gSubMenuSelection = RADIO_FindNextChannel(gEeprom.EEPROM_0E81_0E84[0], 1, false, 1);
+		gSubMenuSelection = RADIO_FindNextChannel(gEeprom.MrChannel[0], 1, false, 1);
 		break;
 
 	case MENU_350TX:
@@ -988,7 +988,7 @@ void MENU_Key_STAR(bool bKeyPressed, bool bKeyHeld)
 		if (gInfoCHAN_A->CHANNEL_SAVE < 207 && !gInfoCHAN_A->IsAM) {
 			if (gMenuCursor == MENU_R_CTCS || gMenuCursor == MENU_R_DCS) {
 				if (g_20000381 == 0) {
-					FUN_000074f8(0x01);
+					FUN_000074f8(1);
 					gRequestDisplayScreen = DISPLAY_MENU;
 					AUDIO_SetVoiceID(0,VOICE_ID_SCANNING_BEGIN);
 					AUDIO_PlaySingleVoice(1);
