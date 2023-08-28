@@ -16,8 +16,9 @@
 
 #include <string.h>
 #include "aircopy.h"
-#include "app.h"
+#include "app/app.h"
 #include "app/generic.h"
+#include "app/main.h"
 #include "app/menu.h"
 #include "audio.h"
 #include "battery.h"
@@ -42,7 +43,7 @@
 #include "settings.h"
 #include "sram-overlay.h"
 
-static void APP_ProcessKey(KEY_Code_t CurrentKey, bool bKeyPressed, bool bKeyHeld);
+static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 void FUN_000069f8(FUNCTION_Type_t Function);
 
 static void FUN_00005144(void)
@@ -58,7 +59,7 @@ static void FUN_00005144(void)
 		}
 		if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF) {
 			if (gIsNoaaMode) {
-				g_20000356 = 0x1e;
+				g_20000356 = 20;
 				gSystickFlag8 = false;
 			}
 			FUNCTION_Select(FUNCTION_3);
@@ -75,7 +76,7 @@ static void FUN_00005144(void)
 			FUNCTION_Select(FUNCTION_3);
 			return;
 		}
-		ScanPauseDelayIn10msec = 0x1e;
+		ScanPauseDelayIn10msec = 20;
 		gSystickFlag9 = false;
 	}
 	g_20000411 = 1;
@@ -109,7 +110,7 @@ void APP_CheckDTMFStuff(void)
 				gSetting_KILLED = true;
 				SETTINGS_SaveSettings();
 				g_200003BE = 2;
-				if (gFmMute == true) {
+				if (gFmRadioMode) {
 					FM_TurnOff();
 					GUI_SelectNextDisplay(DISPLAY_MAIN);
 				}
@@ -434,7 +435,7 @@ void FUN_0000510c(void)
 void FUN_000069f8(FUNCTION_Type_t Function)
 {
 	if (!gSetting_KILLED) {
-		if (gFmMute) {
+		if (gFmRadioMode) {
 			BK1080_Init(0, false);
 		}
 		gVFO_RSSI_Level[gEeprom.RX_CHANNEL == 0] = 0;
@@ -491,7 +492,7 @@ void FUN_000069f8(FUNCTION_Type_t Function)
 			}
 		}
 		FUNCTION_Select(Function);
-		if (Function == FUNCTION_2 || gFmMute) {
+		if (Function == FUNCTION_2 || gFmRadioMode) {
 			GUI_SelectNextDisplay(DISPLAY_MAIN);
 			return;
 		}
@@ -737,9 +738,9 @@ void APP_PlayFM(void)
 	GUI_SelectNextDisplay(DISPLAY_FM);
 }
 
-void FUN_000059b4(void)
+void APP_StartFM(void)
 {
-	gFmMute = true;
+	gFmRadioMode = true;
 	g_20000390 = 0;
 	g_2000038E = 0;
 	BK1080_Init(gEeprom.FM_FrequencyToPlay, true);
@@ -887,7 +888,7 @@ void APP_Update(void)
 	if (gScreenToDisplay != DISPLAY_SCANNER && gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
 		if (gSystickFlag7 && gVoiceWriteIndex == 0) {
 			if (gStepDirection == 0 && g_20000381 == 0) {
-				if (!gPttIsPressed && gFmMute == false && g_200003BC == 0 && gCurrentFunction != FUNCTION_POWER_SAVE) {
+				if (!gPttIsPressed && !gFmRadioMode && g_200003BC == 0 && gCurrentFunction != FUNCTION_POWER_SAVE) {
 					FUN_00007f4c();
 					if (g_2000041F == 1 && gScreenToDisplay == DISPLAY_MAIN) {
 						GUI_SelectNextDisplay(DISPLAY_MAIN);
@@ -911,7 +912,7 @@ void APP_Update(void)
 	}
 
 	if (gSystickFlag5) {
-		if (gEeprom.BATTERY_SAVE == 0 || gStepDirection || g_20000381 || gFmMute || gPttIsPressed || gScreenToDisplay != DISPLAY_MAIN || gKeyBeingHeld || g_200003BC) {
+		if (gEeprom.BATTERY_SAVE == 0 || gStepDirection || g_20000381 || gFmRadioMode || gPttIsPressed || gScreenToDisplay != DISPLAY_MAIN || gKeyBeingHeld || g_200003BC) {
 			g_2000032E = 1000;
 		} else {
 			if ((gEeprom.VfoChannel[0] < 207 && gEeprom.VfoChannel[1] < 207) || !gIsNoaaMode) {
@@ -1070,10 +1071,10 @@ void APP_TimeSlice10ms(void)
 #if 0
 #endif
 	}
-	if (gFmMute && g_2000038E != 0) {
+	if (gFmRadioMode && g_2000038E != 0) {
 		g_2000038E--;
 		if (g_2000038E == 0) {
-			FUN_000059b4();
+			APP_StartFM();
 			GUI_SelectNextDisplay(DISPLAY_FM);
 		}
 	}
@@ -1261,7 +1262,7 @@ void APP_TimeSlice500ms(void)
 						g_200003BB = 0;
 						gAskToSave = false;
 						gAskToDelete = false;
-						if (gFmMute == true && gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_2 && gCurrentFunction != FUNCTION_TRANSMIT) {
+						if (gFmRadioMode && gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_2 && gCurrentFunction != FUNCTION_TRANSMIT) {
 							GUI_SelectNextDisplay(DISPLAY_FM);
 						} else {
 							GUI_SelectNextDisplay(DISPLAY_MAIN);
@@ -1277,8 +1278,8 @@ LAB_00004b08:
 		g_20000373--;
 		if (g_20000373 == 0) {
 			RADIO_SomethingElse(0);
-			if (gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_TRANSMIT && gCurrentFunction != FUNCTION_2 && gFmMute == true) {
-				FUN_000059b4();
+			if (gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_TRANSMIT && gCurrentFunction != FUNCTION_2 && gFmRadioMode) {
+				APP_StartFM();
 				GUI_SelectNextDisplay(DISPLAY_FM);
 			}
 		}
@@ -1460,7 +1461,7 @@ void APP_ChangeStepDirectionMaybe(bool bFlag, uint8_t Direction)
 void APP_FlipVoxSwitch(void)
 {
 	gEeprom.VOX_SWITCH = !gEeprom.VOX_SWITCH;
-	g_2000039E = 1;
+	gRequestSaveSettings = true;
 	g_20000398 = 1;
 	gAnotherVoiceID = VOICE_ID_VOX;
 	g_2000036F = 1;
@@ -1472,14 +1473,14 @@ void APP_CycleOutputPower(void)
 		gTxRadioInfo->OUTPUT_POWER = OUTPUT_POWER_LOW;
 	}
 
-	g_2000039D = 1;
+	gRequestSaveChannel = 1;
 	gAnotherVoiceID = VOICE_ID_POWER;
 	gRequestDisplayScreen = gScreenToDisplay;
 }
 
 void FUN_00005830(bool bFlag)
 {
-	if (gFmMute) {
+	if (gFmRadioMode) {
 		if (gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_2 && gCurrentFunction != FUNCTION_TRANSMIT) {
 			uint16_t Frequency;
 
@@ -1541,18 +1542,18 @@ void FUN_00005770(void)
 		gSystickFlag8 = false;
 	}
 	RADIO_SetupRegisters(true);
-	if (gFmMute == true) {
-		FUN_000059b4();
+	if (gFmRadioMode) {
+		APP_StartFM();
 		gRequestDisplayScreen = DISPLAY_FM;
 	} else {
 		gRequestDisplayScreen = gScreenToDisplay;
 	}
 }
 
-void FUN_000056d8(void)
+void APP_SwitchToFM(void)
 {
 	if (gCurrentFunction != FUNCTION_TRANSMIT && gCurrentFunction != FUNCTION_2) {
-		if (gFmMute) {
+		if (gFmRadioMode) {
 			FM_TurnOff();
 			gNumberOffset = 0;
 			g_200003B6 = 0x50;
@@ -1562,16 +1563,16 @@ void FUN_000056d8(void)
 		}
 		RADIO_ConfigureTX();
 		RADIO_SetupRegisters(true);
-		FUN_000059b4();
+		APP_StartFM();
 		gNumberOffset = 0;
 		gRequestDisplayScreen = DISPLAY_FM;
 	}
 }
 
-void FUN_000056a0(int param_1)
+void FUN_000056a0(bool bFlag)
 {
 	gNumberOffset = 0;
-	if (param_1 == 1) {
+	if (bFlag) {
 		g_20000383 = 3;
 	} else {
 		g_20000383 = 1;
@@ -1581,8 +1582,196 @@ void FUN_000056a0(int param_1)
 	gRequestDisplayScreen = DISPLAY_MAIN;
 }
 
-static void APP_ProcessKey(KEY_Code_t CurrentKey, bool bKeyPressed, bool bKeyHeld)
+static void APP_ProcessKey_MAIN(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 {
+	if (gFmRadioMode && Key != KEY_PTT && Key != KEY_EXIT) {
+		if (!bKeyHeld && bKeyPressed) {
+			g_20000396 = 2;
+		}
+		return;
+	}
+	if (g_200003BA != 0 && !bKeyHeld && bKeyPressed) {
+		char Character = DTMF_GetCharacter(Key);
+		if (Character != 0xFF) {
+			g_20000396 = 1;
+			XXX_Append(Character);
+			gRequestDisplayScreen = DISPLAY_MAIN;
+			g_20000394 = true;
+			return;
+		}
+	}
+
+	// TODO: ???
+	if (KEY_PTT < Key) {
+		Key = KEY_SIDE2;
+	}
+
+	switch(Key) {
+	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
+	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
+	case KEY_8: case KEY_9:
+		MAIN_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+		break;
+	case KEY_MENU:
+		MAIN_Key_MENU(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_UP:
+		MAIN_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
+		break;
+	case KEY_DOWN:
+		MAIN_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+		break;
+	case KEY_EXIT:
+		MAIN_Key_EXIT(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_STAR:
+		//MAIN_Key_STAR(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_F:
+		GENERIC_Key_F(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_PTT:
+		GENERIC_Key_PTT(bKeyPressed);
+		break;
+	default:
+		if (!bKeyHeld && bKeyPressed) {
+			g_20000396 = 2;
+		}
+		break;
+	}
+}
+
+void APP_ProcessKey_MENU(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+	switch(Key) {
+	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
+	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
+	case KEY_8: case KEY_9:
+		MENU_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+		break;
+	case KEY_MENU:
+		MENU_Key_MENU(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_UP:
+		MENU_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
+		break;
+	case KEY_DOWN:
+		MENU_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+		break;
+	case KEY_EXIT:
+		MENU_Key_EXIT(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_STAR:
+		MENU_Key_STAR(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_F:
+		GENERIC_Key_F(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_PTT:
+		GENERIC_Key_PTT(bKeyPressed);
+		break;
+	default:
+		if (!bKeyHeld && bKeyPressed) {
+			g_20000396 = 2;
+		}
+		break;
+	}
+	if (gScreenToDisplay == DISPLAY_MENU && gMenuCursor == MENU_VOL) {
+		g_20000393 = 0x20;
+	}
+}
+
+static void APP_ProcessKey_FM(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+	switch(Key) {
+	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
+	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
+	case KEY_8: case KEY_9:
+		//FM_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+		break;
+	case KEY_MENU:
+		//FM_Key_MENU(bKeyPressed, bKeyHeld);
+		return;
+	case KEY_UP:
+		//FM_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
+		break;
+	case KEY_DOWN:
+		//FM_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+		break;;
+	case KEY_EXIT:
+		//FM_Key_EXIT(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_F:
+		GENERIC_Key_F(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_PTT:
+		GENERIC_Key_PTT(bKeyPressed);
+		break;
+	default:
+		if (!bKeyHeld && bKeyPressed) {
+			g_20000396 = 2;
+		}
+		break;
+	}
+}
+
+static void APP_ProcessKey_SCANNER(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+	switch(Key) {
+	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
+	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
+	case KEY_8: case KEY_9:
+		//SCANNER_Key_DIGITS((VOICE_ID_t)Key, bKeyPressed, bKeyHeld);
+		break;
+	case KEY_MENU:
+		//SCANNER_Key_MENU(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_UP:
+		//SCANNEY_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
+		break;
+	case KEY_DOWN:
+		//SCANNEY_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+		break;
+	case KEY_EXIT:
+		//SCANNER_Key_EXIT(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_STAR:
+		//SCANNER_Key_STAR(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_PTT:
+		GENERIC_Key_PTT(bKeyPressed);
+		break;
+	default:
+		if (!bKeyHeld && bKeyPressed) {
+			g_20000396 = 2;
+		}
+		break;
+	}
+}
+
+static void APP_ProcessKey_AIRCOPY(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+	switch(Key) {
+	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
+	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
+	case KEY_8: case KEY_9:
+		//AIRCOPY_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+		break;
+	case KEY_MENU:
+		//AIRCOPY_Key_MENU(bKeyPressed, bKeyHeld);
+		break;
+	case KEY_EXIT:
+		//AIRCOPY_Key_EXIT(bKeyPressed, bKeyHeld);
+		break;
+	default:
+		break;
+	}
+}
+
+static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+	bool bFlag;
+
 	if (gCurrentFunction == FUNCTION_POWER_SAVE) {
 		FUNCTION_Select(FUNCTION_0);
 	}
@@ -1615,31 +1804,234 @@ static void APP_ProcessKey(KEY_Code_t CurrentKey, bool bKeyPressed, bool bKeyHel
 			GUI_SelectNextDisplay(DISPLAY_MAIN);
 		}
 	} else {
-		if (CurrentKey != KEY_PTT) {
+		if (Key != KEY_PTT) {
 			g_20000393 = 0x10;
 		}
 		BACKLIGHT_TurnOn();
 		if (g_200003C1 == 1) {
 			g_200003C1 = 0;
 			AUDIO_PlayBeep(BEEP_1KHZ_60MS_OPTIONAL);
-			if (CurrentKey != KEY_PTT) {
+			if (Key != KEY_PTT) {
 				g_20000394 = true;
 				return;
 			}
 		}
 	}
 
-	if (gF_LOCK == 1) {
-		if (CurrentKey == KEY_PTT) {
-			return;
-		}
-		if (CurrentKey == KEY_SIDE2) {
-			return;
-		}
-		if (CurrentKey == KEY_SIDE1) {
+	if (gEeprom.KEY_LOCK && gCurrentFunction != FUNCTION_TRANSMIT && Key != KEY_PTT) {
+		if (Key == KEY_F) {
+			if (!bKeyHeld) {
+				if (!bKeyPressed) {
+					return;
+				}
+				if (bKeyHeld) {
+					return;
+				}
+				AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
+				gKeypadLocked = 4;
+				gUpdateDisplay = true;
+				return;
+			}
+			if (!bKeyPressed) {
+				return;
+			}
+		} else if (Key != KEY_SIDE1 && Key != KEY_SIDE2) {
+			if (!bKeyPressed) {
+				return;
+			}
+			if (bKeyHeld) {
+				return;
+			}
+			AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
+			gKeypadLocked = 4;
+			gUpdateDisplay = true;
 			return;
 		}
 	}
 
+	if ((gStepDirection && Key != KEY_PTT && Key != KEY_UP && Key != KEY_DOWN && Key != KEY_EXIT && Key != KEY_STAR) ||
+	    (g_20000381 && Key != KEY_PTT && Key != KEY_UP && Key != KEY_DOWN && Key != KEY_EXIT && Key != KEY_STAR && Key != KEY_MENU)) {
+		if (!bKeyPressed || bKeyHeld) {
+			return;
+		}
+		AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
+		return;
+	}
+
+	bFlag = false;
+
+	if (g_20000395 == 1 && Key == KEY_PTT) {
+		bFlag = bKeyHeld;
+		if (!bKeyPressed) {
+			bFlag = true;
+			g_20000395 = 0;
+		}
+	}
+
+	if (g_20000394 && Key != KEY_PTT) {
+		if (bKeyHeld) {
+			bFlag = true;
+		}
+		if (!bKeyPressed) {
+			bFlag = true;
+			g_20000394 = 0;
+		}
+	}
+
+	if (gWasFKeyPressed && KEY_9 < Key && Key != KEY_F && Key != KEY_STAR) {
+		gWasFKeyPressed = false;
+		g_2000036F = 1;
+	}
+
+	if (gF_LOCK) {
+		if (Key == KEY_PTT) {
+			return;
+		}
+		if (Key == KEY_SIDE2) {
+			return;
+		}
+		if (Key == KEY_SIDE1) {
+			return;
+		}
+	}
+
+	if (!bFlag) {
+		if (gCurrentFunction == FUNCTION_TRANSMIT) {
+#if 0
+#endif
+		} else if (Key != KEY_SIDE1 && Key != KEY_SIDE2) {
+			switch (gScreenToDisplay) {
+			case DISPLAY_MAIN:
+				APP_ProcessKey_MAIN(Key, bKeyPressed, bKeyHeld);
+				break;
+			case DISPLAY_FM:
+				APP_ProcessKey_FM(Key, bKeyPressed, bKeyHeld);
+				break;
+			case DISPLAY_MENU:
+				APP_ProcessKey_MENU(Key, bKeyPressed, bKeyHeld);
+				break;
+			case DISPLAY_SCANNER:
+				APP_ProcessKey_SCANNER(Key, bKeyPressed, bKeyHeld);
+				break;
+			case DISPLAY_AIRCOPY:
+				APP_ProcessKey_AIRCOPY(Key, bKeyPressed, bKeyHeld);
+				break;
+			default:
+				break;
+			}
+		} else if (gScreenToDisplay != DISPLAY_SCANNER && gScreenToDisplay != DISPLAY_AIRCOPY) {
+			//FUN_00004404(Key, bKeyPressed, bKeyHeld);
+		} else if (!bKeyHeld && bKeyPressed) {
+			gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+		}
+	}
+	if (gBeepToPlay) {
+		AUDIO_PlayBeep(gBeepToPlay);
+		gBeepToPlay = 0;
+	}
+
+	if (gFlagAcceptSetting) {
+		MENU_AcceptSetting();
+		gFlagRefreshSetting = true;
+		gFlagAcceptSetting = false;
+	}
+	if (gFlagStopScan) {
+		BK4819_StopScan();
+		gFlagStopScan = false;
+	}
+	if (gRequestSaveSettings) {
+		if (bKeyHeld == 0) {
+			SETTINGS_SaveSettings();
+		} else {
+			gFlagSaveSettings = 1;
+		}
+		gRequestSaveSettings = false;
+		g_2000036F = 1;
+	}
+	if (gRequestSaveFM) {
+		if (!bKeyHeld) {
+			SETTINGS_SaveFM();
+		} else {
+			gFlagSaveFM = true;
+		}
+		gRequestSaveFM = false;
+	}
+	if (gRequestSaveVFO) {
+		if (!bKeyHeld) {
+			SETTINGS_SaveVfoIndices();
+		} else {
+			gFlagSaveVfo = true;
+		}
+		gRequestSaveVFO = false;
+	}
+	if (gRequestSaveChannel) {
+		if (!bKeyHeld) {
+			SETTINGS_SaveChannel(gTxRadioInfo->CHANNEL_SAVE, gEeprom.TX_CHANNEL, gTxRadioInfo, gRequestSaveChannel);
+			if (gScreenToDisplay != DISPLAY_SCANNER) {
+				g_2000039A = 1;
+			}
+		} else {
+			gFlagSaveChannel = gRequestSaveChannel;
+			if (gRequestDisplayScreen == DISPLAY_INVALID) {
+				gRequestDisplayScreen = DISPLAY_MAIN;
+			}
+		}
+		gRequestSaveChannel = 0;
+	}
+
+	if (g_2000039A == 0) {
+		if (g_20000398 == 0) {
+			goto LAB_00002aae;
+		}
+	} else {
+		if (g_2000039B == 1) {
+			RADIO_ConfigureChannel(0, g_2000039A);
+			RADIO_ConfigureChannel(1, g_2000039A);
+		} else {
+			RADIO_ConfigureChannel(gEeprom.TX_CHANNEL, g_2000039A);
+		}
+		if (gRequestDisplayScreen == DISPLAY_INVALID) {
+			gRequestDisplayScreen = DISPLAY_MAIN;
+		}
+		g_20000398 = 1;
+		g_2000039A = 0;
+		g_2000039B = 0;
+	}
+	RADIO_ConfigureTX();
+	RADIO_ConfigureNOAA();
+	RADIO_SetupRegisters(true);
+	gDTMF_AUTO_RESET_TIME = 0;
+	g_200003BC = 0;
+	g_200003C3 = 0;
+	g_200003BD = 0;
+	gVFO_RSSI_Level[0] = 0;
+	gVFO_RSSI_Level[1] = 0;
+	g_20000398 = 0;
+
+LAB_00002aae:
+	if (gFlagRefreshSetting) {
+		MENU_ShowCurrentSetting();
+		gFlagRefreshSetting = false;
+	}
+	if (gFlagStartScan) {
+		AUDIO_SetVoiceID(0, VOICE_ID_SCANNING_BEGIN);
+		AUDIO_PlaySingleVoice(true);
+		FUN_000075b0();
+		gRequestDisplayScreen = DISPLAY_SCANNER;
+		gFlagStartScan = false;
+	}
+	if (g_200003A0 == 1) {
+		RADIO_SomethingWithTransmit();
+		g_200003A0 = 0;
+	}
+	if (gAnotherVoiceID != VOICE_ID_INVALID) {
+		if (gAnotherVoiceID < 76) {
+			AUDIO_SetVoiceID(0, gAnotherVoiceID);
+		}
+		AUDIO_PlaySingleVoice(false);
+		gAnotherVoiceID = VOICE_ID_INVALID;
+	}
+	GUI_SelectNextDisplay(gRequestDisplayScreen);
+	gRequestDisplayScreen = DISPLAY_INVALID;
 }
 

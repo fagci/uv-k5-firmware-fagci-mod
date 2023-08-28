@@ -169,7 +169,7 @@ static const char gSubMenu_F_LOCK[6][4] = {
 };
 
 GUI_DisplayType_t gScreenToDisplay;
-uint8_t g_200003C6;
+bool gIsInSubMenu;
 volatile uint8_t gStepDirection;
 GUI_DisplayType_t gRequestDisplayScreen;
 uint8_t g_200003BA;
@@ -400,8 +400,8 @@ void GUI_DisplayStatusLine(void)
 	if (gSetting_KILLED) {
 		memset(gStatusLine + 21, 0xFF, 10);
 	}
-	else if (gFmMute) {
-		memcpy(gStatusLine + 21, BITMAP_FM_Mute, sizeof(BITMAP_FM_Mute));
+	else if (gFmRadioMode) {
+		memcpy(gStatusLine + 21, BITMAP_FM, sizeof(BITMAP_FM));
 	}
 	if (gIsNoaaMode) {
 		memcpy(gStatusLine + 7, BITMAP_NOAA, sizeof(BITMAP_NOAA));
@@ -471,16 +471,15 @@ void GUI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y, bool bDispl
 
 	bCanDisplay = false;
 	for (i = 0; i < 3; i++) {
-		uint8_t Digit;
+		const uint8_t Digit = pDigits[i];
 
-		Digit = pDigits[i];
 		if (bDisplayLeadingZero || bCanDisplay || Digit) {
 			bCanDisplay = true;
 			memcpy(pFb0 + (i * 13), gFontBigDigits[Digit] +  0, 13);
 			memcpy(pFb1 + (i * 13), gFontBigDigits[Digit] + 13, 13);
 		} else if (Flag1) {
-			pFb1 = pFb1 - 6;
-			pFb0 = pFb0 - 6;
+			pFb1 -= 6;
+			pFb0 -= 6;
 		}
 	}
 
@@ -595,7 +594,7 @@ static void DisplayMain(void)
 			} else if (bIsSameVfo) {
 				memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
 			}
-    	} else {
+		} else {
 			if (bIsSameVfo) {
 				memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
 			} else {
@@ -936,7 +935,7 @@ static void DisplayFM(void)
 void GUI_DisplayMenu(void)
 {
 	char String[16];
-	char Contact[8];
+	char Contact[16];
 	uint8_t i;
 
 	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
@@ -958,7 +957,7 @@ void GUI_DisplayMenu(void)
 	}
 	NUMBER_ToDigits(gMenuCursor + 1, String);
 	GUI_DisplaySmallDigits(2, String + 6, 33, 6);
-	if (g_200003C6) {
+	if (gIsInSubMenu) {
 		memcpy(gFrameBuffer[0] + 50, BITMAP_CurrentIndicator, sizeof(BITMAP_CurrentIndicator));
 	}
 
@@ -1003,7 +1002,7 @@ void GUI_DisplayMenu(void)
 		break;
 
 	case MENU_OFFSET:
-		if (g_200003C6 != 1 || gNumberOffset == 0) {
+		if (!gIsInSubMenu || gNumberOffset == 0) {
 			sprintf(String, "%.5f", gSubMenuSelection * 1e-05);
 			break;
 		}
@@ -1147,9 +1146,10 @@ void GUI_DisplayMenu(void)
 	case MENU_D_LIST:
 		gIsDtmfContactValid = DTMF_GetContact((uint8_t)gSubMenuSelection - 1, Contact);
 		if (!gIsDtmfContactValid) {
-			strcpy(String, "NULL");
+			// Ghidra being weird again...
+			memcpy(String, "NULL\0\0\0", 8);
 		} else {
-			strcpy(String, Contact);
+			memcpy(String, Contact, 8);
 		}
 		break;
 
@@ -1204,8 +1204,9 @@ void GUI_DisplayMenu(void)
 		}
 	}
 	if (gMenuCursor == MENU_D_LIST && gIsDtmfContactValid) {
-		memcpy(&gDTMF_ID, Contact, 4);
-		sprintf(String,"ID:%s", Contact);
+		Contact[11] = 0;
+		memcpy(&gDTMF_ID, Contact + 8, 4);
+		sprintf(String,"ID:%s", Contact + 8);
 		GUI_PrintString(String, 50, 127, 4, 8, true);
 	}
 
@@ -1363,7 +1364,7 @@ void GUI_SelectNextDisplay(GUI_DisplayType_t Display)
 	if (Display != DISPLAY_INVALID) {
 		if (gScreenToDisplay != Display) {
 			gNumberOffset = 0;
-			g_200003C6 = 0;
+			gIsInSubMenu = false;
 			g_20000381 = 0;
 			gStepDirection = 0;
 			g_20000390 = 0;

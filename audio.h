@@ -49,7 +49,7 @@ enum VOICE_ID_t {
 	VOICE_ID_100			= 0x0BU,
 	VOICE_ID_WELCOME		= 0x0CU,
 	VOICE_ID_LOCK			= 0x0DU,
-	VOICE_ID_M_LOCK			= 0x0EU,
+	VOICE_ID_UNLOCK			= 0x0EU,
 	VOICE_ID_SCANNING_BEGIN		= 0x0FU,
 	VOICE_ID_SCANNING_STOP		= 0x10U,
 	VOICE_ID_SCRAMBLER_ON		= 0x11U,
@@ -123,6 +123,7 @@ extern uint8_t gVoiceWriteIndex;
 extern volatile uint16_t gCountdownToPlayNextVoice;
 extern volatile bool gFlagPlayQueuedVoice;
 extern VOICE_ID_t gAnotherVoiceID;
+extern BEEP_Type_t gBeepToPlay;
 
 void AUDIO_PlayBeep(BEEP_Type_t Beep);
 void AUDIO_PlayVoice(VOICE_ID_t VoiceID);
