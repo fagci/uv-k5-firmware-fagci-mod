@@ -183,9 +183,7 @@ extern char gDTMF_Contact1[4];
 extern uint8_t g_CalloutAndDTMF_State;
 
 extern bool gIs_A_Scan;
-extern bool gIsNoaaMode;
 extern volatile bool gNextTimeslice;
-extern uint8_t gNoaaChannel;
 extern bool gUpdateDisplay;
 extern uint8_t gFmRadioCountdown;
 extern uint8_t gA_Scan_Channel;

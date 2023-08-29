@@ -69,7 +69,6 @@ enum {
 	MENU_ROGER		= 45,
 	MENU_VOL		= 46,
 	MENU_AM			= 47,
-	MENU_NOAA_S		= 48,
 	MENU_DEL_CH		= 49,
 	MENU_RESET		= 50,
 	MENU_350TX		= 51,

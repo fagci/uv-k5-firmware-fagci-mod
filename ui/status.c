@@ -73,9 +73,6 @@ void UI_DisplayStatus(void)
 	else if (gFmRadioMode) {
 		memcpy(gStatusLine + 21, BITMAP_FM, sizeof(BITMAP_FM));
 	}
-	if (gIsNoaaMode) {
-		memcpy(gStatusLine + 7, BITMAP_NOAA, sizeof(BITMAP_NOAA));
-	}
 	ST7565_BlitStatusLine();
 }
 

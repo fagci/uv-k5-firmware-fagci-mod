@@ -115,7 +115,6 @@ void RADIO_ApplyOffset(VFO_Info_t *pInfo);
 void RADIO_ConfigureTX(void);
 void RADIO_ConfigureCrossTX(void);
 void RADIO_SetupRegisters(bool bSwitchToFunction0);
-void RADIO_ConfigureNOAA(void);
 void RADIO_PrepareTransmit(void);
 
 void RADIO_SomethingElse(uint8_t Arg);

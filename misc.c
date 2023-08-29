@@ -159,9 +159,7 @@ char gDTMF_Contact1[4];
 uint8_t g_CalloutAndDTMF_State;
 
 bool gIs_A_Scan;
-bool gIsNoaaMode;
 volatile bool gNextTimeslice;
-uint8_t gNoaaChannel;
 bool gUpdateDisplay;
 uint8_t gFmRadioCountdown;
 uint8_t gA_Scan_Channel;

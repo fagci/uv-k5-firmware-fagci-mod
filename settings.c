@@ -58,8 +58,6 @@ void SETTINGS_SaveVfoIndices(void)
 	State[3] = gEeprom.ScreenChannel[1];
 	State[4] = gEeprom.MrChannel[1];
 	State[5] = gEeprom.FreqChannel[1];
-	State[6] = gEeprom.NoaaChannel[0];
-	State[7] = gEeprom.NoaaChannel[1];
 
 	EEPROM_WriteBuffer(0x0E80, State);
 }

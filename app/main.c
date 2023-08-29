@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include "app/fm.h"
+#include "app/spectrum.h"
 #include "app/main.h"
 #include "audio.h"
 #include "dtmf.h"
@@ -219,14 +220,7 @@ void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		break;
 
 	case KEY_5:
-		if (IS_NOT_NOAA_CHANNEL(gTxRadioInfo->CHANNEL_SAVE)) {
-			gEeprom.ScreenChannel[Vfo] = gEeprom.NoaaChannel[gEeprom.TX_CHANNEL];
-		} else {
-			gEeprom.ScreenChannel[Vfo] = gEeprom.FreqChannel[gEeprom.TX_CHANNEL];
-			gAnotherVoiceID = VOICE_ID_FREQUENCY_MODE;
-		}
-		gRequestSaveVFO = true;
-		g_2000039A = 2;
+        APP_RunSpectrum();
 		break;
 
 	case KEY_6:
@@ -382,7 +376,6 @@ void MAIN_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
 	}
 
 	if (gStepDirection == 0) {
-		if (IS_NOT_NOAA_CHANNEL(Channel)) {
 			uint8_t Next;
 
 			if (199 < Channel) {
@@ -403,11 +396,6 @@ void MAIN_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
 				AUDIO_SetDigitVoice(0, Next + 1);
 				gAnotherVoiceID = 0xFE;
 			}
-		} else {
-			Channel = NOAA_CHANNEL_FIRST + NUMBER_AddWithWraparound(gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] - NOAA_CHANNEL_FIRST, Direction, 0, 9);
-			gEeprom.NoaaChannel[gEeprom.TX_CHANNEL] = Channel;
-			gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] = Channel;
-		}
 		gRequestSaveVFO = true;
 		g_2000039A = 2;
 		return;

@@ -497,11 +497,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 	}
 	BK4819_WriteRegister(BK4819_REG_3F, 0);
 	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE940);
-	if (IS_NOT_NOAA_CHANNEL(gInfoCHAN_A->CHANNEL_SAVE) || !gIsNoaaMode) {
 		Frequency = gInfoCHAN_A->pDCS_Current->Frequency;
-	} else {
-		Frequency = NoaaFrequencyTable[gNoaaChannel];
-	}
 	BK4819_SetFrequency(Frequency);
 	BK4819_SetupSquelch(
 			gInfoCHAN_A->SquelchOpenRSSIThresh, gInfoCHAN_A->SquelchCloseRSSIThresh,
@@ -597,37 +593,6 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 
 	if (bSwitchToFunction0 == 1) {
 		FUNCTION_Select(FUNCTION_0);
-	}
-}
-
-void RADIO_ConfigureNOAA(void)
-{
-	uint8_t ChanAB;
-
-	g_2000036F = 1;
-	if (gEeprom.NOAA_AUTO_SCAN) {
-		if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-			if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0])) {
-				if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) {
-					gIsNoaaMode = false;
-					return;
-				}
-				ChanAB = 1;
-			} else {
-				ChanAB = 0;
-			}
-			if (!gIsNoaaMode) {
-				gNoaaChannel = gEeprom.VfoInfo[ChanAB].CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
-			}
-			gIsNoaaMode = true;
-			return;
-		}
-		if (gInfoCHAN_A->CHANNEL_SAVE >= NOAA_CHANNEL_FIRST) {
-			gIsNoaaMode = true;
-			gNoaaChannel = gInfoCHAN_A->CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
-			g_20000356 = 50;
-			gSystickFlag8 = 0;
-		}
 	}
 }
 

@@ -363,11 +363,6 @@ void BOARD_EEPROM_Init(void)
 	} else {
 		gEeprom.TX_TIMEOUT_TIMER = 2;
 	}
-	if (Data[3] < 2) {
-		gEeprom.NOAA_AUTO_SCAN = Data[3];
-	} else {
-		gEeprom.NOAA_AUTO_SCAN = true;
-	}
 	if (Data[4] < 2) {
 		gEeprom.KEY_LOCK = Data[4];
 	} else {
@@ -458,16 +453,6 @@ void BOARD_EEPROM_Init(void)
 		gEeprom.FreqChannel[1] = Data[5];
 	} else {
 		gEeprom.FreqChannel[1] = 205;
-	}
-	if (IS_NOAA_CHANNEL(Data[6])) {
-		gEeprom.NoaaChannel[0] = Data[6];
-	} else {
-		gEeprom.NoaaChannel[0] = NOAA_CHANNEL_FIRST;
-	}
-	if (IS_NOAA_CHANNEL(Data[7])) {
-		gEeprom.NoaaChannel[1] = Data[7];
-	} else {
-		gEeprom.NoaaChannel[1] = NOAA_CHANNEL_FIRST;
 	}
 
 	// 0E88..0E8F

@@ -74,19 +74,6 @@ void SystickHandler(void)
 		}
 	}
 
-	if (gStepDirection == 0 && g_20000381 == 0 && gEeprom.DUAL_WATCH == DUAL_WATCH_OFF) {
-		if (gIsNoaaMode && gCurrentFunction != FUNCTION_MONITOR && gCurrentFunction != FUNCTION_TRANSMIT) {
-			if (gCurrentFunction != FUNCTION_4) {
-				if (g_20000356 != 0) {
-					g_20000356--;
-					if (g_20000356 == 0) {
-						gSystickFlag8 = true;
-					}
-				}
-			}
-		}
-	}
-
 	if (gStepDirection != 0 || g_20000381 == 1) {
 		if (gCurrentFunction != FUNCTION_MONITOR && gCurrentFunction != FUNCTION_TRANSMIT) {
 			if (ScanPauseDelayIn10msec != 0) {

@@ -288,7 +288,6 @@ void UI_DisplayMenu(void)
 	case MENU_D_ST:
 	case MENU_D_DCD:
 	case MENU_AM:
-	case MENU_NOAA_S:
 	case MENU_350TX:
 	case MENU_200TX:
 	case MENU_500TX:
