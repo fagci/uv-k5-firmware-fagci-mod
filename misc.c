@@ -71,7 +71,7 @@ volatile uint8_t g_20000381;
 uint8_t g_20000382;
 uint8_t g_20000383;
 uint16_t g_2000038E;
-volatile int8_t g_20000390;
+volatile int8_t gFM_Step;
 uint8_t g_20000393;
 bool g_20000394;
 uint8_t g_20000395;
@@ -82,7 +82,7 @@ uint8_t g_20000398;
 uint8_t g_2000039A;
 uint8_t g_2000039B;
 bool gRequestSaveVFO;
-bool gRequestSaveChannel;
+uint8_t gRequestSaveChannel;
 bool gRequestSaveSettings;
 bool gRequestSaveFM;
 uint8_t g_200003A0;
@@ -105,6 +105,8 @@ uint8_t gFlashLightState;
 uint8_t g_200003B4;
 uint16_t g_200003B6;
 uint16_t g_200003B8;
+uint8_t g_200003BA;
+uint8_t g_200003BB;
 uint8_t g_200003BC;
 uint8_t g_200003BD;
 uint8_t g_200003BE;
@@ -164,11 +166,8 @@ uint8_t gNoaaChannel;
 bool gUpdateDisplay;
 uint8_t gFmRadioCountdown;
 uint8_t gA_Scan_Channel;
-uint8_t gDebounceCounter;
 uint8_t gDTMF_AUTO_RESET_TIME;
 bool gF_LOCK;
-char gNumberForPrintf[8];
-uint8_t gNumberOffset;
 uint8_t gScanChannel;
 uint32_t gScanFrequency;
 uint8_t gScanPauseMode;
@@ -195,17 +194,9 @@ int16_t gFM_FrequencyDeviation;
 
 uint16_t gCurrentRSSI;
 
-// --------
+volatile int8_t gStepDirection;
 
-void NUMBER_Append(char Digit)
-{
-	if (gNumberOffset == 0) {
-		memset(gNumberForPrintf, 10, sizeof(gNumberForPrintf));
-	} else if (gNumberOffset >= sizeof(gNumberForPrintf)) {
-		return;
-	}
-	gNumberForPrintf[gNumberOffset++] = Digit;
-}
+// --------
 
 void NUMBER_Get(char *pDigits, uint32_t *pInteger)
 {

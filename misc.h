@@ -20,6 +20,21 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define IS_MR_CHANNEL(x) ((x) >= MR_CHANNEL_FIRST && (x) <= MR_CHANNEL_LAST)
+#define IS_FREQ_CHANNEL(x) ((x) >= FREQ_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
+#define IS_NOAA_CHANNEL(x) ((x) >= NOAA_CHANNEL_FIRST && (x) <= NOAA_CHANNEL_LAST)
+#define IS_NOT_NOAA_CHANNEL(x) ((x) >= MR_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
+#define IS_VALID_CHANNEL(x) ((x) <= NOAA_CHANNEL_LAST)
+
+enum {
+	MR_CHANNEL_FIRST = 0U,
+	MR_CHANNEL_LAST = 199U,
+	FREQ_CHANNEL_FIRST = 200U,
+	FREQ_CHANNEL_LAST = 206U,
+	NOAA_CHANNEL_FIRST = 207U,
+	NOAA_CHANNEL_LAST = 216U,
+};
+
 enum {
 	FLASHLIGHT_OFF = 0U,
 	FLASHLIGHT_ON = 1U,
@@ -80,7 +95,7 @@ extern volatile uint8_t g_20000381;
 extern uint8_t g_20000382;
 extern uint8_t g_20000383;
 extern uint16_t g_2000038E;
-extern volatile int8_t g_20000390;
+extern volatile int8_t gFM_Step;
 extern uint8_t g_20000393;
 extern bool g_20000394;
 extern uint8_t g_20000395;
@@ -90,7 +105,7 @@ extern uint8_t g_20000398;
 extern uint8_t g_2000039A;
 extern uint8_t g_2000039B;
 extern bool gRequestSaveVFO;
-extern bool gRequestSaveChannel;
+extern uint8_t gRequestSaveChannel;
 extern bool gRequestSaveSettings;
 extern bool gRequestSaveFM;
 extern uint8_t gKeypadLocked;
@@ -114,6 +129,8 @@ extern uint8_t gFlashLightState;
 extern uint8_t g_200003B4;
 extern uint16_t g_200003B6;
 extern uint16_t g_200003B8;
+extern uint8_t g_200003BA;
+extern uint8_t g_200003BB;
 extern uint8_t g_200003BC;
 extern uint8_t g_200003BD;
 extern uint8_t g_200003BE;
@@ -173,11 +190,8 @@ extern uint8_t gNoaaChannel;
 extern bool gUpdateDisplay;
 extern uint8_t gFmRadioCountdown;
 extern uint8_t gA_Scan_Channel;
-extern uint8_t gDebounceCounter;
 extern uint8_t gDTMF_AUTO_RESET_TIME;
 extern bool gF_LOCK;
-extern char gNumberForPrintf[8];
-extern uint8_t gNumberOffset;
 extern uint8_t gScanChannel;
 extern uint32_t gScanFrequency;
 extern uint8_t gScanPauseMode;
@@ -203,9 +217,10 @@ extern int16_t gFM_FrequencyDeviation;
 
 extern uint16_t gCurrentRSSI;
 
+extern volatile int8_t gStepDirection;
+
 // --------
 
-void NUMBER_Append(char Digit);
 void NUMBER_Get(char *pDigits, uint32_t *pInteger);
 void NUMBER_ToDigits(uint32_t Value, char *pDigits);
 uint8_t NUMBER_AddWithWraparound(uint8_t Base, int8_t Add, uint8_t LowerLimit, uint8_t UpperLimit);

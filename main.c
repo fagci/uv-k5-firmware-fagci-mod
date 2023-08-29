@@ -20,7 +20,6 @@
 
 #include "app/app.h"
 #include "audio.h"
-#include "battery.h"
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/portcon.h"
 #include "bsp/dp32g030/syscon.h"
@@ -40,11 +39,13 @@
 #include "dtmf.h"
 #include "external/printf/printf.h"
 #include "functions.h"
-#include "gui.h"
-#include "helper.h"
+#include "helper/battery.h"
+#include "helper/boot.h"
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "ui/lock.h"
+#include "ui/welcome.h"
 
 static const char Version[] = "UV-K5 Firmware, v0.01 Open Edition\r\n";
 
@@ -101,32 +102,31 @@ void Main(void)
 		GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
 		g_2000037E = 1;
 	} else {
-		uint8_t KeyType;
+		BOOT_Mode_t BootMode;
 		uint8_t Channel;
 
-		GUI_Welcome();
+		UI_DisplayWelcome();
 		BACKLIGHT_TurnOn();
 		SYSTEM_DelayMs(1000);
 		gMenuListCount = 51;
 
-		HELPER_GetKey();
-		KeyType = HELPER_GetKey();
+		BootMode = BOOT_GetMode();
 		if (gEeprom.POWER_ON_PASSWORD < 1000000) {
 			g_2000036E = 1;
-			GUI_PasswordScreen();
+			UI_DisplayLock();
 			g_2000036E = 0;
 		}
 
-		HELPER_CheckBootKey(KeyType);
+		BOOT_ProcessMode(BootMode);
 
 		GPIO_ClearBit(&GPIOA->DATA, GPIOA_PIN_VOICE_0);
 		g_2000036F = 1;
 		AUDIO_SetVoiceID(0, VOICE_ID_WELCOME);
-		Channel = gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] + 1;
-		if (Channel < 201) {
+		Channel = gEeprom.ScreenChannel[gEeprom.TX_CHANNEL];
+		if (IS_MR_CHANNEL(Channel)) {
 			AUDIO_SetVoiceID(1, VOICE_ID_CHANNEL_MODE);
-			AUDIO_SetDigitVoice(2, Channel);
-		} else if ((Channel - 201) < 7) {
+			AUDIO_SetDigitVoice(2, Channel + 1);
+		} else if (IS_FREQ_CHANNEL(Channel)) {
 			AUDIO_SetVoiceID(1, VOICE_ID_FREQUENCY_MODE);
 		}
 		AUDIO_PlaySingleVoice(0);

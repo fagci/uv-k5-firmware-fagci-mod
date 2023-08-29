@@ -14,32 +14,27 @@
  *     limitations under the License.
  */
 
-#include "aircopy.h"
+#include "app/aircopy.h"
 #include "bsp/dp32g030/gpio.h"
 #include "driver/bk4819.h"
 #include "driver/keyboard.h"
 #include "driver/gpio.h"
 #include "driver/system.h"
-#include "gui.h"
-#include "helper.h"
+#include "helper/boot.h"
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "ui/menu.h"
+#include "ui/ui.h"
 
-KEY_Code_t gKeyReading0;
-KEY_Code_t gKeyReading1;
-uint8_t g_2000042A;
-
-uint8_t HELPER_GetKey(void)
+BOOT_Mode_t BOOT_GetMode(void)
 {
 	KEY_Code_t Keys[2];
 	uint8_t i;
-	uint8_t ret;
 
-	ret = 0;
 	for (i = 0; i < 2; i++) {
-		if (GPIO_CheckBit(&GPIOC->DATA, 5)) {
-			return 0;
+		if (GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT)) {
+			return BOOT_MODE_NORMAL;
 		}
 		Keys[i] = KEYBOARD_Poll();
 		SYSTEM_DelayMs(20);
@@ -47,26 +42,27 @@ uint8_t HELPER_GetKey(void)
 	if (Keys[0] == Keys[1]) {
 		gKeyReading0 = Keys[0];
 		gKeyReading1 = Keys[0];
-		g_2000042A = 2;
-		if (i == KEY_SIDE1) {
-			ret = 1;
-		} else if (i == KEY_SIDE2) {
-			ret = 2;
+		gDebounceCounter = 2;
+		if (Keys[0] == KEY_SIDE1) {
+			return BOOT_MODE_F_LOCK;
+		}
+		if (Keys[0] == KEY_SIDE2) {
+			return BOOT_MODE_AIRCOPY;
 		}
 	}
 
-	return ret;
+	return BOOT_MODE_NORMAL;
 }
 
-void HELPER_CheckBootKey(uint8_t KeyType)
+void BOOT_ProcessMode(BOOT_Mode_t Mode)
 {
-	if (KeyType == 1) {
+	if (Mode == BOOT_MODE_F_LOCK) {
 		gMenuCursor = MENU_350TX;
 		gSubMenuSelection = gSetting_350TX;
 		GUI_SelectNextDisplay(DISPLAY_MENU);
 		gMenuListCount = 57;
 		gF_LOCK = true;
-	} else if (KeyType == 2) {
+	} else if (Mode == BOOT_MODE_AIRCOPY) {
 		gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
 		gEeprom.BATTERY_SAVE = 0;
 		gEeprom.VOX_SWITCH = false;

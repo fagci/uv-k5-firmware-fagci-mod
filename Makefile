@@ -34,27 +34,39 @@ OBJS += driver/systick.o
 OBJS += driver/uart.o
 
 # Main
+OBJS += app/aircopy.o
 OBJS += app/app.o
+OBJS += app/fm.o
 OBJS += app/generic.o
 OBJS += app/main.o
 OBJS += app/menu.o
-OBJS += aircopy.o
 OBJS += audio.o
-OBJS += battery.o
 OBJS += bitmaps.o
 OBJS += board.o
 OBJS += dcs.o
 OBJS += dtmf.o
-OBJS += fm.o
 OBJS += font.o
 OBJS += frequencies.o
 OBJS += functions.o
-OBJS += gui.o
-OBJS += helper.o
+OBJS += helper/battery.o
+OBJS += helper/boot.o
 OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
+OBJS += ui/aircopy.o
+OBJS += ui/battery.o
+OBJS += ui/fmradio.o
+OBJS += ui/helper.o
+OBJS += ui/inputbox.o
+OBJS += ui/lock.o
+OBJS += ui/main.o
+OBJS += ui/menu.o
+OBJS += ui/rssi.o
+OBJS += ui/scanner.o
+OBJS += ui/status.o
+OBJS += ui/ui.o
+OBJS += ui/welcome.o
 
 OBJS += main.o
 

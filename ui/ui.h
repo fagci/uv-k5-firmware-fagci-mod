@@ -14,23 +14,32 @@
  *     limitations under the License.
  */
 
-#ifndef APP_MENU_H
-#define APP_MENU_H
+#ifndef GUI_H
+#define GUI_H
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "driver/keyboard.h"
 
-int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax);
-void MENU_AcceptSetting(void);
-void MENU_SelectNextDCS(void);
-void MENU_ShowCurrentSetting(void);
+enum GUI_DisplayType_t {
+	DISPLAY_MAIN	= 0x00U,
+	DISPLAY_FM	= 0x01U,
+	DISPLAY_MENU	= 0x02U,
+	DISPLAY_SCANNER	= 0x03U,
+	DISPLAY_AIRCOPY	= 0x04U,
+	DISPLAY_INVALID	= 0xFFU,
+};
 
-void MENU_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_EXIT(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_MENU(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_STAR(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction);
+typedef enum GUI_DisplayType_t GUI_DisplayType_t;
+
+extern GUI_DisplayType_t gScreenToDisplay;
+extern GUI_DisplayType_t gRequestDisplayScreen;
+
+extern uint8_t gAskForConfirmation;
+extern bool gAskToSave;
+extern bool gAskToDelete;
+
+void GUI_DisplayScreen(void);
+void GUI_SelectNextDisplay(GUI_DisplayType_t Display);
 
 #endif
 

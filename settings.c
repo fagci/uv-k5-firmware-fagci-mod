@@ -15,9 +15,9 @@
  */
 
 #include <string.h>
+#include "app/fm.h"
 #include "driver/eeprom.h"
 #include "driver/uart.h"
-#include "fm.h"
 #include "misc.h"
 #include "settings.h"
 
@@ -170,21 +170,21 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 {
 	UART_LogSend("schn\r\n", 6);
 
-	if (Channel < 207) {
+	if (IS_NOT_NOAA_CHANNEL(Channel)) {
 		uint16_t OffsetMR;
 		uint16_t OffsetVFO;
 
 		OffsetMR = 0x0000 + (Channel * 16);
 		OffsetVFO = OffsetMR;
-		if (Channel >= 200) {
+		if (!IS_MR_CHANNEL(Channel)) {
 			if (VFO == 0) {
-				OffsetVFO = 0x0C80 + ((Channel - 200) * 32);
+				OffsetVFO = 0x0C80 + ((Channel - FREQ_CHANNEL_FIRST) * 32);
 			} else {
-				OffsetVFO = 0x0C90 + ((Channel - 200) * 32);
+				OffsetVFO = 0x0C90 + ((Channel - FREQ_CHANNEL_FIRST) * 32);
 			}
 		}
 		// Mode 2 == Delete
-		if (Mode == 2 || Channel >= 200) {
+		if (Mode == 2 || !IS_MR_CHANNEL(Channel)) {
 			uint32_t State32[2];
 			uint8_t State8[8];
 
@@ -211,7 +211,7 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 
 			SETTINGS_UpdateChannel(Channel, pVFO, true);
 
-			if (Channel < 200) {
+			if (IS_MR_CHANNEL(Channel)) {
 				memset(&State32, 0xFF, sizeof(State32));
 				EEPROM_WriteBuffer(OffsetMR + 0x0F50, State32);
 				EEPROM_WriteBuffer(OffsetMR + 0x0F58, State32);
@@ -224,7 +224,7 @@ void SETTINGS_UpdateChannel(uint8_t Channel, const VFO_Info_t *pVFO, bool bUpdat
 {
 	UART_LogSend("svalid\r\n",8);
 
-	if (Channel < 207) {
+	if (IS_NOT_NOAA_CHANNEL(Channel)) {
 		uint8_t State[8];
 		uint16_t Offset;
 		uint8_t Attributes;

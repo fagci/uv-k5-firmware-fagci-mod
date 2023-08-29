@@ -1,19 +1,38 @@
+/* Copyright 2023 Dual Tachyon
+ * https://github.com/DualTachyon
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
+
+#include "app/fm.h"
 #include "app/generic.h"
 #include "audio.h"
+#include "driver/keyboard.h"
 #include "dtmf.h"
 #include "external/printf/printf.h"
-#include "fm.h"
 #include "functions.h"
-#include "gui.h"
 #include "misc.h"
 #include "settings.h"
+#include "ui/inputbox.h"
+#include "ui/ui.h"
 
 extern void FUN_0000773c(void);
 extern void PlayFMRadio(void);
+extern void TalkRelatedCode(void);
 
 void GENERIC_Key_F(bool bKeyPressed, bool bKeyHeld)
 {
-	if (gNumberOffset != 0) {
+	if (gInputBoxIndex) {
 		if (!bKeyHeld && bKeyPressed) {
 			g_20000396 = 2;
 		}
@@ -49,7 +68,7 @@ void GENERIC_Key_F(bool bKeyPressed, bool bKeyHeld)
 			g_20000396 = 1;
 			return;
 		}
-		if (g_20000390 == 0) {
+		if (gFM_Step == 0) {
 			g_20000396 = 1;
 			return;
 		}
@@ -60,12 +79,14 @@ void GENERIC_Key_F(bool bKeyPressed, bool bKeyHeld)
 
 void GENERIC_Key_PTT(bool bKeyPressed)
 {
-	gNumberOffset = 0;
+	gInputBoxIndex = 0;
 	if (!bKeyPressed) {
 		if (gScreenToDisplay == DISPLAY_MAIN) {
 			if (gCurrentFunction == FUNCTION_TRANSMIT) {
 				if (g_200003FD == 1) {
-					//TalkRelatedCode();
+					FUNCTION_Select(FUNCTION_0);
+				} else {
+					TalkRelatedCode();
 					if (gEeprom.REPEATER_TAIL_TONE_ELIMINATION == 0) {
 						FUNCTION_Select(FUNCTION_0);
 					} else {
@@ -79,11 +100,11 @@ void GENERIC_Key_PTT(bool bKeyPressed)
 			gRequestDisplayScreen = DISPLAY_MAIN;
 			return;
 		}
-		gNumberOffset = 0;
+		gInputBoxIndex = 0;
 		return;
 	}
 
-	if (gStepDirection != 0) {
+	if (gStepDirection) {
 		FUN_0000773c();
 		gPttDebounceCounter = 0;
 		gPttIsPressed = false;
@@ -91,25 +112,18 @@ void GENERIC_Key_PTT(bool bKeyPressed)
 		return;
 	}
 
-	if (g_20000390 == 0) {
+	if (gFM_Step == 0) {
 		if (g_20000381 == 0) {
-			if (gScreenToDisplay == DISPLAY_MENU) {
+			if (gScreenToDisplay == DISPLAY_MENU || gScreenToDisplay == DISPLAY_FM) {
 				gRequestDisplayScreen = DISPLAY_MAIN;
-				gNumberOffset = 0;
-				gPttIsPressed = false;
-				gPttDebounceCounter = 0;
-				return;
-			}
-			if (gScreenToDisplay == DISPLAY_FM) {
-				gRequestDisplayScreen = DISPLAY_MAIN;
-				gNumberOffset = 0;
+				gInputBoxIndex = 0;
 				gPttIsPressed = false;
 				gPttDebounceCounter = 0;
 				return;
 			}
 			if (gScreenToDisplay != DISPLAY_SCANNER) {
 				if (gCurrentFunction == FUNCTION_TRANSMIT && gRTTECountdown == 0) {
-					gNumberOffset = 0;
+					gInputBoxIndex = 0;
 					return;
 				}
 				g_200003A0 = 1;
@@ -136,7 +150,7 @@ void GENERIC_Key_PTT(bool bKeyPressed)
 				}
 				gRequestDisplayScreen = DISPLAY_MAIN;
 				g_200003A0 = 1;
-				gNumberOffset = 0;
+				gInputBoxIndex = 0;
 				return;
 			}
 			gRequestDisplayScreen = DISPLAY_MAIN;
@@ -150,7 +164,7 @@ void GENERIC_Key_PTT(bool bKeyPressed)
 			gRequestDisplayScreen = DISPLAY_MENU;
 		}
 	} else {
-		PlayFMRadio();
+		FM_Play();
 		gRequestDisplayScreen = DISPLAY_FM;
 	}
 	gAnotherVoiceID = VOICE_ID_SCANNING_STOP;

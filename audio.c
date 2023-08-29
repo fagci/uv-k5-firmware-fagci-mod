@@ -14,6 +14,7 @@
  *     limitations under the License.
  */
 
+#include "app/fm.h"
 #include "audio.h"
 #include "bsp/dp32g030/gpio.h"
 #include "driver/bk1080.h"
@@ -21,11 +22,10 @@
 #include "driver/gpio.h"
 #include "driver/system.h"
 #include "driver/systick.h"
-#include "fm.h"
 #include "functions.h"
-#include "gui.h"
 #include "misc.h"
 #include "settings.h"
+#include "ui/ui.h"
 
 static const uint8_t VoiceClipLengthChinese[58] = {
 	0x32, 0x32, 0x32, 0x37, 0x37, 0x32, 0x32, 0x32,
@@ -75,7 +75,7 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep)
 	if (gCurrentFunction == FUNCTION_4) {
 		return;
 	}
-	if (gCurrentFunction == FUNCTION_2) {
+	if (gCurrentFunction == FUNCTION_MONITOR) {
 		return;
 	}
 
@@ -193,7 +193,7 @@ void AUDIO_PlaySingleVoice(bool bFlag)
 			VoiceID += VOICE_ID_ENG_BASE;
 		}
 
-		if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_2) {
+		if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_MONITOR) {
 			BK4819_SetAF(BK4819_AF_MUTE);
 		}
 		if (gFmRadioMode) {
@@ -208,7 +208,7 @@ void AUDIO_PlaySingleVoice(bool bFlag)
 		}
 		if (bFlag) {
 			SYSTEM_DelayMs(Delay * 10);
-			if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_2) {
+			if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_MONITOR) {
 				if (gInfoCHAN_A->IsAM == true) {
 					BK4819_SetAF(BK4819_AF_AM);
 				} else {
@@ -265,19 +265,22 @@ uint8_t AUDIO_SetDigitVoice(uint8_t Index, uint32_t Value)
 	Count = 0;
 	Result = Value / 1000;
 	Remainder = Value % 1000;
-	if (Remainder >= 100) {
+	if (Remainder < 100) {
+		if (Remainder < 10) {
+			goto Skip;
+		}
+	} else {
 		Result = Remainder / 100;
 		gVoiceID[gVoiceWriteIndex++] = Result;
 		Count++;
 		Remainder -= Result * 100;
 	}
-	if (Remainder >= 10) {
-		Result = Remainder / 10;
-		gVoiceID[gVoiceWriteIndex++] = Result;
-		Count += 1;
-		Remainder -= Result * 10;
-	}
+	Result = Remainder / 10;
+	gVoiceID[gVoiceWriteIndex++] = Result;
+	Count++;
+	Remainder -= Result * 10;
 
+Skip:
 	gVoiceID[gVoiceWriteIndex++] = Remainder;
 
 	return Count + 1;
@@ -321,7 +324,7 @@ void AUDIO_PlayQueuedVoice(void)
 		}
 	}
 
-	if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_2) {
+	if (gCurrentFunction == FUNCTION_4 || gCurrentFunction == FUNCTION_MONITOR) {
 		if (gInfoCHAN_A->IsAM == true) {
 			BK4819_SetAF(BK4819_AF_AM);
 		} else {

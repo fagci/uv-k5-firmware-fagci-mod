@@ -15,7 +15,7 @@
  */
 
 #include <string.h>
-#include "battery.h"
+#include "app/fm.h"
 #include "bsp/dp32g030/gpio.h"
 #include "dcs.h"
 #include "driver/bk1080.h"
@@ -24,18 +24,19 @@
 #include "driver/system.h"
 #include "dtmf.h"
 #include "external/printf/printf.h"
-#include "fm.h"
 #include "functions.h"
-#include "gui.h"
+#include "helper/battery.h"
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "ui/status.h"
+#include "ui/ui.h"
 
 FUNCTION_Type_t gCurrentFunction;
 
 void FUNCTION_Init(void)
 {
-	if (gInfoCHAN_A->CHANNEL_SAVE < 207) {
+	if (IS_NOT_NOAA_CHANNEL(gInfoCHAN_A->CHANNEL_SAVE)) {
 		gCopyOfCodeType = gCodeType;
 		if (g_20000381 == 0) {
 			if (gInfoCHAN_A->IsAM == true) {
@@ -81,7 +82,7 @@ void FUNCTION_Select(FUNCTION_Type_t Function)
 		if (Function != FUNCTION_POWER_SAVE) {
 			BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable();
 			gThisCanEnable_BK4819_Rxon = false;
-			GUI_DisplayStatusLine();
+			UI_DisplayStatus();
 		}
 	}
 
@@ -111,7 +112,7 @@ void FUNCTION_Select(FUNCTION_Type_t Function)
 		return;
 	}
 
-	if (Function == FUNCTION_2 || Function == FUNCTION_3 || Function == FUNCTION_4) {
+	if (Function == FUNCTION_MONITOR || Function == FUNCTION_3 || Function == FUNCTION_4) {
 		g_2000032E = 1000;
 		gSystickFlag5 = false;
 		g_2000038E = 0;

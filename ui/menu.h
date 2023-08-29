@@ -14,22 +14,11 @@
  *     limitations under the License.
  */
 
-#ifndef GUI_H
-#define GUI_H
+#ifndef UI_MENU_H
+#define UI_MENU_H
 
 #include <stdbool.h>
 #include <stdint.h>
-
-enum GUI_DisplayType_t {
-	DISPLAY_MAIN	= 0x00U,
-	DISPLAY_FM	= 0x01U,
-	DISPLAY_MENU	= 0x02U,
-	DISPLAY_SCANNER	= 0x03U,
-	DISPLAY_AIRCOPY	= 0x04U,
-	DISPLAY_INVALID	= 0xFFU,
-};
-
-typedef enum GUI_DisplayType_t GUI_DisplayType_t;
 
 enum {
 	MENU_SQL		= 0,
@@ -91,38 +80,13 @@ enum {
 	MENU_SCREN		= 56,
 };
 
-extern GUI_DisplayType_t gScreenToDisplay;
 extern bool gIsInSubMenu;
-extern volatile int8_t gStepDirection;
-extern GUI_DisplayType_t gRequestDisplayScreen;
-extern uint8_t g_200003BA;
-extern uint8_t g_200003BB;
-extern bool gWasFKeyPressed;
-
-extern uint8_t gAskForConfirmation;
-extern bool gAskToSave;
-extern bool gAskToDelete;
 
 extern uint8_t gMenuCursor;
 extern int8_t gMenuScrollDirection;
 extern uint32_t gSubMenuSelection;
 
-void GUI_DisplayBatteryLevel(uint8_t BatteryLevel);
-void GUI_Welcome(void);
-void GUI_PrintString(const char *pString, uint8_t Start, uint8_t End, uint8_t Line, int Width, bool bCentered);
-void GUI_PasswordScreen(void);
-void GUI_LockScreen(void);
-void GUI_DisplayStatusLine(void);
-
-void GUI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y, bool bDisplayLeadingZero, bool Flag1);
-void GUI_DisplaySmallDigits(uint8_t Size, const char *pString, uint8_t x, uint8_t y);
-
-void GUI_DisplayMenu(void);
-void GUI_DisplayScreen(void);
-void GUI_SelectNextDisplay(GUI_DisplayType_t Display);
-
-void GUI_RenderRSSI(uint8_t RssiLevel, uint8_t VFO);
-void GUI_DisplayRSSI(uint16_t RSSI);
+void UI_DisplayMenu(void);
 
 #endif
 

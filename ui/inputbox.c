@@ -14,23 +14,19 @@
  *     limitations under the License.
  */
 
-#ifndef APP_MENU_H
-#define APP_MENU_H
+#include <string.h>
+#include "ui/inputbox.h"
 
-#include <stdbool.h>
-#include <stdint.h>
-#include "driver/keyboard.h"
+char gInputBox[8];
+uint8_t gInputBoxIndex;
 
-int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax);
-void MENU_AcceptSetting(void);
-void MENU_SelectNextDCS(void);
-void MENU_ShowCurrentSetting(void);
-
-void MENU_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_EXIT(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_MENU(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_STAR(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction);
-
-#endif
+void INPUTBOX_Append(char Digit)
+{
+	if (gInputBoxIndex == 0) {
+		memset(gInputBox, 10, sizeof(gInputBox));
+	} else if (gInputBoxIndex >= sizeof(gInputBox)) {
+		return;
+	}
+	gInputBox[gInputBoxIndex++] = Digit;
+}
 

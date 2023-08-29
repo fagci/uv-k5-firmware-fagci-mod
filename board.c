@@ -16,7 +16,7 @@
  */
 
 #include <string.h>
-#include "battery.h"
+#include "app/fm.h"
 #include "board.h"
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/portcon.h"
@@ -32,8 +32,8 @@
 #include "driver/system.h"
 #include "driver/st7565.h"
 #include "dtmf.h"
-#include "fm.h"
 #include "frequencies.h"
+#include "helper/battery.h"
 #include "misc.h"
 #include "settings.h"
 #include "sram-overlay.h"
@@ -348,7 +348,7 @@ void BOARD_EEPROM_Init(void)
 
 	// 0E70..0E77
 	EEPROM_ReadBuffer(0x0E70, Data, 8);
-	if (Data[0] < 200) {
+	if (IS_MR_CHANNEL(Data[0])) {
 		gEeprom.CHAN_1_CALL = Data[0];
 	} else {
 		gEeprom.CHAN_1_CALL = 0;
@@ -429,45 +429,45 @@ void BOARD_EEPROM_Init(void)
 
 	// 0E80..0E87
 	EEPROM_ReadBuffer(0x0E80, Data, 8);
-	if (Data[0] < 217) {
+	if (IS_VALID_CHANNEL(Data[0])) {
 		gEeprom.ScreenChannel[0] = Data[0];
 	} else {
 		gEeprom.ScreenChannel[0] = 205;
 	}
-	if (Data[3] < 217) {
+	if (IS_VALID_CHANNEL(Data[3])) {
 		gEeprom.ScreenChannel[1] = Data[3];
 	} else {
 		gEeprom.ScreenChannel[1] = 205;
 	}
-	if (Data[1] < 200) {
+	if (IS_MR_CHANNEL(Data[1])) {
 		gEeprom.MrChannel[0] = Data[1];
 	} else {
 		gEeprom.MrChannel[0] = 0;
 	}
-	if (Data[4] < 200) {
+	if (IS_MR_CHANNEL(Data[4])) {
 		gEeprom.MrChannel[1] = Data[4];
 	} else {
 		gEeprom.MrChannel[1] = 0;
 	}
-	if (Data[2] - 200 < 7) {
+	if (IS_FREQ_CHANNEL(Data[2])) {
 		gEeprom.FreqChannel[0] = Data[2];
 	} else {
 		gEeprom.FreqChannel[0] = 205;
 	}
-	if (Data[5] - 200 < 7) {
+	if (IS_FREQ_CHANNEL(Data[5])) {
 		gEeprom.FreqChannel[1] = Data[5];
 	} else {
 		gEeprom.FreqChannel[1] = 205;
 	}
-	if (Data[6] - 207 < 10) {
+	if (IS_NOAA_CHANNEL(Data[6])) {
 		gEeprom.NoaaChannel[0] = Data[6];
 	} else {
-		gEeprom.NoaaChannel[0] = 207;
+		gEeprom.NoaaChannel[0] = NOAA_CHANNEL_FIRST;
 	}
-	if (Data[7] - 207 < 10) {
+	if (IS_NOAA_CHANNEL(Data[7])) {
 		gEeprom.NoaaChannel[1] = Data[7];
 	} else {
-		gEeprom.NoaaChannel[1] = 207;
+		gEeprom.NoaaChannel[1] = NOAA_CHANNEL_FIRST;
 	}
 
 	// 0E88..0E8F

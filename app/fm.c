@@ -1,0 +1,246 @@
+/* Copyright 2023 Dual Tachyon
+ * https://github.com/DualTachyon
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ */
+
+#include <string.h>
+#include "app/fm.h"
+#include "audio.h"
+#include "bsp/dp32g030/gpio.h"
+#include "driver/bk1080.h"
+#include "driver/eeprom.h"
+#include "driver/gpio.h"
+#include "misc.h"
+#include "settings.h"
+#include "ui/inputbox.h"
+#include "ui/ui.h"
+
+extern void APP_SwitchToFM(void);
+
+uint16_t gFM_Channels[20];
+bool gFmRadioMode;
+
+bool FM_CheckValidChannel(uint8_t Channel)
+{
+	if (Channel < 20 && (gFM_Channels[Channel] - 760) < 321) {
+		return true;
+	}
+
+	return false;
+}
+
+uint8_t FM_FindNextChannel(uint8_t Channel, uint8_t Direction)
+{
+	uint8_t i;
+
+	for (i = 0; i < 20; i++) {
+		if (Channel == 0xFF) {
+			Channel = 19;
+		} else if (Channel >= 20) {
+			Channel = 0;
+		}
+		if (FM_CheckValidChannel(Channel)) {
+			return Channel;
+		}
+		Channel += Direction;
+	}
+
+	return 0xFF;
+}
+
+int FM_ConfigureChannelState(void)
+{
+	uint8_t Channel;
+
+	gEeprom.FM_FrequencyToPlay = gEeprom.FM_CurrentFrequency;
+	if (gEeprom.FM_IsChannelSelected) {
+		Channel = FM_FindNextChannel(gEeprom.FM_CurrentChannel, FM_CHANNEL_UP);
+		if (Channel == 0xFF) {
+			gEeprom.FM_IsChannelSelected = false;
+			return -1;
+		}
+		gEeprom.FM_CurrentChannel = Channel;
+		gEeprom.FM_FrequencyToPlay = gFM_Channels[Channel];
+	}
+
+	return 0;
+}
+
+void FM_TurnOff(void)
+{
+	gFmRadioMode = false;
+	gFM_Step = 0;
+	g_2000038E = 0;
+	GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+	g_2000036B = 0;
+	BK1080_Init(0, false);
+	g_2000036F = 1;
+}
+
+void FM_EraseChannels(void)
+{
+	uint8_t i;
+	uint8_t Template[8];
+
+	memset(Template, 0xFF, sizeof(Template));
+	for (i = 0; i < 5; i++) {
+		EEPROM_WriteBuffer(0x0E40 + (i * 8), Template);
+	}
+
+	memset(gFM_Channels, 0xFF, sizeof(gFM_Channels));
+}
+
+void FM_Tune(uint16_t Frequency, int8_t Step, bool bFlag)
+{
+	GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+	g_2000036B = 0;
+	if (gFM_Step == 0) {
+		g_2000034C = 120;
+	} else {
+		g_2000034C = 10;
+	}
+	gSystickFlag11 = false;
+	g_20000427 = 0;
+	gAskToSave = false;
+	gAskToDelete = false;
+	gEeprom.FM_FrequencyToPlay = Frequency;
+	if (!bFlag) {
+		Frequency += Step;
+		if (Frequency < gEeprom.FM_LowerLimit) {
+			Frequency = gEeprom.FM_UpperLimit;
+		} else if (Frequency > gEeprom.FM_UpperLimit) {
+			Frequency = gEeprom.FM_LowerLimit;
+		}
+		gEeprom.FM_FrequencyToPlay = Frequency;
+	}
+
+	gFM_Step = Step;
+	BK1080_SetFrequency(gEeprom.FM_FrequencyToPlay);
+}
+
+void FM_Play(void)
+{
+	gFM_Step = 0;
+	if (gIs_A_Scan) {
+		gEeprom.FM_IsChannelSelected = true;
+		gEeprom.FM_CurrentChannel = 0;
+	}
+	FM_ConfigureChannelState();
+	BK1080_SetFrequency(gEeprom.FM_FrequencyToPlay);
+	SETTINGS_SaveFM();
+	g_2000034C = 0;
+	gSystickFlag11 = false;
+	gAskToSave = false;
+	GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+	g_2000036B = 1;
+}
+
+void FM_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
+{
+	if (bKeyHeld) {
+		return;
+	}
+	if (!bKeyPressed) {
+		return;
+	}
+	gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+	if (gFM_Step == 0) {
+		if (gInputBoxIndex == 0) {
+			if (!gAskToSave && !gAskToDelete) {
+				APP_SwitchToFM();
+				return;
+			}
+			gAskToSave = false;
+			gAskToDelete = false;
+		} else {
+			gInputBoxIndex--;
+			gInputBox[gInputBoxIndex] = 10;
+			if (gInputBoxIndex) {
+				if (gInputBoxIndex != 1) {
+					gRequestDisplayScreen = DISPLAY_FM;
+					return;
+				}
+				if (gInputBox[0] != 0) {
+					gRequestDisplayScreen = DISPLAY_FM;
+					return;
+				}
+			}
+			gInputBoxIndex = 0;
+		}
+		gAnotherVoiceID = VOICE_ID_CANCEL;
+	} else {
+		FM_Play();
+		gAnotherVoiceID = VOICE_ID_SCANNING_STOP;
+	}
+	gRequestDisplayScreen = DISPLAY_FM;
+}
+
+void FM_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Step)
+{
+	if (bKeyHeld || !bKeyPressed) {
+		if (gInputBoxIndex) {
+			return;
+		}
+		if (!bKeyPressed) {
+			return;
+		}
+	} else {
+		if (gInputBoxIndex) {
+			gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+			return;
+		}
+		gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+	}
+	if (gAskToSave) {
+		gRequestDisplayScreen = DISPLAY_FM;
+		gA_Scan_Channel = NUMBER_AddWithWraparound(gA_Scan_Channel, Step, 0, 19);
+		return;
+	}
+	if (gFM_Step) {
+		if (gIs_A_Scan) {
+			gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+			return;
+		}
+		FM_Tune(gEeprom.FM_FrequencyToPlay, Step, false);
+		gRequestDisplayScreen = DISPLAY_FM;
+		return;
+	}
+	if (gEeprom.FM_IsChannelSelected) {
+		uint8_t Channel;
+
+		Channel = FM_FindNextChannel(gEeprom.FM_CurrentChannel + Step, Step);
+		if (Channel == 0xFF || gEeprom.FM_CurrentChannel == Channel) {
+			goto Bail;
+		}
+		gEeprom.FM_CurrentChannel = Channel;
+		gEeprom.FM_FrequencyToPlay = gFM_Channels[Channel];
+	} else {
+		uint16_t Frequency;
+
+		Frequency = gEeprom.FM_CurrentFrequency + Step;
+		if (Frequency < gEeprom.FM_LowerLimit) {
+			Frequency = gEeprom.FM_UpperLimit;
+		} else if (Frequency > gEeprom.FM_UpperLimit) {
+			Frequency = gEeprom.FM_LowerLimit;
+		}
+		gEeprom.FM_FrequencyToPlay = Frequency;
+		gEeprom.FM_CurrentFrequency = gEeprom.FM_FrequencyToPlay;
+	}
+	gRequestSaveFM = true;
+
+Bail:
+	BK1080_SetFrequency(gEeprom.FM_FrequencyToPlay);
+	gRequestDisplayScreen = DISPLAY_FM;
+}
+

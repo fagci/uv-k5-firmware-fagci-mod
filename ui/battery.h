@@ -14,23 +14,12 @@
  *     limitations under the License.
  */
 
-#ifndef FM_H
-#define FM_H
+#ifndef UI_BATTERY_H
+#define UI_BATTERY_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
-#define FM_CHANNEL_UP	0x01
-#define FM_CHANNEL_DOWN	0xFF
-
-extern uint16_t gFM_Channels[20];
-extern bool gFmRadioMode;
-
-bool FM_CheckValidChannel(uint8_t Channel);
-uint8_t FM_FindNextChannel(uint8_t Channel, uint8_t Direction);
-int FM_ConfigureChannelState(void);
-void FM_TurnOff(void);
-void FM_EraseChannels(void);
+void UI_DisplayBattery(uint8_t Level);
 
 #endif
 

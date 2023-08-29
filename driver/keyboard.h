@@ -18,6 +18,9 @@
 #ifndef DRIVER_KEYBOARD_H
 #define DRIVER_KEYBOARD_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 enum KEY_Code_t {
 	KEY_0 = 0,
 	KEY_1 = 1,
@@ -42,6 +45,11 @@ enum KEY_Code_t {
 };
 
 typedef enum KEY_Code_t KEY_Code_t;
+
+extern KEY_Code_t gKeyReading0;
+extern KEY_Code_t gKeyReading1;
+extern uint8_t gDebounceCounter;
+extern bool gWasFKeyPressed;
 
 KEY_Code_t KEYBOARD_Poll(void);
 

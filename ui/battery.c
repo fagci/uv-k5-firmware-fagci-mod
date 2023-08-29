@@ -14,23 +14,40 @@
  *     limitations under the License.
  */
 
-#ifndef APP_MENU_H
-#define APP_MENU_H
+#include <stddef.h>
+#include "bitmaps.h"
+#include "driver/st7565.h"
+#include "functions.h"
+#include "ui/battery.h"
 
-#include <stdbool.h>
-#include <stdint.h>
-#include "driver/keyboard.h"
+void UI_DisplayBattery(uint8_t Level)
+{
+	const uint8_t *pBitmap;
+	bool bClearMode = false;
 
-int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax);
-void MENU_AcceptSetting(void);
-void MENU_SelectNextDCS(void);
-void MENU_ShowCurrentSetting(void);
-
-void MENU_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_EXIT(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_MENU(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_STAR(bool bKeyPressed, bool bKeyHeld);
-void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction);
-
-#endif
+	if (gCurrentFunction != 1) {
+		switch (Level) {
+		case 0:
+			pBitmap = NULL;
+			bClearMode = 1;
+			break;
+		case 1:
+			pBitmap = BITMAP_BatteryLevel1;
+			break;
+		case 2:
+			pBitmap = BITMAP_BatteryLevel2;
+			break;
+		case 3:
+			pBitmap = BITMAP_BatteryLevel3;
+			break;
+		case 4:
+			pBitmap = BITMAP_BatteryLevel4;
+			break;
+		default:
+			pBitmap = BITMAP_BatteryLevel5;
+			break;
+		}
+		ST7565_DrawLine(110, 0, 18, pBitmap, bClearMode);
+	}
+}
 
