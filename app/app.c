@@ -21,6 +21,7 @@
 #include "app/generic.h"
 #include "app/main.h"
 #include "app/menu.h"
+#include "app/scanner.h"
 #include "audio.h"
 #include "board.h"
 #include "bsp/dp32g030/gpio.h"
@@ -664,7 +665,7 @@ void APP_PlayFM(void)
 {
 	if (!FM_ChecksChannelValid_and_FrequencyDeviation(gEeprom.FM_FrequencyToPlay, gEeprom.FM_LowerLimit)) {
 		if (gIs_A_Scan != 1) {
-			g_2000034C = 0;
+			gFmPlayCountdown = 0;
 			g_20000427 = 1;
 			if (gEeprom.FM_IsChannelSelected == false) {
 				gEeprom.FM_CurrentFrequency = gEeprom.FM_FrequencyToPlay;
@@ -847,8 +848,8 @@ void APP_Update(void)
 		gFlagPlayQueuedVoice = false;
 	}
 
-	if (gCurrentFunction == FUNCTION_TRANSMIT && gSystickFlag0) {
-		gSystickFlag0 = false;
+	if (gCurrentFunction == FUNCTION_TRANSMIT && gTxTimeoutReached) {
+		gTxTimeoutReached = false;
 		g_200003FD = 1;
 		TalkRelatedCode();
 		AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP);
@@ -913,26 +914,26 @@ void APP_Update(void)
 		}
 	}
 
-	if (gFM_Step && gSystickFlag11 && gCurrentFunction != FUNCTION_MONITOR && gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_TRANSMIT) {
+	if (gFM_Step && gScheduleFM && gCurrentFunction != FUNCTION_MONITOR && gCurrentFunction != FUNCTION_4 && gCurrentFunction != FUNCTION_TRANSMIT) {
 		APP_PlayFM();
-		gSystickFlag11 = false;
+		gScheduleFM = false;
 	}
 
 	if (gEeprom.VOX_SWITCH) {
 		FUN_00008334();
 	}
 
-	if (gSystickFlag5) {
+	if (gSchedulePowerSave) {
 		if (gEeprom.BATTERY_SAVE == 0 || gStepDirection || g_20000381 || gFmRadioMode || gPttIsPressed || gScreenToDisplay != DISPLAY_MAIN || gKeyBeingHeld || g_200003BC) {
-			g_2000032E = 1000;
+			gBatterySaveCountdown = 1000;
 		} else {
 			if ((IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0]) && IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) || !gIsNoaaMode) {
 				FUNCTION_Select(FUNCTION_POWER_SAVE);
 			} else {
-				g_2000032E = 1000;
+				gBatterySaveCountdown = 1000;
 			}
 		}
-		gSystickFlag5 = false;
+		gSchedulePowerSave = false;
 	}
 
 	if (gBatterySaveCountdownExpired && gCurrentFunction == FUNCTION_POWER_SAVE && gVoiceWriteIndex == 0) {
@@ -1100,7 +1101,7 @@ void APP_TimeSlice10ms(void)
 			APP_CheckKeys();
 			return;
 		}
-		if (g_20000461 != 0) {
+		if (gScannerEditState != 0) {
 			APP_CheckKeys();
 			return;
 		}
@@ -1323,7 +1324,7 @@ LAB_00004b08:
 		}
 	}
 
-	if (gScreenToDisplay == DISPLAY_SCANNER && g_20000461 == 0 && gScanState < 2) {
+	if (gScreenToDisplay == DISPLAY_SCANNER && gScannerEditState == 0 && gScanState < 2) {
 		g_20000464++;
 		if (0x20 < g_20000464) {
 			if (gScanState == 1 && g_20000458 == 0) {
@@ -1420,7 +1421,7 @@ void FUN_000075b0(void)
 	if (g_20000458 == 1) {
 		gScanState = 1;
 		gScanFrequency = gInfoCHAN_A->pDCS_Current->Frequency;
-		gStepOffset = gInfoCHAN_A->STEP_SETTING;
+		gStepSetting = gInfoCHAN_A->STEP_SETTING;
 		BK4819_PickRXFilterPathBasedOnFrequency(gScanFrequency);
 		BK4819_SetScanFrequency(gScanFrequency);
 	} else {
@@ -1441,7 +1442,7 @@ void FUN_000075b0(void)
 	g_CTCSS_Lost = false;
 	g_VOX_Lost = false;
 	g_SquelchLost = false;
-	g_20000461 = 0;
+	gScannerEditState = 0;
 	g_20000464 = 0;
 }
 
@@ -1771,7 +1772,7 @@ static void APP_ProcessKey_FM(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
 	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
 	case KEY_8: case KEY_9:
-		//FM_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+		FM_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
 		break;
 	case KEY_MENU:
 		//FM_Key_MENU(bKeyPressed, bKeyHeld);
@@ -1805,22 +1806,22 @@ static void APP_ProcessKey_SCANNER(KEY_Code_t Key, bool bKeyPressed, bool bKeyHe
 	case KEY_0: case KEY_1: case KEY_2: case KEY_3:
 	case KEY_4: case KEY_5: case KEY_6: case KEY_7:
 	case KEY_8: case KEY_9:
-		//SCANNER_Key_DIGITS((VOICE_ID_t)Key, bKeyPressed, bKeyHeld);
+		SCANNER_Key_DIGITS((VOICE_ID_t)Key, bKeyPressed, bKeyHeld);
 		break;
 	case KEY_MENU:
-		//SCANNER_Key_MENU(bKeyPressed, bKeyHeld);
+		SCANNER_Key_MENU(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_UP:
-		//SCANNEY_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
+		SCANNER_Key_UP_DOWN(bKeyPressed, bKeyHeld, 1);
 		break;
 	case KEY_DOWN:
-		//SCANNEY_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+		SCANNER_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
 		break;
 	case KEY_EXIT:
-		//SCANNER_Key_EXIT(bKeyPressed, bKeyHeld);
+		SCANNER_Key_EXIT(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_STAR:
-		//SCANNER_Key_STAR(bKeyPressed, bKeyHeld);
+		SCANNER_Key_STAR(bKeyPressed, bKeyHeld);
 		break;
 	case KEY_PTT:
 		GENERIC_Key_PTT(bKeyPressed);
@@ -1859,7 +1860,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 	if (gCurrentFunction == FUNCTION_POWER_SAVE) {
 		FUNCTION_Select(FUNCTION_0);
 	}
-	g_2000032E = 1000;
+	gBatterySaveCountdown = 1000;
 	if (gEeprom.AUTO_KEYPAD_LOCK) {
 		gKeyLockCountdown = 30;
 	}
