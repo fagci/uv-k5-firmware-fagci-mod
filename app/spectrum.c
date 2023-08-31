@@ -477,8 +477,11 @@ bool HandleUserInput() {
   btnPrev = btn;
   btn = KEYBOARD_Poll();
   if (btn == KEY_EXIT) {
-    DeInitSpectrum();
-    return false;
+    if (currentState != FREQ_INPUT)
+    {
+      DeInitSpectrum();
+      return false;
+    }
   }
 
   if (btn == 255) {
