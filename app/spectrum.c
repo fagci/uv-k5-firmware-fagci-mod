@@ -489,12 +489,12 @@ static void OnKeyDown(uint8_t key) {
             currentState = MENU;
             break; */
         case KEY_SIDE2:
-            if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
-                settings.listenBw = BK4819_FILTER_BW_WIDE;
-                break;
-            }
-            settings.listenBw++;
+          if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
+            settings.listenBw = BK4819_FILTER_BW_WIDE;
             break;
+          }
+          settings.listenBw++;
+          break;
         case KEY_5:
             settings.backlightState = !settings.backlightState;
             if (settings.backlightState) {
@@ -664,9 +664,9 @@ bool HandleUserInput() {
             case FREQ_INPUT:
                 OnKeyDownFreqInput(btn);
                 break;
-                /* case MENU:
-                    OnMenuInput(btn);
-                    break; */
+            /* case MENU:
+                OnMenuInput(btn);
+                break; */
         }
         RenderStatus();
     }
