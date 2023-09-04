@@ -295,7 +295,9 @@ void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth)
 		BK4819_WriteRegister(BK4819_REG_43, 0x3028);
 	} else if (Bandwidth == BK4819_FILTER_BW_NARROW) {
 		BK4819_WriteRegister(BK4819_REG_43, 0x4048);
-	}
+    } else if (Bandwidth == BK4819_FILTER_BW_NARROWER) {
+        BK4819_WriteRegister(BK4819_REG_43, 0b0100000001011000);
+    }
 }
 
 void BK4819_SetupPowerAmplifier(uint16_t Bias, uint32_t Frequency)
@@ -322,6 +324,11 @@ void BK4819_SetFrequency(uint32_t Frequency)
 {
 	BK4819_WriteRegister(BK4819_REG_38, (Frequency >>  0) & 0xFFFF);
 	BK4819_WriteRegister(BK4819_REG_39, (Frequency >> 16) & 0xFFFF);
+}
+
+uint32_t BK4819_GetFrequency() {
+  return (BK4819_GetRegister(BK4819_REG_39) << 16) |
+         BK4819_GetRegister(BK4819_REG_38);
 }
 
 void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh, uint8_t SquelchCloseRSSIThresh, uint8_t SquelchOpenNoiseThresh, uint8_t SquelchCloseNoiseThresh, uint8_t SquelchCloseGlitchThresh, uint8_t SquelchOpenGlitchThresh)

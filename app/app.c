@@ -16,7 +16,7 @@
 
 #include <string.h>
 #include "app/action.h"
-#include "app/aircopy.h"
+// #include "app/aircopy.h"
 #include "app/app.h"
 #include "app/dtmf.h"
 #include "app/fm.h"
@@ -308,14 +308,14 @@ void APP_StartListening(FUNCTION_Type_t Function)
 			}
 			bScanKeepFrequency = true;
 		}
-		if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) && gIsNoaaMode) {
+		/* if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) && gIsNoaaMode) {
 			gRxVfo->CHANNEL_SAVE = gNoaaChannel + NOAA_CHANNEL_FIRST;
 			gRxVfo->pCurrent->Frequency = NoaaFrequencyTable[gNoaaChannel];
 			gRxVfo->pReverse->Frequency = NoaaFrequencyTable[gNoaaChannel];
 			gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = gRxVfo->CHANNEL_SAVE;
 			gNOAA_Countdown = 500;
 			gScheduleNOAA = false;
-		}
+		} */
 		if (gCssScanMode != CSS_SCAN_MODE_OFF) {
 			gCssScanMode = CSS_SCAN_MODE_FOUND;
 		}
@@ -531,14 +531,14 @@ void APP_CheckRadioInterrupts(void)
 			g_SquelchLost = false;
 			BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
 		}
-		if (Mask & BK4819_REG_02_FSK_FIFO_ALMOST_FULL && gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 0) {
+		/* if (Mask & BK4819_REG_02_FSK_FIFO_ALMOST_FULL && gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 0) {
 			uint8_t i;
 
 			for (i = 0; i < 4; i++) {
 				g_FSK_Buffer[gFSKWriteIndex++] = BK4819_GetRegister(BK4819_REG_5F);
 			}
 			AIRCOPY_StorePacket();
-		}
+		} */
 	}
 }
 
@@ -728,9 +728,9 @@ void APP_CheckKeys(void)
 {
 	KEY_Code_t Key;
 
-	if (gSetting_KILLED || (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState != AIRCOPY_READY)) {
+	/* if (gSetting_KILLED || (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState != AIRCOPY_READY)) {
 		return;
-	}
+	} */
 
 	if (gPttIsPressed) {
 		if (GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT)) {
@@ -983,7 +983,7 @@ void APP_TimeSlice10ms(void)
 		}
 	}
 
-	if (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 1) {
+	/* if (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 1) {
 		if (gAircopySendCountdown) {
 			gAircopySendCountdown--;
 			if (gAircopySendCountdown == 0) {
@@ -991,7 +991,7 @@ void APP_TimeSlice10ms(void)
 				GUI_DisplayScreen();
 			}
 		}
-	}
+	} */
 
 	APP_CheckKeys();
 }
@@ -1406,13 +1406,13 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 			case DISPLAY_SCANNER:
 				SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);
 				break;
-			case DISPLAY_AIRCOPY:
+			/* case DISPLAY_AIRCOPY:
 				AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-				break;
+				break; */
 			default:
 				break;
 			}
-		} else if (gScreenToDisplay != DISPLAY_SCANNER && gScreenToDisplay != DISPLAY_AIRCOPY) {
+		} else if (gScreenToDisplay != DISPLAY_SCANNER /*&& gScreenToDisplay != DISPLAY_AIRCOPY*/) {
 			ACTION_Handle(Key, bKeyPressed, bKeyHeld);
 		} else if (!bKeyHeld && bKeyPressed) {
 			gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;

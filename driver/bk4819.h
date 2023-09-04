@@ -36,6 +36,7 @@ typedef enum BK4819_AF_Type_t BK4819_AF_Type_t;
 enum BK4819_FilterBandwidth_t {
 	BK4819_FILTER_BW_WIDE   = 0U,
 	BK4819_FILTER_BW_NARROW = 1U,
+	BK4819_FILTER_BW_NARROWER = 2U,
 };
 
 typedef enum BK4819_FilterBandwidth_t BK4819_FilterBandwidth_t;
@@ -67,6 +68,7 @@ void BK4819_EnableVox(uint16_t Vox1Threshold, uint16_t Vox0Threshold);
 void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth);
 void BK4819_SetupPowerAmplifier(uint16_t Bias, uint32_t Frequency);
 void BK4819_SetFrequency(uint32_t Frequency);
+uint32_t BK4819_GetFrequency(void);
 void BK4819_SetupSquelch(
 		uint8_t SquelchOpenRSSIThresh, uint8_t SquelchCloseRSSIThresh,
 		uint8_t SquelchOpenNoiseThresh, uint8_t SquelchCloseNoiseThresh,

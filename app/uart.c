@@ -367,7 +367,7 @@ static void CMD_052F(const uint8_t *pBuffer)
 	gEeprom.VfoInfo[0].FREQUENCY_DEVIATION_SETTING = FREQUENCY_DEVIATION_OFF;
 	gEeprom.VfoInfo[0].DTMF_PTT_ID_TX_MODE = PTT_ID_OFF;
 	gEeprom.VfoInfo[0].DTMF_DECODING_ENABLE = false;
-	gIsNoaaMode = false;
+	// gIsNoaaMode = false;
 	if (gCurrentFunction == FUNCTION_POWER_SAVE) {
 		FUNCTION_Select(FUNCTION_FOREGROUND);
 	}

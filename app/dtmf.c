@@ -194,7 +194,8 @@ void DTMF_HandleRequest(void)
 	}
 
 	if (gDTMF_WriteIndex >= 9) {
-		Offset = gDTMF_WriteIndex - 9;
+        return;
+		/* Offset = gDTMF_WriteIndex - 9;
 		sprintf(String, "%s%c%s", gEeprom.ANI_DTMF_ID, gEeprom.DTMF_SEPARATE_CODE, gEeprom.KILL_CODE);
 		if (DTMF_CompareMessage(gDTMF_Received + Offset, String, 9, true)) {
 			if (gEeprom.PERMIT_REMOTE_KILL) {
@@ -222,7 +223,7 @@ void DTMF_HandleRequest(void)
 			gUpdateDisplay = true;
 			gUpdateStatus = true;
 			return;
-		}
+		} */
 	}
 
 	if (gDTMF_WriteIndex >= 2) {

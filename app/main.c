@@ -21,6 +21,7 @@
 #include "app/generic.h"
 #include "app/main.h"
 #include "app/scanner.h"
+#include "app/spectrum.h"
 #include "audio.h"
 #include "dtmf.h"
 #include "frequencies.h"
@@ -212,14 +213,15 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		break;
 
 	case KEY_5:
-		if (IS_NOT_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+        APP_RunSpectrum();
+		/* if (IS_NOT_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
 			gEeprom.ScreenChannel[Vfo] = gEeprom.NoaaChannel[gEeprom.TX_CHANNEL];
 		} else {
 			gEeprom.ScreenChannel[Vfo] = gEeprom.FreqChannel[gEeprom.TX_CHANNEL];
 			gAnotherVoiceID = VOICE_ID_FREQUENCY_MODE;
 		}
 		gRequestSaveVFO = true;
-		gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+		gVfoConfigureMode = VFO_CONFIGURE_RELOAD; */
 		break;
 
 	case KEY_6:
