@@ -352,6 +352,9 @@ static void DrawNums() {
     sprintf(String, "%3.3f", GetPeakF() * 1e-5);
     UI_PrintString(String, 2, 127, 0, 8, 1);
 
+    sprintf(String, settings.isAMOn ? "AM" : "FM");
+    GUI_DisplaySmallest(String, 0, 3, false, true);
+
     sprintf(String, bwOptions[settings.listenBw]);
     GUI_DisplaySmallest(String, 12, 3, false, true);
 
@@ -478,12 +481,12 @@ static void OnKeyDown(uint8_t key) {
             currentState = MENU;
             break; */
         case KEY_SIDE2:
-          if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
-            settings.listenBw = BK4819_FILTER_BW_WIDE;
+            if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
+                settings.listenBw = BK4819_FILTER_BW_WIDE;
+                break;
+            }
+            settings.listenBw++;
             break;
-          }
-          settings.listenBw++;
-          break;
         case KEY_5:
             settings.backlightState = !settings.backlightState;
             if (settings.backlightState) {
@@ -644,9 +647,9 @@ bool HandleUserInput() {
             case FREQ_INPUT:
                 OnKeyDownFreqInput(btn);
                 break;
-            /* case MENU:
-                OnMenuInput(btn);
-                break; */
+                /* case MENU:
+                    OnMenuInput(btn);
+                    break; */
         }
     }
 
