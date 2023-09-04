@@ -455,20 +455,20 @@ void BOARD_EEPROM_Init(void)
 	}
 
 	// 0EE8..0EEF
-	EEPROM_ReadBuffer(0x0EE8, Data, 8);
+	/* EEPROM_ReadBuffer(0x0EE8, Data, 8);
 	if (DTMF_ValidateCodes((char *)Data, 8)) {
 		memcpy(gEeprom.KILL_CODE, Data, 8);
 	} else {
 		memcpy(gEeprom.KILL_CODE, "ABCD9\0\0", 8);
-	}
+	} */
 
 	// 0EF0..0EF7
-	EEPROM_ReadBuffer(0x0EF0, Data, 8);
+	/* EEPROM_ReadBuffer(0x0EF0, Data, 8);
 	if (DTMF_ValidateCodes((char *)Data, 8)) {
 		memcpy(gEeprom.REVIVE_CODE, Data, 8);
 	} else {
 		memcpy(gEeprom.REVIVE_CODE, "9DCBA\0\0", 8);
-	}
+	} */
 
 	// 0EF8..0F07
 	EEPROM_ReadBuffer(0x0EF8, Data, 16);

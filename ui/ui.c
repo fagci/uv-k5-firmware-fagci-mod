@@ -20,7 +20,7 @@
 #include "app/scanner.h"
 #include "driver/keyboard.h"
 #include "misc.h"
-#include "ui/aircopy.h"
+// #include "ui/aircopy.h"
 #include "ui/fmradio.h"
 #include "ui/inputbox.h"
 #include "ui/main.h"
@@ -50,8 +50,8 @@ void GUI_DisplayScreen(void)
 	case DISPLAY_SCANNER:
 		UI_DisplayScanner();
 		break;
-	case DISPLAY_AIRCOPY:
-		UI_DisplayAircopy();
+	/* case DISPLAY_AIRCOPY:
+		UI_DisplayAircopy(); */
 		break;
 	default:
 		break;

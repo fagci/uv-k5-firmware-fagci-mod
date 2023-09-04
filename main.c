@@ -96,7 +96,7 @@ void Main(void)
 		UI_DisplayWelcome();
 		BACKLIGHT_TurnOn();
 		SYSTEM_DelayMs(1000);
-		gMenuListCount = 51;
+		gMenuListCount = 50;
 
 		BootMode = BOOT_GetMode();
 		if (gEeprom.POWER_ON_PASSWORD < 1000000) {

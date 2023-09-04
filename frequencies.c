@@ -19,7 +19,7 @@
 #include "settings.h"
 
 const uint32_t LowerLimitFrequencyBandTable[7] = {
-	 5000000,
+	 1800000,
 	10800000,
 	13600000,
 	17400000,
@@ -45,10 +45,10 @@ const uint32_t UpperLimitFrequencyBandTable[7] = {
 	34999990,
 	39999990,
 	46999990,
-	60000000,
+	130000000,
 };
 
-const uint32_t NoaaFrequencyTable[10] = {
+/* const uint32_t NoaaFrequencyTable[10] = {
 	16255000,
 	16240000,
 	16247500,
@@ -59,7 +59,7 @@ const uint32_t NoaaFrequencyTable[10] = {
 	16152500,
 	16177500,
 	16327500,
-};
+}; */
 
 const uint16_t StepFrequencyTable[6] = {
 	250,
@@ -72,30 +72,25 @@ const uint16_t StepFrequencyTable[6] = {
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency)
 {
-	if ((Frequency - 5000000) < 2600001) {
+	if (Frequency < 7600001) {
 		return BAND1_50MHz;
 	}
-	if ((Frequency - 10800000) < 2799991) {
+	if (Frequency < 13599991) {
 		return BAND2_108MHz;
 	}
-	if ((Frequency - 13600000) < 3799991) {
+	if (Frequency < 17399991) {
 		return BAND3_136MHz;
 	}
-	if ((Frequency - 17400000) < 17599991) {
+	if (Frequency < 34999991) {
 		return BAND4_174MHz;
 	}
-	if ((Frequency - 35000000) < 4999991) {
+	if (Frequency < 39999991) {
 		return BAND5_350MHz;
 	}
-	if ((Frequency - 40000000) < 6999991) {
+	if (Frequency < 46999991) {
 		return BAND6_400MHz;
 	}
-	if ((Frequency - 47000000) < 13000001) {
-		return BAND7_470MHz;
-	}
-
-	// TODO: Double check the assembly
-	return BAND6_400MHz;
+    return BAND7_470MHz;
 }
 
 uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid, uint8_t TxpHigh, int32_t LowerLimit, int32_t Middle, int32_t UpperLimit, int32_t Frequency)

@@ -87,39 +87,25 @@ void UI_PrintString(const char *pString, uint8_t Start, uint8_t End, uint8_t Lin
 	}
 }
 
-void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y, bool bDisplayLeadingZero, bool bFlag)
-{
-	uint8_t *pFb0, *pFb1;
-	bool bCanDisplay;
-	uint8_t i;
-
-	pFb0 = gFrameBuffer[Y] + X;
-	pFb1 = pFb0 + 128;
-
-	bCanDisplay = false;
-	for (i = 0; i < 3; i++) {
-		const uint8_t Digit = pDigits[i];
-
-		if (bDisplayLeadingZero || bCanDisplay || Digit) {
-			bCanDisplay = true;
-			memcpy(pFb0 + (i * 13), gFontBigDigits[Digit] +  0, 13);
-			memcpy(pFb1 + (i * 13), gFontBigDigits[Digit] + 13, 13);
-		} else if (bFlag) {
-			pFb1 -= 6;
-			pFb0 -= 6;
-		}
-	}
-
-	pFb1[0x27] = 0x60;
-	pFb1[0x28] = 0x60;
-	pFb1[0x29] = 0x60;
-
-	for (i = 0; i < 3; i++) {
-		const uint8_t Digit = pDigits[i + 3];
-
-		memcpy(pFb0 + (i * 13) + 42, gFontBigDigits[Digit] +  0, 13);
-		memcpy(pFb1 + (i * 13) + 42, gFontBigDigits[Digit] + 13, 13);
-	}
+void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
+                         bool bDisplayLeadingZero, bool bFlag) {
+  char String[8];
+  char baseDigit = '0';
+  uint8_t d;
+  sprintf(String, "---.---");
+  for (int i = 0; i < 3; i++) {
+    d = pDigits[i];
+    if (d < 10) {
+      String[i] = d + baseDigit;
+    }
+  }
+  for (int i = 0; i < 3; i++) {
+    d = pDigits[i + 3];
+    if (d < 10) {
+      String[i + 4] = d + baseDigit;
+    }
+  }
+  UI_PrintString(String, 8, 127, Y, 8, 1);
 }
 
 void UI_DisplaySmallDigits(uint8_t Size, const char *pString, uint8_t X, uint8_t Y)

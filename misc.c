@@ -126,7 +126,7 @@ uint8_t gAircopySendCountdown;
 uint8_t gFSKWriteIndex;
 uint8_t g_20000474;
 
-bool gIsNoaaMode;
+const bool gIsNoaaMode;
 volatile bool gNextTimeslice;
 uint8_t gNoaaChannel;
 bool gUpdateDisplay;

@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-#include "app/aircopy.h"
+// #include "app/aircopy.h"
 #include "bsp/dp32g030/gpio.h"
 #include "driver/bk4819.h"
 #include "driver/keyboard.h"
@@ -60,7 +60,7 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode)
 		gMenuCursor = MENU_350TX;
 		gSubMenuSelection = gSetting_350TX;
 		GUI_SelectNextDisplay(DISPLAY_MENU);
-		gMenuListCount = 57;
+		gMenuListCount = 56;
 		gF_LOCK = true;
 	} else if (Mode == BOOT_MODE_AIRCOPY) {
 		gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
@@ -81,7 +81,7 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode)
 		RADIO_SetupRegisters(true);
 		BK4819_SetupAircopy();
 		BK4819_ResetFSK();
-		gAircopyState = AIRCOPY_READY;
+		// gAircopyState = AIRCOPY_READY;
 		GUI_SelectNextDisplay(DISPLAY_AIRCOPY);
 	} else {
 		GUI_SelectNextDisplay(DISPLAY_MAIN);
