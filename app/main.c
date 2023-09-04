@@ -216,6 +216,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
 	case KEY_5:
         APP_RunSpectrum();
+        gRequestDisplayScreen = DISPLAY_MAIN;
 		/* if (IS_NOT_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
 			gEeprom.ScreenChannel[Vfo] = gEeprom.NoaaChannel[gEeprom.TX_CHANNEL];
 		} else {
