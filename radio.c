@@ -615,7 +615,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 		if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
 			if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0])) {
 				if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) {
-					gIsNoaaMode = false;
+					// gIsNoaaMode = false;
 					return;
 				}
 				ChanAB = 1;
@@ -625,19 +625,19 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 			if (!gIsNoaaMode) {
 				gNoaaChannel = gEeprom.VfoInfo[ChanAB].CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
 			}
-			gIsNoaaMode = true;
+			// gIsNoaaMode = true;
 			return;
 		}
 		if (gRxVfo->CHANNEL_SAVE >= NOAA_CHANNEL_FIRST) {
-			gIsNoaaMode = true;
+			// gIsNoaaMode = true;
 			gNoaaChannel = gRxVfo->CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
 			gNOAA_Countdown = 50;
 			gScheduleNOAA = false;
 		} else {
-			gIsNoaaMode = false;
+			// gIsNoaaMode = false;
 		}
 	} else {
-		gIsNoaaMode = false;
+		// gIsNoaaMode = false;
 	}
 } */
 
