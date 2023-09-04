@@ -51,8 +51,8 @@ void GUI_DisplayScreen(void)
 		UI_DisplayScanner();
 		break;
 	/* case DISPLAY_AIRCOPY:
-		UI_DisplayAircopy(); */
-		break;
+		UI_DisplayAircopy();
+		break; */
 	default:
 		break;
 	}
