@@ -1158,13 +1158,13 @@ LAB_00004b08:
 
 	if (gScreenToDisplay == DISPLAY_SCANNER && gScannerEditState == 0 && gScanCssState < SCAN_CSS_STATE_FOUND) {
 		gScanProgressIndicator++;
-		if (gScanProgressIndicator > 32) {
+		/* if (gScanProgressIndicator > 32) {
 			if (gScanCssState == SCAN_CSS_STATE_SCANNING && !gScanSingleFrequency) {
 				gScanCssState = SCAN_CSS_STATE_FOUND;
 			} else {
 				gScanCssState = SCAN_CSS_STATE_FAILED;
 			}
-		}
+		} */
 		gUpdateDisplay = true;
 	}
 
