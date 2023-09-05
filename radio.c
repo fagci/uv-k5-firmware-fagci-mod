@@ -349,7 +349,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg)
 		}
 	}
 
-	if (gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
+	if (/*gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && */gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
 		gEeprom.VfoInfo[VFO].IsAM = true;
 		gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = 0;
 		gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = false;
