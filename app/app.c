@@ -283,7 +283,7 @@ static void APP_HandleFunction(void)
 
 void APP_StartListening(FUNCTION_Type_t Function)
 {
-	if (!gSetting_KILLED) {
+	// if (!gSetting_KILLED) {
 		if (gFmRadioMode) {
 			BK1080_Init(0, false);
 		}
@@ -346,7 +346,7 @@ void APP_StartListening(FUNCTION_Type_t Function)
 			return;
 		}
 		gUpdateDisplay = true;
-	}
+	// }
 }
 
 void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step)
@@ -551,7 +551,7 @@ void APP_EndTransmission(void)
 
 static void APP_HandleVox(void)
 {
-	if (!gSetting_KILLED) {
+	// if (!gSetting_KILLED) {
 		if (g_200003B6 == 0) {
 			if (gVoxPauseCountdown) {
 				return;
@@ -594,7 +594,7 @@ static void APP_HandleVox(void)
 				}
 			}
 		}
-	}
+	// }
 }
 
 void APP_Update(void)
@@ -1492,7 +1492,7 @@ Skip:
 
 	if (gFlagReconfigureVfos) {
 		RADIO_SelectVfos();
-		RADIO_ConfigureNOAA();
+		// RADIO_ConfigureNOAA();
 		RADIO_SetupRegisters(true);
 		gDTMF_AUTO_RESET_TIME = 0;
 		gDTMF_CallState = DTMF_CALL_STATE_NONE;

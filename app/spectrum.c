@@ -370,8 +370,6 @@ static void DrawNums() {
         sprintf(String, "O: %2.1fkHz", settings.stillOffset * 1e-2);
         GUI_DisplaySmallest(String, 0, 9, false, true);
     }
-    sprintf(String, "BTN: %d", btn);
-    GUI_DisplaySmallest(String, 0, 16, false, true);
 
     sprintf(String, "%dx%3.2fk %1.1fms", GetStepsCount(), GetScanStep() * 1e-2,
             settings.scanDelay * 1e-3);
