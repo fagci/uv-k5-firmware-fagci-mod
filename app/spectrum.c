@@ -116,7 +116,7 @@ uint32_t fMeasure;
 uint8_t rssiMin = 255, rssiMax = 0;
 uint8_t btnCounter = 0;
 
-key_t btn;
+KEY_Code_t btn;
 uint8_t btnPrev;
 uint32_t currentFreq, tempFreq;
 uint8_t freqInputIndex = 0;
@@ -177,6 +177,14 @@ static void GUI_DisplaySmallest(const char *pString, uint8_t x, uint8_t y,
 }
 
 // Utility functions
+
+KEY_Code_t GetKey() {
+    KEY_Code_t btn = KEYBOARD_Poll();
+    if (btn == KEY_INVALID && !GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT)) {
+        btn = KEY_PTT;
+    }
+    return btn;
+}
 
 static int clamp(int v, int min, int max) {
     return v <= min ? min : (v >= max ? max : v);
@@ -362,6 +370,8 @@ static void DrawNums() {
         sprintf(String, "O: %2.1fkHz", settings.stillOffset * 1e-2);
         GUI_DisplaySmallest(String, 0, 9, false, true);
     }
+    sprintf(String, "BTN: %d", btn);
+    GUI_DisplaySmallest(String, 0, 16, false, true);
 
     sprintf(String, "%dx%3.2fk %1.1fms", GetStepsCount(), GetScanStep() * 1e-2,
             settings.scanDelay * 1e-3);
@@ -506,6 +516,10 @@ static void OnKeyDown(uint8_t key) {
         case KEY_EXIT:
             DeInitSpectrum();
             break;
+        case KEY_PTT:
+            if(settings.isStillMode) {
+                // TODO: tx
+            }
     }
     ResetPeak();
 }
@@ -548,7 +562,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
 
 /* uint8_t menuItemIndex = 0;
 const uint8_t MENU_SIZE = sizeof(mainMenu) / sizeof(MenuItem);
-void OnMenuInput(key_t btn) {
+void OnMenuInput(KEY_Code_t btn) {
     switch (btn) {
         case KEY_DOWN:
             if (menuItemIndex < MENU_SIZE - 1) {
@@ -628,10 +642,11 @@ static void Render() {
 
 bool HandleUserInput() {
     btnPrev = btn;
-    btn = KEYBOARD_Poll();
+    btn = GetKey();
 
     if (btn == 255) {
         btnCounter = 0;
+
         return true;
     }
 
@@ -668,7 +683,7 @@ static void Scan() {
     uint8_t measurementsCount = GetStepsCount();
 
     for (uint8_t i = 0;
-         i < measurementsCount && (KEYBOARD_Poll() == 255 || resetBlacklist);
+         i < measurementsCount && (GetKey() == 255 || resetBlacklist);
          ++i, fMeasure += scanStep) {
         if (!resetBlacklist && rssiHistory[i] == 255) {
             continue;
@@ -702,7 +717,7 @@ static void Listen() {
     }
     ToggleRX(peak.rssi >= settings.rssiTriggerLevel);
     BK4819_SetFilterBandwidth(settings.listenBw);
-    for (uint8_t i = 0; i < 50 && KEYBOARD_Poll() == 255; ++i) {
+    for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
         SYSTEM_DelayMs(20);
     }
     BK4819_SetFilterBandwidth(GetBWIndex());

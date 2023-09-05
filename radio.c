@@ -502,7 +502,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 		SYSTEM_DelayMs(1);
 	}
 	BK4819_WriteRegister(BK4819_REG_3F, 0);
-	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE940);
+	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE94F);
 	// if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) || !gIsNoaaMode) {
 		Frequency = gRxVfo->pCurrent->Frequency;
 	/* } else {
