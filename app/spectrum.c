@@ -234,7 +234,7 @@ static void ToggleRX(bool on) {
         return;
     }
     rxState = on;
-    BK4819_ToggleGpioOut(6, on);
+    BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, on);
     ToggleAFDAC(on);
     ToggleAFBit(on);
     if (on) {
@@ -412,6 +412,10 @@ static void DrawTicks() {
 
     // center
     gFrameBuffer[5][64] = 0b10101000;
+    gFrameBuffer[5][0] = 0xff;
+    gFrameBuffer[5][1] = 0x80;
+    gFrameBuffer[5][2] = 0x80;
+    gFrameBuffer[5][3] = 0x80;
 }
 
 static void DrawArrow(uint8_t x) {
@@ -459,7 +463,7 @@ static void OnKeyDown(uint8_t key) {
             UpdateCurrentFreq(-settings.frequencyChangeStep);
             resetBlacklist = true;
             break;
-        case KEY_0:
+        case KEY_SIDE1:
             Blacklist();
             break;
         case KEY_STAR:
@@ -470,32 +474,29 @@ static void OnKeyDown(uint8_t key) {
             UpdateRssiTriggerLevel(-1);
             SYSTEM_DelayMs(90);
             break;
-        case KEY_MENU:
+        case KEY_5:
             currentState = FREQ_INPUT;
             freqInputIndex = 0;
             break;
-        case KEY_4:
+        case KEY_0:
             settings.isAMOn = !settings.isAMOn;
             ToggleAM(settings.isAMOn);
             break;
-        case KEY_SIDE1:
+        case KEY_6:
+            if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
+                settings.listenBw = BK4819_FILTER_BW_WIDE;
+                break;
+            }
+            settings.listenBw++;
+            break;
+        case KEY_4:
             if (settings.stepsCount == STEPS_128) {
                 settings.stepsCount = STEPS_16;
                 break;
             }
             settings.stepsCount--;
             break;
-        /* case KEY_SIDE2:
-            currentState = MENU;
-            break; */
         case KEY_SIDE2:
-          if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
-            settings.listenBw = BK4819_FILTER_BW_WIDE;
-            break;
-          }
-          settings.listenBw++;
-          break;
-        case KEY_5:
             settings.backlightState = !settings.backlightState;
             if (settings.backlightState) {
                 GPIO_SetBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
@@ -503,21 +504,23 @@ static void OnKeyDown(uint8_t key) {
                 GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
             }
             break;
-        case KEY_6:
-            settings.isStillMode = !settings.isStillMode;
-            if (settings.isStillMode) {
-                ResetRSSIHistory();
-            } else {
-                settings.stillOffset = 0;
-            }
+        case KEY_PTT:
+            settings.isStillMode = true;
+            // TODO: start transmit
+            /* if (settings.isStillMode) {
+                BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
+                BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true);
+            } */
+            ResetRSSIHistory();
             break;
         case KEY_EXIT:
+            if (settings.isStillMode) {
+                settings.isStillMode = false;
+                settings.stillOffset = 0;
+                break;
+            }
             DeInitSpectrum();
             break;
-        case KEY_PTT:
-            if (settings.isStillMode) {
-                // TODO: tx
-            }
     }
     ResetPeak();
 }
@@ -664,9 +667,9 @@ bool HandleUserInput() {
             case FREQ_INPUT:
                 OnKeyDownFreqInput(btn);
                 break;
-            /* case MENU:
-                OnMenuInput(btn);
-                break; */
+                /* case MENU:
+                    OnMenuInput(btn);
+                    break; */
         }
         RenderStatus();
     }
