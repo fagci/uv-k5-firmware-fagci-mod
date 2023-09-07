@@ -351,7 +351,6 @@ void BOARD_EEPROM_Init(void)
 	gEeprom.CHAN_1_CALL      = IS_MR_CHANNEL(Data[0]) ? Data[0] : MR_CHANNEL_FIRST;
 	gEeprom.SQUELCH_LEVEL    = (Data[1] < 10) ? Data[1] : 4;
 	gEeprom.TX_TIMEOUT_TIMER = (Data[2] < 11) ? Data[2] : 2;
-	gEeprom.NOAA_AUTO_SCAN   = (Data[3] <  2) ? Data[3] : true;
 	gEeprom.KEY_LOCK         = (Data[4] <  2) ? Data[4] : false;
 	gEeprom.VOX_SWITCH       = (Data[5] <  2) ? Data[5] : false;
 	gEeprom.VOX_LEVEL        = (Data[6] < 10) ? Data[6] : 5;
@@ -375,8 +374,6 @@ void BOARD_EEPROM_Init(void)
 	gEeprom.MrChannel[1]     = IS_MR_CHANNEL(Data[4])    ? Data[4] : MR_CHANNEL_FIRST;
 	gEeprom.FreqChannel[0]   = IS_FREQ_CHANNEL(Data[2])  ? Data[2] : (FREQ_CHANNEL_FIRST + 5);
 	gEeprom.FreqChannel[1]   = IS_FREQ_CHANNEL(Data[5])  ? Data[5] : (FREQ_CHANNEL_FIRST + 5);
-	gEeprom.NoaaChannel[0]   = IS_NOAA_CHANNEL(Data[6])  ? Data[6] : NOAA_CHANNEL_FIRST;
-	gEeprom.NoaaChannel[1]   = IS_NOAA_CHANNEL(Data[7])  ? Data[7] : NOAA_CHANNEL_FIRST;
 
 	// 0E88..0E8F
 	struct {
@@ -443,7 +440,6 @@ void BOARD_EEPROM_Init(void)
 	EEPROM_ReadBuffer(0x0ED8, Data, 8);
 	gEeprom.DTMF_CODE_PERSIST_TIME  = (Data[0] < 101) ? Data[0] * 10 : 100;
 	gEeprom.DTMF_CODE_INTERVAL_TIME = (Data[1] < 101) ? Data[1] * 10 : 100;
-	gEeprom.PERMIT_REMOTE_KILL      = (Data[2] <   2) ? Data[2] : true;
 
 	// 0EE0..0EE7
 	EEPROM_ReadBuffer(0x0EE0, Data, 8);
@@ -455,20 +451,6 @@ void BOARD_EEPROM_Init(void)
 	}
 
 	// 0EE8..0EEF
-	/* EEPROM_ReadBuffer(0x0EE8, Data, 8);
-	if (DTMF_ValidateCodes((char *)Data, 8)) {
-		memcpy(gEeprom.KILL_CODE, Data, 8);
-	} else {
-		memcpy(gEeprom.KILL_CODE, "ABCD9\0\0", 8);
-	} */
-
-	// 0EF0..0EF7
-	/* EEPROM_ReadBuffer(0x0EF0, Data, 8);
-	if (DTMF_ValidateCodes((char *)Data, 8)) {
-		memcpy(gEeprom.REVIVE_CODE, Data, 8);
-	} else {
-		memcpy(gEeprom.REVIVE_CODE, "9DCBA\0\0", 8);
-	} */
 
 	// 0EF8..0F07
 	EEPROM_ReadBuffer(0x0EF8, Data, 16);
@@ -505,8 +487,7 @@ void BOARD_EEPROM_Init(void)
 	gUpperLimitFrequencyBandTable = UpperLimitFrequencyBandTable;
 	gLowerLimitFrequencyBandTable = LowerLimitFrequencyBandTable;
 
-	gSetting_350TX          = (Data[1] < 2) ? Data[1] : true;
-	gSetting_KILLED         = (Data[2] < 2) ? Data[2] : false;
+	gSetting_ALL_TX          = (Data[1] < 2) ? Data[1] : true;
 	gSetting_200TX          = (Data[3] < 2) ? Data[3] : false;
 	gSetting_500TX          = (Data[4] < 2) ? Data[4] : false;
 	gSetting_350EN          = (Data[5] < 2) ? Data[5] : true;

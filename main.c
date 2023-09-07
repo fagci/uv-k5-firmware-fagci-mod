@@ -118,7 +118,6 @@ void Main(void)
 			AUDIO_SetVoiceID(1, VOICE_ID_FREQUENCY_MODE);
 		}
 		AUDIO_PlaySingleVoice(0);
-		// RADIO_ConfigureNOAA();
 	}
 
 	while (1) {

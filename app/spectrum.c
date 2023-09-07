@@ -411,11 +411,22 @@ static void DrawTicks() {
     }
 
     // center
-    gFrameBuffer[5][64] = 0b10101000;
-    gFrameBuffer[5][0] = 0xff;
-    gFrameBuffer[5][1] = 0x80;
-    gFrameBuffer[5][2] = 0x80;
-    gFrameBuffer[5][3] = 0x80;
+    if (IsCenterMode()) {
+        gFrameBuffer[5][62] = 0x80;
+        gFrameBuffer[5][63] = 0x80;
+        gFrameBuffer[5][64] = 0xff;
+        gFrameBuffer[5][65] = 0x80;
+        gFrameBuffer[5][66] = 0x80;
+    } else {
+        gFrameBuffer[5][0] = 0xff;
+        gFrameBuffer[5][1] = 0x80;
+        gFrameBuffer[5][2] = 0x80;
+        gFrameBuffer[5][3] = 0x80;
+        gFrameBuffer[5][124] = 0x80;
+        gFrameBuffer[5][125] = 0x80;
+        gFrameBuffer[5][126] = 0x80;
+        gFrameBuffer[5][127] = 0xff;
+    }
 }
 
 static void DrawArrow(uint8_t x) {
@@ -757,7 +768,7 @@ static void Tick() {
 }
 
 void APP_RunSpectrum() {
-    currentFreq = BK4819_GetFrequency();
+    currentFreq = gEeprom.VfoInfo[gEeprom.RX_CHANNEL].pCurrent->Frequency;
     oldAFSettings = BK4819_GetRegister(0x47);
     oldBWSettings = BK4819_GetRegister(0x43);
     BK4819_SetFilterBandwidth(GetBWIndex());

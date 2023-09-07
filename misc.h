@@ -22,8 +22,6 @@
 
 #define IS_MR_CHANNEL(x) ((x) >= MR_CHANNEL_FIRST && (x) <= MR_CHANNEL_LAST)
 #define IS_FREQ_CHANNEL(x) ((x) >= FREQ_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
-#define IS_NOAA_CHANNEL(x) false
-#define IS_NOT_NOAA_CHANNEL(x) true
 #define IS_VALID_CHANNEL(x) ((x) <= NOAA_CHANNEL_LAST)
 
 enum {
@@ -75,8 +73,7 @@ typedef enum CssScanMode_t CssScanMode_t;
 extern const uint32_t *gUpperLimitFrequencyBandTable;
 extern const uint32_t *gLowerLimitFrequencyBandTable;
 
-extern bool gSetting_350TX;
-extern bool gSetting_KILLED;
+extern bool gSetting_ALL_TX;
 extern bool gSetting_200TX;
 extern bool gSetting_500TX;
 extern bool gSetting_350EN;
@@ -108,7 +105,6 @@ extern volatile uint16_t gDualWatchCountdown;
 extern volatile uint16_t gTxTimerCountdown;
 extern volatile uint16_t gTailNoteEliminationCountdown;
 extern volatile uint16_t gFmPlayCountdown;
-extern volatile uint16_t gNOAA_Countdown;
 extern bool gEnableSpeaker;
 extern uint8_t gKeyLockCountdown;
 extern uint8_t gRTTECountdown;
@@ -170,13 +166,10 @@ extern uint8_t gPttDebounceCounter;
 extern uint8_t gMenuListCount;
 extern uint8_t gBackupCROSS_BAND_RX_TX;
 extern uint8_t gScanDelay;
-extern uint8_t gAircopySendCountdown;
 extern uint8_t gFSKWriteIndex;
 extern uint8_t gNeverUsed;
 
-extern const bool gIsNoaaMode;
 extern volatile bool gNextTimeslice;
-extern uint8_t gNoaaChannel;
 extern bool gUpdateDisplay;
 extern uint8_t gFM_ChannelPosition;
 extern bool gF_LOCK;
@@ -190,7 +183,6 @@ extern volatile bool gNextTimeslice40ms;
 extern volatile bool gSchedulePowerSave;
 extern volatile bool gBatterySaveCountdownExpired;
 extern volatile bool gScheduleDualWatch;
-extern volatile bool gScheduleNOAA;
 extern volatile bool gSystickFlag10;
 extern volatile bool gScheduleFM;
 

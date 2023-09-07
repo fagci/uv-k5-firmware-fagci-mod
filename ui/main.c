@@ -362,7 +362,7 @@ void UI_DisplayMain(void)
 		if (gEeprom.VfoInfo[i].CHANNEL_BANDWIDTH == BANDWIDTH_NARROW) {
 			memcpy(pLine1 + 128 + 74, BITMAP_NarrowBand, sizeof(BITMAP_NarrowBand));
 		}
-		if (gEeprom.VfoInfo[i].DTMF_DECODING_ENABLE || gSetting_KILLED) {
+		if (gEeprom.VfoInfo[i].DTMF_DECODING_ENABLE) {
 			memcpy(pLine1 + 128 + 84, BITMAP_DTMF, sizeof(BITMAP_DTMF));
 		}
 		if (gEeprom.VfoInfo[i].SCRAMBLING_TYPE && gSetting_ScrambleEnable) {

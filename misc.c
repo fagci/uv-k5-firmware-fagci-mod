@@ -20,8 +20,7 @@
 const uint32_t *gUpperLimitFrequencyBandTable;
 const uint32_t *gLowerLimitFrequencyBandTable;
 
-bool gSetting_350TX;
-bool gSetting_KILLED;
+bool gSetting_ALL_TX;
 bool gSetting_200TX;
 bool gSetting_500TX;
 bool gSetting_350EN;
@@ -57,7 +56,6 @@ volatile uint16_t gBatterySaveCountdown = 1000;
 volatile uint16_t gDualWatchCountdown;
 volatile uint16_t gTxTimerCountdown;
 volatile uint16_t gTailNoteEliminationCountdown;
-volatile uint16_t gNOAA_Countdown;
 bool gEnableSpeaker;
 uint8_t gKeyLockCountdown;
 uint8_t gRTTECountdown;
@@ -119,13 +117,10 @@ uint8_t gPttDebounceCounter;
 uint8_t gMenuListCount;
 uint8_t gBackupCROSS_BAND_RX_TX;
 uint8_t gScanDelay;
-uint8_t gAircopySendCountdown;
 uint8_t gFSKWriteIndex;
 uint8_t gNeverUsed;
 
-const bool gIsNoaaMode;
 volatile bool gNextTimeslice;
-uint8_t gNoaaChannel;
 bool gUpdateDisplay;
 bool gF_LOCK;
 uint8_t gShowChPrefix;
@@ -138,7 +133,6 @@ volatile bool gNextTimeslice40ms;
 volatile bool gSchedulePowerSave;
 volatile bool gBatterySaveCountdownExpired;
 volatile bool gScheduleDualWatch = true;
-volatile bool gScheduleNOAA = true;
 volatile bool gSystickFlag10;
 volatile bool gScheduleFM;
 

@@ -292,10 +292,6 @@ void SCANNER_Start(void)
 	BK4819_StopScan();
 	RADIO_SelectVfos();
 
-	if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
-		gRxVfo->CHANNEL_SAVE = FREQ_CHANNEL_FIRST + 5;
-	}
-
 	BackupStep = gRxVfo->STEP_SETTING;
 	BackupFrequency = gRxVfo->StepFrequency;
 
@@ -306,7 +302,6 @@ void SCANNER_Start(void)
 
 	RADIO_SetupRegisters(true);
 
-	// gIsNoaaMode = false;
 	if (gScanSingleFrequency) {
 		gScanCssState = SCAN_CSS_STATE_SCANNING;
 		gScanFrequency = gRxVfo->pCurrent->Frequency;

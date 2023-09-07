@@ -23,7 +23,6 @@
 enum BOOT_Mode_t {
 	BOOT_MODE_NORMAL  = 0U,
 	BOOT_MODE_F_LOCK  = 1U,
-	BOOT_MODE_AIRCOPY = 2U,
 };
 
 typedef enum BOOT_Mode_t BOOT_Mode_t;

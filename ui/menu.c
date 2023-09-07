@@ -48,7 +48,7 @@ static const char MenuList[][7] = {
 	"D-PRE",  "PTT-ID",  "D-DCD",  "D-LIST",
 	"PONMSG", "ROGER",   "VOL",    "AM",
 	// 0x30
-	"DEL-CH",  "RESET",  "350TX", "F-LOCK",
+	"DEL-CH",  "RESET",  "ALL TX", "F-LOCK",
     "200TX",   "500TX",  "350EN", "SCREN",
 	// 0x38
 };
@@ -287,8 +287,7 @@ void UI_DisplayMenu(void)
 	case MENU_D_ST:
 	case MENU_D_DCD:
 	case MENU_AM:
-	// case MENU_NOAA_S:
-	case MENU_350TX:
+	case MENU_ALL_TX:
 	case MENU_200TX:
 	case MENU_500TX:
 	case MENU_350EN:

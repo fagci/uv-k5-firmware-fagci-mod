@@ -31,7 +31,6 @@ OBJS += driver/uart.o
 
 # Main
 OBJS += app/action.o
-# OBJS += app/aircopy.o
 OBJS += app/app.o
 OBJS += app/dtmf.o
 OBJS += app/fm.o
@@ -54,7 +53,6 @@ OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
-# OBJS += ui/aircopy.o
 OBJS += ui/battery.o
 OBJS += ui/fmradio.o
 OBJS += ui/helper.o

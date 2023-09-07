@@ -48,19 +48,6 @@ const uint32_t UpperLimitFrequencyBandTable[7] = {
 	130000000,
 };
 
-/* const uint32_t NoaaFrequencyTable[10] = {
-	16255000,
-	16240000,
-	16247500,
-	16242500,
-	16245000,
-	16250000,
-	16252500,
-	16152500,
-	16177500,
-	16327500,
-}; */
-
 const uint16_t StepFrequencyTable[6] = {
 	250,
 	500,
@@ -170,13 +157,11 @@ int FREQUENCY_Check(VFO_Info_t *pInfo)
 		break;
 
 	default:
+        if (gSetting_ALL_TX) {
+            return 0;
+        }
 		if (Frequency >= 13600000 && Frequency <= 17399990) {
 			return 0;
-		}
-		if (Frequency >= 35000000 && Frequency <= 39999990) {
-			if (gSetting_350TX && gSetting_350EN) {
-				return 0;
-			}
 		}
 		if (Frequency >= 40000000 && Frequency <= 46999990) {
 			return 0;
