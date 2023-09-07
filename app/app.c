@@ -552,7 +552,7 @@ void APP_EndTransmission(void)
 static void APP_HandleVox(void)
 {
 	// if (!gSetting_KILLED) {
-		if (g_200003B6 == 0) {
+		if (gVoxResumeCountdown == 0) {
 			if (gVoxPauseCountdown) {
 				return;
 			}
