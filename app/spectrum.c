@@ -16,7 +16,8 @@
 
 #include "../app/spectrum.h"
 
-// TODO: select Listen() BW
+const static uint32_t F_MIN = 1800000;
+const static uint32_t F_MAX = 130000000;
 
 enum State {
     SPECTRUM,
@@ -35,6 +36,7 @@ enum StepsCount {
     STEPS_128,
     STEPS_64,
     STEPS_32,
+    STEPS_16,
 };
 
 enum ModulationType {
@@ -205,7 +207,7 @@ static void RestoreOldBWSettings() {
 static void ToggleAFBit(bool on) {
     uint16_t reg = BK4819_GetRegister(BK4819_REG_47);
     reg &= ~(1 << 8);
-    if (on) reg |= 1 << 8;
+    if (on) reg |= on << 8;
     BK4819_WriteRegister(BK4819_REG_47, reg);
 }
 
@@ -298,8 +300,7 @@ uint8_t GetBWIndex() {
 uint8_t GetRssi() {
     ResetRSSI();
     SYSTICK_DelayUs(settings.scanDelay);
-    uint16_t v = BK4819_GetRegister(0x67) & 0x1FF;
-    return v < 255 ? v : 255;
+    return clamp(BK4819_GetRSSI(), 0, 255);
 }
 
 // Update things by keypress
@@ -325,8 +326,8 @@ static void UpdateCurrentFreq(long int diff) {
         ResetRSSIHistory();
         return;
     }
-    if ((diff > 0 && currentFreq < 130000000) ||
-        (diff < 0 && currentFreq > 1800000)) {
+    if ((diff > 0 && currentFreq < F_MAX) ||
+        (diff < 0 && currentFreq > F_MIN)) {
         currentFreq += diff;
     }
 }
@@ -345,49 +346,48 @@ uint8_t Rssi2Y(uint8_t rssi) {
 }
 
 static void DrawSpectrum() {
-    uint8_t div = settings.stepsCount;
     for (uint8_t x = 0; x < 128; ++x) {
-        uint8_t v = rssiHistory[x >> div];
+        uint8_t v = rssiHistory[x >> settings.stepsCount];
         if (v != 255) {
             DrawHLine(Rssi2Y(v), DrawingEndY, x, true);
         }
     }
 }
 
-static void DrawNums() {
+static void DrawStatus() {
     char String[32];
+
+    if (settings.isStillMode) {
+        sprintf(String, "Offset: %2.1fkHz %s %s", settings.stillOffset * 1e-2,
+                settings.isAMOn ? "AM" : "FM", bwOptions[settings.listenBw]);
+        GUI_DisplaySmallest(String, 1, 2, true, true);
+    } else {
+        sprintf(String, "%dx%3.2fk %1.1fms %s %s", GetStepsCount(),
+                GetScanStep() * 1e-2, settings.scanDelay * 1e-3,
+                settings.isAMOn ? "AM" : "FM", bwOptions[settings.listenBw]);
+        GUI_DisplaySmallest(String, 1, 2, true, true);
+    }
+}
+
+static void DrawNums() {
+    char String[16];
 
     sprintf(String, "%3.3f", GetPeakF() * 1e-5);
     UI_PrintString(String, 2, 127, 0, 8, 1);
-
-    sprintf(String, settings.isAMOn ? "AM" : "FM");
-    GUI_DisplaySmallest(String, 0, 3, false, true);
-
-    sprintf(String, bwOptions[settings.listenBw]);
-    GUI_DisplaySmallest(String, 12, 3, false, true);
-
-    if (settings.isStillMode) {
-        sprintf(String, "O: %2.1fkHz", settings.stillOffset * 1e-2);
-        GUI_DisplaySmallest(String, 0, 9, false, true);
-    }
-
-    sprintf(String, "%dx%3.2fk %1.1fms", GetStepsCount(), GetScanStep() * 1e-2,
-            settings.scanDelay * 1e-3);
-    GUI_DisplaySmallest(String, 1, 2, true, true);
 
     if (IsCenterMode()) {
         sprintf(String, "%04.5f \xB1%1.2fk", currentFreq * 1e-5,
                 settings.frequencyChangeStep * 1e-2);
         GUI_DisplaySmallest(String, 36, 49, false, true);
     } else {
-        sprintf(String, "%04.1f", GetFStart() * 1e-5);
+        sprintf(String, "%04.4f", GetFStart() * 1e-5);
         GUI_DisplaySmallest(String, 0, 49, false, true);
 
         sprintf(String, "\xB1%1.0fk", settings.frequencyChangeStep * 1e-2);
         GUI_DisplaySmallest(String, 56, 49, false, true);
 
-        sprintf(String, "%04.1f", GetFEnd() * 1e-5);
-        GUI_DisplaySmallest(String, 105, 49, false, true);
+        sprintf(String, "%04.4f", GetFEnd() * 1e-5);
+        GUI_DisplaySmallest(String, 96, 49, false, true);
     }
 }
 
@@ -446,10 +446,10 @@ static void OnKeyDown(uint8_t key) {
             resetBlacklist = true;
             break;
         case KEY_2:
-            UpdateFreqChangeStep(10000);
+            UpdateFreqChangeStep(GetScanStep() * 4);
             break;
         case KEY_8:
-            UpdateFreqChangeStep(-10000);
+            UpdateFreqChangeStep(-GetScanStep() * 4);
             break;
         case KEY_UP:
             UpdateCurrentFreq(settings.frequencyChangeStep);
@@ -480,7 +480,7 @@ static void OnKeyDown(uint8_t key) {
             break;
         case KEY_SIDE1:
             if (settings.stepsCount == STEPS_128) {
-                settings.stepsCount = STEPS_32;
+                settings.stepsCount = STEPS_16;
                 break;
             }
             settings.stepsCount--;
@@ -505,17 +505,17 @@ static void OnKeyDown(uint8_t key) {
             break;
         case KEY_6:
             settings.isStillMode = !settings.isStillMode;
-            if (!settings.isStillMode) {
-                settings.stillOffset = 0;
-            } else {
+            if (settings.isStillMode) {
                 ResetRSSIHistory();
+            } else {
+                settings.stillOffset = 0;
             }
             break;
         case KEY_EXIT:
             DeInitSpectrum();
             break;
         case KEY_PTT:
-            if(settings.isStillMode) {
+            if (settings.isStillMode) {
                 // TODO: tx
             }
     }
@@ -546,7 +546,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
             freqInputIndex--;
             break;
         case KEY_MENU:
-            if (tempFreq >= 1800000 && tempFreq <= 130000000) {
+            if (tempFreq >= F_MIN && tempFreq <= F_MAX) {
                 peak.f = currentFreq = tempFreq;
                 settings.stillOffset = 0;
                 resetBlacklist = true;
@@ -613,9 +613,14 @@ static void RenderFreqInput() {
     }
 } */
 
+static void RenderStatus() {
+    memset(gStatusLine, 0, sizeof(gStatusLine));
+    DrawStatus();
+    ST7565_BlitStatusLine();
+}
+
 static void Render() {
     memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
-    memset(gStatusLine, 0, sizeof(gStatusLine));
     if (currentState == SPECTRUM /*|| currentState == MENU*/) {
         DrawTicks();
         DrawArrow(peak.i << settings.stepsCount);
@@ -634,7 +639,6 @@ static void Render() {
         RenderFreqInput();
     }
 
-    ST7565_BlitStatusLine();
     ST7565_BlitFullScreen();
 }
 
@@ -664,6 +668,7 @@ bool HandleUserInput() {
                     OnMenuInput(btn);
                     break; */
         }
+        RenderStatus();
     }
 
     return true;
@@ -757,6 +762,7 @@ void APP_RunSpectrum() {
     resetBlacklist = true;
     ToggleRX(false);
     isInitialized = true;
+    RenderStatus();
     while (isInitialized) {
         Tick();
     }
