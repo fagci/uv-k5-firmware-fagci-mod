@@ -774,6 +774,7 @@ void APP_RunSpectrum() {
     BK4819_SetFilterBandwidth(GetBWIndex());
     ResetPeak();
     resetBlacklist = true;
+    ToggleRX(true);
     ToggleRX(false);
     isInitialized = true;
     RenderStatus();
