@@ -16,8 +16,13 @@
 
 #include "../app/spectrum.h"
 
+#include <stdint.h>
+
 const static uint32_t F_MIN = 1800000;
 const static uint32_t F_MAX = 130000000;
+
+const static uint32_t F_BFM_MIN = 7600000;
+const static uint32_t F_BFM_MAX = 10800000;
 
 enum State {
     SPECTRUM,
@@ -228,22 +233,6 @@ static void ToggleAFDAC(bool on) {
     BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-bool rxState = true;
-static void ToggleRX(bool on) {
-    if (rxState == on) {
-        return;
-    }
-    rxState = on;
-    BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, on);
-    ToggleAFDAC(on);
-    ToggleAFBit(on);
-    if (on) {
-        GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-    } else {
-        GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-    }
-}
-
 static void ResetRSSI() {
     uint32_t Reg = BK4819_GetRegister(BK4819_REG_30);
     Reg &= ~1;
@@ -301,6 +290,55 @@ uint8_t GetRssi() {
     ResetRSSI();
     SYSTICK_DelayUs(settings.scanDelay);
     return clamp(BK4819_GetRSSI(), 0, 255);
+}
+
+static void ListenBK1080() {
+    if (fMeasure != GetPeakF()) {
+        fMeasure = GetPeakF();
+        BK1080_Init(fMeasure * 1e-4, true);
+        BK1080_SetFrequency(fMeasure * 1e-4);
+    }
+    BK1080_Mute(false);
+}
+
+static void ListenBK4819() {
+    if (fMeasure != GetPeakF()) {
+        fMeasure = GetPeakF();
+        SetF(fMeasure);
+    }
+    BK4819_SetFilterBandwidth(settings.listenBw);
+    ToggleAFDAC(true);
+    ToggleAFBit(true);
+}
+
+static bool IsBroadcastFM(uint32_t f) {
+    return f >= F_BFM_MIN && f <= F_BFM_MAX;
+}
+
+bool rxState = true;
+static void ToggleRX(bool on) {
+    if (rxState == on) {
+        return;
+    }
+    rxState = on;
+
+    BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, on);
+
+    if (on) {
+        GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+        if (IsBroadcastFM(peak.f)) {
+            ListenBK1080();
+        } else {
+            ListenBK4819();
+        }
+    } else {
+        GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+        ToggleAFDAC(false);
+        ToggleAFBit(false);
+        BK1080_Mute(true);
+        BK1080_Init(0, false);
+        BK4819_SetFilterBandwidth(GetBWIndex());
+    }
 }
 
 // Update things by keypress
@@ -719,7 +757,7 @@ static void Scan() {
     resetBlacklist = false;
     ++peak.t;
 
-    if (rssiMax > peak.rssi || peak.t >= 16) {
+    if (peak.t >= 16) {
         peak.t = 0;
         peak.rssi = rssiMax;
         peak.f = fPeak;
@@ -727,28 +765,19 @@ static void Scan() {
     }
 }
 
-static void Listen() {
-    if (fMeasure != GetPeakF()) {
-        fMeasure = GetPeakF();
-        SetF(fMeasure);
-    }
-    ToggleRX(peak.rssi >= settings.rssiTriggerLevel);
-    BK4819_SetFilterBandwidth(settings.listenBw);
-    for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
-        SYSTEM_DelayMs(20);
-    }
-    BK4819_SetFilterBandwidth(GetBWIndex());
-    peak.rssi = rssiHistory[peak.i] = GetRssi();
-}
-
 static void Update() {
     if (settings.isStillMode || peak.rssi >= settings.rssiTriggerLevel) {
-        Listen();
+        ToggleRX(peak.rssi >= settings.rssiTriggerLevel);
+        // if (!IsBroadcastFM(peak.f)) {
+            for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
+                SYSTEM_DelayMs(20);
+            }
+        // }
+        peak.rssi = rssiHistory[peak.i] = GetRssi();
     }
     if (rssiMin == 255 ||
         (!settings.isStillMode && peak.rssi < settings.rssiTriggerLevel)) {
         ToggleRX(false);
-        BK4819_SetFilterBandwidth(GetBWIndex());
         Scan();
     }
 }

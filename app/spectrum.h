@@ -21,6 +21,8 @@
 #include "../driver/backlight.h"
 #include "../driver/bk4819-regs.h"
 #include "../driver/bk4819.h"
+#include "../driver/bk1080-regs.h"
+#include "../driver/bk1080.h"
 #include "../driver/gpio.h"
 #include "../driver/keyboard.h"
 #include "../driver/st7565.h"
