@@ -960,6 +960,7 @@ void APP_TimeSlice500ms(void) {
         gFmRadioCountdown--;
         return;
     }
+
     if (gReducedService) {
         BOARD_ADC_GetBatteryInfo(&gBatteryCurrentVoltage, &gBatteryCurrent);
         if (gBatteryCurrent > 500 ||

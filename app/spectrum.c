@@ -757,7 +757,7 @@ static void Scan() {
     resetBlacklist = false;
     ++peak.t;
 
-    if (peak.t >= 16) {
+    if (!peak.f || peak.t >= 16) {
         peak.t = 0;
         peak.rssi = rssiMax;
         peak.f = fPeak;
@@ -769,9 +769,9 @@ static void Update() {
     if (settings.isStillMode || peak.rssi >= settings.rssiTriggerLevel) {
         ToggleRX(peak.rssi >= settings.rssiTriggerLevel);
         // if (!IsBroadcastFM(peak.f)) {
-            for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
-                SYSTEM_DelayMs(20);
-            }
+        for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
+            SYSTEM_DelayMs(20);
+        }
         // }
         peak.rssi = rssiHistory[peak.i] = GetRssi();
     }
@@ -797,14 +797,15 @@ static void Tick() {
 }
 
 void APP_RunSpectrum() {
-    currentFreq = gEeprom.VfoInfo[gEeprom.RX_CHANNEL].pCurrent->Frequency;
+    // TX here coz it always? set to active VFO
+    currentFreq = gEeprom.VfoInfo[gEeprom.TX_CHANNEL].pCurrent->Frequency;
     oldAFSettings = BK4819_GetRegister(0x47);
     oldBWSettings = BK4819_GetRegister(0x43);
     BK4819_SetFilterBandwidth(GetBWIndex());
     ResetPeak();
     resetBlacklist = true;
-    ToggleRX(true);
-    ToggleRX(false);
+    // HACK: to make sure that all params are set to our default
+    ToggleRX(true), ToggleRX(false);
     isInitialized = true;
     RenderStatus();
     while (isInitialized) {
