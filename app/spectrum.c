@@ -127,7 +127,7 @@ KEY_Code_t btn;
 uint8_t btnPrev;
 uint32_t currentFreq, tempFreq;
 uint8_t freqInputIndex = 0;
-uint8_t freqInputArr[7] = {};
+KEY_Code_t freqInputArr[10];
 uint16_t oldAFSettings;
 uint16_t oldBWSettings;
 
@@ -250,12 +250,17 @@ static void SetF(uint32_t f) {
 
 // Spectrum related
 
+bool IsPeakOverLevel() { return peak.rssi >= settings.rssiTriggerLevel; }
+
 static void ResetRSSIHistory() {
     for (int i = 0; i < 128; ++i) {
         rssiHistory[i] = 0;
     }
 }
-static void ResetPeak() { peak.rssi = 0; }
+static void ResetPeak() {
+    peak.rssi = 0;
+    peak.f = 0;
+}
 
 bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
 uint8_t GetStepsCount() { return 128 >> settings.stepsCount; }
@@ -375,6 +380,66 @@ static void UpdateFreqChangeStep(long int diff) {
         clamp(settings.frequencyChangeStep + diff, 10000, 200000);
 }
 
+char freqInputString[11] = "----------\0";  // XXXX.XXXXX\0
+uint8_t freqInputDotIndex = 0;
+
+static void ResetFreqInput() {
+    tempFreq = 0;
+    for (int i = 0; i < 10; ++i) {
+        freqInputString[i] = '-';
+    }
+}
+
+static void FreqInput() {
+    freqInputIndex = 0;
+    freqInputDotIndex = 0;
+    ResetFreqInput();
+    currentState = FREQ_INPUT;
+}
+
+static void UpdateFreqInput(KEY_Code_t key) {
+    if (freqInputIndex >= 10) {
+        return;
+    }
+    if (key == KEY_STAR) {
+        freqInputDotIndex = freqInputIndex;
+    }
+    if (key == KEY_EXIT) {
+        freqInputIndex--;
+    } else {
+        freqInputArr[freqInputIndex++] = key;
+    }
+
+    ResetFreqInput();
+
+    uint8_t dotIndex =
+        freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
+
+    KEY_Code_t digitKey;
+    for (int i = 0; i < 10; ++i) {
+        if (i < freqInputIndex) {
+            digitKey = freqInputArr[i];
+            freqInputString[i] = digitKey <= KEY_9 ? '0' + digitKey : '.';
+        } else {
+            freqInputString[i] = '-';
+        }
+    }
+
+    uint32_t base = 100000;  // 1MHz in BK units
+    for (int i = dotIndex - 1; i >= 0; --i) {
+        tempFreq += freqInputArr[i] * base;
+        base *= 10;
+    }
+
+    base = 10000;  // 0.1MHz in BK units
+    if (dotIndex < freqInputIndex) {
+        for (int i = dotIndex + 1; i < freqInputIndex; ++i) {
+            tempFreq += freqInputArr[i] * base;
+            base /= 10;
+        }
+    }
+}
+
 static void Blacklist() { rssiHistory[peak.i] = 255; }
 
 // Draw things
@@ -418,14 +483,14 @@ static void DrawNums() {
                 settings.frequencyChangeStep * 1e-2);
         GUI_DisplaySmallest(String, 36, 49, false, true);
     } else {
-        sprintf(String, "%04.4f", GetFStart() * 1e-5);
+        sprintf(String, "%04.5f", GetFStart() * 1e-5);
         GUI_DisplaySmallest(String, 0, 49, false, true);
 
         sprintf(String, "\xB1%1.0fk", settings.frequencyChangeStep * 1e-2);
         GUI_DisplaySmallest(String, 56, 49, false, true);
 
-        sprintf(String, "%04.4f", GetFEnd() * 1e-5);
-        GUI_DisplaySmallest(String, 96, 49, false, true);
+        sprintf(String, "%04.5f", GetFEnd() * 1e-5);
+        GUI_DisplaySmallest(String, 93, 49, false, true);
     }
 }
 
@@ -524,8 +589,7 @@ static void OnKeyDown(uint8_t key) {
             SYSTEM_DelayMs(90);
             break;
         case KEY_5:
-            currentState = FREQ_INPUT;
-            freqInputIndex = 0;
+            FreqInput();
             break;
         case KEY_0:
             settings.isAMOn = !settings.isAMOn;
@@ -586,16 +650,15 @@ static void OnKeyDownFreqInput(uint8_t key) {
         case KEY_7:
         case KEY_8:
         case KEY_9:
-            if (freqInputIndex < 7) {
-                freqInputArr[freqInputIndex++] = key;
-            }
+        case KEY_STAR:
+            UpdateFreqInput(key);
             break;
         case KEY_EXIT:
             if (freqInputIndex == 0) {
                 currentState = SPECTRUM;
                 break;
             }
-            freqInputIndex--;
+            UpdateFreqInput(key);
             break;
         case KEY_MENU:
             if (tempFreq >= F_MIN && tempFreq <= F_MAX) {
@@ -632,18 +695,7 @@ void OnMenuInput(KEY_Code_t btn) {
 } */
 
 static void RenderFreqInput() {
-    tempFreq = 0;
-
-    for (int i = 0; i < freqInputIndex; ++i) {
-        tempFreq *= 10;
-        tempFreq += freqInputArr[i];
-    }
-    tempFreq *= 100;
-
-    char String[16];
-
-    sprintf(String, "%4.3f", tempFreq * 1e-5);
-    UI_PrintString(String, 2, 127, 0, 8, 1);
+    UI_PrintString(freqInputString, 2, 127, 0, 8, true);
 }
 
 /* void RenderMenu() {
@@ -766,18 +818,17 @@ static void Scan() {
 }
 
 static void Update() {
-    if (settings.isStillMode || peak.rssi >= settings.rssiTriggerLevel) {
-        ToggleRX(peak.rssi >= settings.rssiTriggerLevel);
+    if (settings.isStillMode || IsPeakOverLevel()) {
+        ToggleRX(IsPeakOverLevel());
         // if (!IsBroadcastFM(peak.f)) {
         for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
             SYSTEM_DelayMs(20);
         }
         // }
-        peak.rssi = rssiHistory[peak.i] = GetRssi();
     }
-    if (rssiMin == 255 ||
-        (!settings.isStillMode && peak.rssi < settings.rssiTriggerLevel)) {
-        ToggleRX(false);
+    ToggleRX(false);
+    peak.rssi = rssiHistory[peak.i] = GetRssi();
+    if (rssiMin == 255 || (!settings.isStillMode && !IsPeakOverLevel())) {
         Scan();
     }
 }
