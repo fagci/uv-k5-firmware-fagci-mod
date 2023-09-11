@@ -339,12 +339,12 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
     uint32_t Frequency;
 
     Frequency = pInfo->ConfigRX.Frequency + (Step * pInfo->StepFrequency);
-    if (Frequency > gUpperLimitFrequencyBandTable[pInfo->Band]) {
-        pInfo->ConfigRX.Frequency = gLowerLimitFrequencyBandTable[pInfo->Band];
-    } else if (Frequency < gLowerLimitFrequencyBandTable[pInfo->Band]) {
+    if (Frequency > UpperLimitFrequencyBandTable[pInfo->Band]) {
+        pInfo->ConfigRX.Frequency = LowerLimitFrequencyBandTable[pInfo->Band];
+    } else if (Frequency < LowerLimitFrequencyBandTable[pInfo->Band]) {
         pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(
-            gUpperLimitFrequencyBandTable[pInfo->Band], pInfo->StepFrequency,
-            gLowerLimitFrequencyBandTable[pInfo->Band]);
+            UpperLimitFrequencyBandTable[pInfo->Band], pInfo->StepFrequency,
+            LowerLimitFrequencyBandTable[pInfo->Band]);
     } else {
         pInfo->ConfigRX.Frequency = Frequency;
     }
@@ -989,7 +989,7 @@ void APP_TimeSlice500ms(void) {
             UI_UpdateRSSI(gCurrentRSSI);
         }
         if ((gFM_ScanState == FM_SCAN_OFF || gAskToSave) &&
-            gScanState == SCAN_OFF && gCssScanMode == CSS_SCAN_MODE_OFF) {
+            gCssScanMode == CSS_SCAN_MODE_OFF) {
             if (gBacklightCountdown) {
                 gBacklightCountdown--;
                 if (gBacklightCountdown == 0) {

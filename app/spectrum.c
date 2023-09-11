@@ -258,8 +258,10 @@ static void ResetRSSIHistory() {
     }
 }
 static void ResetPeak() {
-    peak.rssi = 0;
-    peak.f = 0;
+    if (!settings.isStillMode) {
+        peak.rssi = 0;
+        peak.f = 0;
+    }
 }
 
 bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
@@ -605,9 +607,10 @@ static void OnKeyDown(uint8_t key) {
         case KEY_4:
             if (settings.stepsCount == STEPS_128) {
                 settings.stepsCount = STEPS_16;
-                break;
+            } else {
+                settings.stepsCount--;
             }
-            settings.stepsCount--;
+            settings.frequencyChangeStep = GetBW() >> 1;
             break;
         case KEY_SIDE2:
             settings.backlightState = !settings.backlightState;
@@ -809,7 +812,7 @@ static void Scan() {
     resetBlacklist = false;
     ++peak.t;
 
-    if (!peak.f || peak.t >= 16) {
+    if (!peak.f || rssiMax > peak.rssi || peak.t >= 16) {
         peak.t = 0;
         peak.rssi = rssiMax;
         peak.f = fPeak;
@@ -818,18 +821,27 @@ static void Scan() {
 }
 
 static void Update() {
-    if (settings.isStillMode || IsPeakOverLevel()) {
-        ToggleRX(IsPeakOverLevel());
-        // if (!IsBroadcastFM(peak.f)) {
-        for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
-            SYSTEM_DelayMs(20);
-        }
-        // }
-    }
-    ToggleRX(false);
-    peak.rssi = rssiHistory[peak.i] = GetRssi();
-    if (rssiMin == 255 || (!settings.isStillMode && !IsPeakOverLevel())) {
+    if ((!IsPeakOverLevel() && !settings.isStillMode) || rssiMin == 255) {
+        ToggleRX(false);
         Scan();
+    }
+
+    if (IsPeakOverLevel()) {
+        ToggleRX(true);
+
+        // coz there can be already RX on
+        BK4819_SetFilterBandwidth(settings.listenBw);
+
+        if (!IsBroadcastFM(peak.f)) {
+            for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
+                SYSTEM_DelayMs(20);
+            }
+        }
+    }
+
+    if (IsPeakOverLevel()) {
+        BK4819_SetFilterBandwidth(GetBWIndex());
+        peak.rssi = rssiHistory[peak.i] = GetRssi();
     }
 }
 
