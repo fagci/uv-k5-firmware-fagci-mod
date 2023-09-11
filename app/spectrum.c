@@ -832,11 +832,11 @@ static void Update() {
         // coz there can be already RX on
         BK4819_SetFilterBandwidth(settings.listenBw);
 
-        if (!IsBroadcastFM(peak.f)) {
+        // if (!IsBroadcastFM(peak.f)) {
             for (uint8_t i = 0; i < 50 && GetKey() == 255; ++i) {
                 SYSTEM_DelayMs(20);
             }
-        }
+        // }
     }
 
     if (IsPeakOverLevel()) {
