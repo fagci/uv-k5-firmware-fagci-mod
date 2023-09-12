@@ -39,7 +39,7 @@ const uint32_t MiddleFrequencyBandTable[7] = {
 };
 
 const uint32_t UpperLimitFrequencyBandTable[7] = {
-	 7600000,
+	 8800000,
 	13599990,
 	17399990,
 	34999990,
@@ -59,22 +59,22 @@ const uint16_t StepFrequencyTable[6] = {
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency)
 {
-	if (Frequency < 7600001) {
+	if (Frequency <= UpperLimitFrequencyBandTable[0]) {
 		return BAND1_50MHz;
 	}
-	if (Frequency < 13599991) {
+	if (Frequency <= UpperLimitFrequencyBandTable[1]) {
 		return BAND2_108MHz;
 	}
-	if (Frequency < 17399991) {
+	if (Frequency <= UpperLimitFrequencyBandTable[2]) {
 		return BAND3_136MHz;
 	}
-	if (Frequency < 34999991) {
+	if (Frequency <= UpperLimitFrequencyBandTable[3]) {
 		return BAND4_174MHz;
 	}
-	if (Frequency < 39999991) {
+	if (Frequency <= UpperLimitFrequencyBandTable[4]) {
 		return BAND5_350MHz;
 	}
-	if (Frequency < 46999991) {
+	if (Frequency <= UpperLimitFrequencyBandTable[5]) {
 		return BAND6_400MHz;
 	}
     return BAND7_470MHz;
