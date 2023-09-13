@@ -358,7 +358,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg)
 		}
 	}
 
-	if (gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
+	if (/* gEeprom.VfoInfo[VFO].Band == BAND2_108MHz && */ gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
 		gEeprom.VfoInfo[VFO].IsAM = true;
 		gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = 0;
 		gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = false;
@@ -511,7 +511,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0)
 		SYSTEM_DelayMs(1);
 	}
 	BK4819_WriteRegister(BK4819_REG_3F, 0);
-	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE940);
+	BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE94F);
 #if defined(ENABLE_NOAA)
 	if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) || !gIsNoaaMode) {
 		Frequency = gRxVfo->pRX->Frequency;

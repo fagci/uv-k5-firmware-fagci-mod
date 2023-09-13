@@ -42,7 +42,7 @@ void BK4819_Init(void)
 	BK4819_WriteRegister(BK4819_REG_36, 0x0022);
 	BK4819_SetAGC(0);
 	BK4819_WriteRegister(BK4819_REG_19, 0x1041);
-	BK4819_WriteRegister(BK4819_REG_7D, 0xE940);
+	BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
 	BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
 	BK4819_WriteRegister(BK4819_REG_09, 0x006F);
 	BK4819_WriteRegister(BK4819_REG_09, 0x106B);
@@ -294,7 +294,9 @@ void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth)
 	if (Bandwidth == BK4819_FILTER_BW_WIDE) {
 		BK4819_WriteRegister(BK4819_REG_43, 0x3028);
 	} else if (Bandwidth == BK4819_FILTER_BW_NARROW) {
-		BK4819_WriteRegister(BK4819_REG_43, 0x4048);
+		BK4819_WriteRegister(BK4819_REG_43, 0x790C);
+	} else if (Bandwidth == BK4819_FILTER_BW_NARROWER) {
+		BK4819_WriteRegister(BK4819_REG_43, 0b0100000001011000);
 	}
 }
 
@@ -324,12 +326,17 @@ void BK4819_SetFrequency(uint32_t Frequency)
 	BK4819_WriteRegister(BK4819_REG_39, (Frequency >> 16) & 0xFFFF);
 }
 
+uint32_t BK4819_GetFrequency()
+{
+	return (BK4819_ReadRegister(BK4819_REG_39) << 16) | BK4819_ReadRegister(BK4819_REG_38);
+}
+
 void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh, uint8_t SquelchCloseRSSIThresh, uint8_t SquelchOpenNoiseThresh, uint8_t SquelchCloseNoiseThresh, uint8_t SquelchCloseGlitchThresh, uint8_t SquelchOpenGlitchThresh)
 {
 	BK4819_WriteRegister(BK4819_REG_70, 0);
 	BK4819_WriteRegister(BK4819_REG_4D, 0xA000 | SquelchCloseGlitchThresh);
 	// 0x6f = 0110 1111 meaning the default sql delays from the datasheet are used (101 and 111)
-	BK4819_WriteRegister(BK4819_REG_4E, 0x6F00 | SquelchOpenGlitchThresh);
+	BK4819_WriteRegister(BK4819_REG_4E, 0b01000000 | SquelchOpenGlitchThresh);
 	BK4819_WriteRegister(BK4819_REG_4F, (SquelchCloseNoiseThresh << 8) | SquelchOpenNoiseThresh);
 	BK4819_WriteRegister(BK4819_REG_78, (SquelchOpenRSSIThresh << 8) | SquelchCloseRSSIThresh);
 	BK4819_SetAF(BK4819_AF_MUTE);

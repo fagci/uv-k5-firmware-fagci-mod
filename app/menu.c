@@ -128,7 +128,11 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax)
 			break;
 		}
 		// Fallthrough
-	case MENU_ABR: case MENU_F_LOCK:
+	case MENU_ABR:
+		*pMin = 0;
+		*pMax = 60;
+		break;
+	case MENU_F_LOCK:
 		*pMin = 0;
 		*pMax = 5;
 		break;

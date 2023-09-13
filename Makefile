@@ -1,11 +1,12 @@
 TARGET = firmware
 
-ENABLE_AIRCOPY := 1
+ENABLE_AIRCOPY := 0
 ENABLE_ALARM := 1
 ENABLE_FMRADIO := 1
-ENABLE_NOAA := 1
-ENABLE_OVERLAY := 1
-ENABLE_SWD := 0
+ENABLE_NOAA := 0
+ENABLE_OVERLAY := 0
+ENABLE_SPECTRUM := 1
+ENABLE_SWD := 1
 ENABLE_TX1750 := 1
 ENABLE_UART := 1
 
@@ -64,6 +65,9 @@ OBJS += app/generic.o
 OBJS += app/main.o
 OBJS += app/menu.o
 OBJS += app/scanner.o
+ifeq ($(ENABLE_SPECTRUM), 1)
+OBJS += app/spectrum.o
+endif
 ifeq ($(ENABLE_UART),1)
 OBJS += app/uart.o
 endif
@@ -136,6 +140,9 @@ CFLAGS += -DENABLE_NOAA
 endif
 ifeq ($(ENABLE_OVERLAY),1)
 CFLAGS += -DENABLE_OVERLAY
+endif
+ifeq ($(ENABLE_SPECTRUM),1)
+CFLAGS += -DENABLE_SPECTRUM
 endif
 ifeq ($(ENABLE_SWD),1)
 CFLAGS += -DENABLE_SWD

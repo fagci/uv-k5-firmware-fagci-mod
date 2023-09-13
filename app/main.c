@@ -23,6 +23,7 @@
 #include "app/generic.h"
 #include "app/main.h"
 #include "app/scanner.h"
+#include "app/spectrum.h"
 #include "audio.h"
 #include "dtmf.h"
 #include "frequencies.h"
@@ -227,6 +228,9 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		}
 		gRequestSaveVFO = true;
 		gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+#elif defined(ENABLE_SPECTRUM)
+		APP_RunSpectrum();
+		gRequestDisplayScreen = DISPLAY_MAIN;
 #endif
 		break;
 

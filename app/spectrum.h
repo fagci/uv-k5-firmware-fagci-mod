@@ -1,5 +1,5 @@
-/* Copyright 2023 Dual Tachyon
- * https://github.com/DualTachyon
+/* Copyright 2023 fagci
+ * https://github.com/fagci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  *     limitations under the License.
  */
 
-#ifndef FONT_H
-#define FONT_H
+#ifndef APP_SPECTRUM_H
+#define APP_SPECTRUM_H
 
-#include <stdint.h>
+void APP_RunSpectrum(void);
 
-extern const uint8_t gFontBig[95][16];
-extern const uint8_t gFontBigDigits[11][26];
-extern const uint8_t gFontSmallDigits[11][7];
-extern const uint8_t gFont3x5[160][3];
-
-#endif
-
+#endif /* ifndef SPECTRUM_H */
