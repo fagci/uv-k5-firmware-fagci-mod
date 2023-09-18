@@ -166,7 +166,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax)
 #endif
 	case MENU_RESET: case MENU_350TX:
 	case MENU_200TX: case MENU_500TX:
-	case MENU_350EN: case MENU_SCREN:
+	case MENU_ALL_TX: case MENU_SCREN:
 		*pMin = 0;
 		*pMax = 1;
 		break;
@@ -517,8 +517,8 @@ void MENU_AcceptSetting(void)
 		gSetting_500TX = gSubMenuSelection;
 		break;
 
-	case MENU_350EN:
-		gSetting_350EN = gSubMenuSelection;
+	case MENU_ALL_TX:
+		gSetting_ALL_TX = gSubMenuSelection;
 		gRequestSaveSettings = true;
 		gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
 		gFlagResetVfos = true;
@@ -834,8 +834,8 @@ void MENU_ShowCurrentSetting(void)
 		gSubMenuSelection = gSetting_500TX;
 		break;
 
-	case MENU_350EN:
-		gSubMenuSelection = gSetting_350EN;
+	case MENU_ALL_TX:
+		gSubMenuSelection = gSetting_ALL_TX;
 		break;
 
 	case MENU_SCREN:

@@ -176,7 +176,7 @@ void SETTINGS_SaveSettings(void)
 	State[2] = gSetting_KILLED;
 	State[3] = gSetting_200TX;
 	State[4] = gSetting_500TX;
-	State[5] = gSetting_350EN;
+	State[5] = gSetting_ALL_TX;
 	State[6] = gSetting_ScrambleEnable;
 
 	EEPROM_WriteBuffer(0x0F40, State);

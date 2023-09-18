@@ -19,7 +19,7 @@
 #include "settings.h"
 
 const uint32_t LowerLimitFrequencyBandTable[7] = {
-	 5000000,
+	 1800000,
 	10800000,
 	13600000,
 	17400000,
@@ -45,7 +45,7 @@ const uint32_t UpperLimitFrequencyBandTable[7] = {
 	34999990,
 	39999990,
 	46999990,
-	60000000,
+	130000000,
 };
 
 #if defined(ENABLE_NOAA)
@@ -75,7 +75,7 @@ const uint16_t StepFrequencyTable[7] = {
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency)
 {
-	if (Frequency >=  5000000 && Frequency <=  7600000) {
+	if (Frequency >=  1800000 && Frequency <=  7600000) {
 		return BAND1_50MHz;
 	}
 	if (Frequency >= 10800000 && Frequency <= 13599990) {
@@ -93,7 +93,7 @@ FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency)
 	if (Frequency >= 40000000 && Frequency <= 46999990) {
 		return BAND6_400MHz;
 	}
-	if (Frequency >= 47000000 && Frequency <= 60000000) {
+	if (Frequency >= 47000000 && Frequency <= 130000000) {
 		return BAND7_470MHz;
 	}
 
@@ -146,6 +146,9 @@ int FREQUENCY_Check(VFO_Info_t *pInfo)
 		return -1;
 	}
 	Frequency = pInfo->pTX->Frequency;
+    if (gSetting_ALL_TX) {
+        return 0;
+    }
 	switch (gSetting_F_LOCK) {
 	case F_LOCK_FCC:
 		if (Frequency >= 14400000 && Frequency <= 14799990) {
@@ -194,7 +197,7 @@ int FREQUENCY_Check(VFO_Info_t *pInfo)
 			return 0;
 		}
 		if (Frequency >= 35000000 && Frequency <= 39999990) {
-			if (gSetting_350TX && gSetting_350EN) {
+			if (gSetting_350TX) {
 				return 0;
 			}
 		}
