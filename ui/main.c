@@ -230,6 +230,7 @@ void UI_DisplayMain(void)
 			if (gInputBoxIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) && gEeprom.TX_CHANNEL == i) {
 				UI_DisplayFrequency(gInputBox, 31, i * 4, true, false);
 			} else {
+                uint32_t frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 				if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
 					switch (gEeprom.CHANNEL_DISPLAY_MODE) {
 					case MDF_FREQUENCY:
@@ -271,6 +272,26 @@ void UI_DisplayMain(void)
 							UI_PrintString(gEeprom.VfoInfo[i].Name, 31, 112, i * 4, 8, true);
 						}
 						break;
+                    case MDF_NAME_FREQ:	// show the channel name and frequency
+                        if (gEeprom.VfoInfo[i].Name[0] <= 32 ||
+                            gEeprom.VfoInfo[i].Name[0] >= 127)
+                        {	// no channel name, show channel number instead
+                            sprintf(String, "CH-%03u", gEeprom.ScreenChannel[i] + 1);
+                        }
+                        else
+                        {	// channel name
+                            memset(String, 0, sizeof(String));
+                            memmove(String, gEeprom.VfoInfo[i].Name, 10);
+                        }
+                        UI_PrintString(String, 31, 112, Line, 8 , true);
+
+                        // show the channel frequency below the channel number/name
+                        /* sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                        UI_PrintString(String, 31, 112, Line + 1, 8, true); */
+                        NUMBER_ToDigits(frequency, String);
+                        UI_DisplaySmallDigits(2, String, 31, Line + 2);
+
+                        break;
 					}
 				} else {
 					if (gCurrentFunction == FUNCTION_TRANSMIT) {

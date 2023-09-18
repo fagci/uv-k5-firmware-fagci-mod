@@ -304,3 +304,4 @@ const uint8_t gFont3x5[160][3] = {
     {0x03, 0x0b, 0x18}, // 190 - threequarters
     {0x18, 0x15, 0x10}, // 191 - questiondown
 };
+

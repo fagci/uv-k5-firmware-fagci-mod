@@ -84,17 +84,18 @@ enum ALARM_Mode_t {
 typedef enum ALARM_Mode_t ALARM_Mode_t;
 
 enum ROGER_Mode_t {
-	ROGER_MODE_OFF   = 0U,
-	ROGER_MODE_ROGER = 1U,
-	ROGER_MODE_MDC   = 2U,
+	ROGER_MODE_OFF,
+	ROGER_MODE_ROGER,
+	ROGER_MODE_MDC,
 };
 
 typedef enum ROGER_Mode_t ROGER_Mode_t;
 
 enum CHANNEL_DisplayMode_t {
-	MDF_FREQUENCY = 0U,
-	MDF_CHANNEL   = 1U,
-	MDF_NAME      = 2U,
+	MDF_FREQUENCY,
+	MDF_CHANNEL,
+	MDF_NAME,
+    MDF_NAME_FREQ,
 };
 
 typedef enum CHANNEL_DisplayMode_t CHANNEL_DisplayMode_t;
