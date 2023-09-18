@@ -14,8 +14,8 @@
  *     limitations under the License.
  */
 
-#ifndef APP_SPECTRUM_H
-#define APP_SPECTRUM_H
+#ifndef SPECTRUM_H
+#define SPECTRUM_H
 
 void APP_RunSpectrum(void);
 
