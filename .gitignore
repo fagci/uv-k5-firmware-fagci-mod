@@ -2,6 +2,7 @@
 *.d
 firmware
 firmware.bin
+firmware.packed.bin
 link-overlay.S
 sram-overlay
 sram-overlay.bin
