@@ -33,7 +33,7 @@
 #include <string.h>
 
 static uint16_t R30, R37, R3D, R43, R47, R48, R4B, R7E;
-const static uint32_t F_MIN = 1800000;
+const static uint32_t F_MIN = 0;
 const static uint32_t F_MAX = 130000000;
 
 const static uint32_t F_BFM_MIN = 7600000;
@@ -42,7 +42,8 @@ const static uint32_t F_BFM_MAX = 10800000;
 enum State {
   SPECTRUM,
   FREQ_INPUT,
-} currentState = SPECTRUM;
+  STILL,
+} currentState = SPECTRUM, previousState = SPECTRUM;
 
 struct PeakInfo {
   uint16_t t;
@@ -182,6 +183,11 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   BK4819_WriteRegister(regnum, reg | (v << offset));
 }
 
+void SetState(enum State state) {
+    previousState = currentState;
+    currentState = state;
+}
+
 char *bwOptions[] = {"25k", "12.5k", "6.25k"};
 char *modulationTypeOptions[] = {"FM", "AM", "USB"};
 
@@ -192,8 +198,6 @@ struct SpectrumSettings {
   uint16_t scanDelay;
   uint8_t rssiTriggerLevel;
 
-  bool isStillMode;
-  int32_t stillOffset;
   bool backlightState;
   BK4819_FilterBandwidth_t bw;
   BK4819_FilterBandwidth_t listenBw;
@@ -202,8 +206,6 @@ struct SpectrumSettings {
               S_STEP_25_0kHz,
               80000,
               800,
-              0,
-              false,
               0,
               true,
               BK4819_FILTER_BW_WIDE,
@@ -422,13 +424,8 @@ uint32_t GetFStart() {
   return IsCenterMode() ? currentFreq - (GetBW() >> 1) : currentFreq;
 }
 uint32_t GetFEnd() { return currentFreq + GetBW(); }
-uint32_t GetPeakF() { return peak.f + settings.stillOffset; }
 
-static void TuneToPeak() {
-  uint32_t f = GetPeakF();
-  SetF(scanInfo.f = f);
-  scanInfo.i = peak.i = (f - GetFStart()) / GetScanStep();
-}
+static void TuneToPeak() { SetF(scanInfo.f = peak.f); }
 
 static void DeInitSpectrum() {
   SetF(currentFreq);
@@ -515,8 +512,6 @@ static void ResetScanStats() {
 }
 
 static void InitScan() {
-  if (settings.isStillMode)
-    return;
   ResetScanStats();
   scanInfo.i = 0;
   scanInfo.f = GetFStart();
@@ -533,8 +528,6 @@ static void ResetBlacklist() {
 }
 
 static void NewBandOrLevel() {
-  if (settings.isStillMode)
-    return;
   ResetPeak();
   ResetBlacklist();
   InitScan();
@@ -555,11 +548,7 @@ static void UpdateScanInfo() {
   }
 }
 
-static void UpdatePeakInfo() {
-  // FIXME: peak > rssiMax is temporary solution to listen highest peak
-  if (peak.f && peak.t < 1024 && peak.rssi >= scanInfo.rssiMax)
-    return;
-
+static void UpdatePeakInfoForce() {
   peak.t = 0;
   peak.rssi = scanInfo.rssiMax;
   peak.f = scanInfo.fPeak;
@@ -567,6 +556,14 @@ static void UpdatePeakInfo() {
   if (settings.rssiTriggerLevel == 255) {
     settings.rssiTriggerLevel = scanInfo.rssiMax;
   }
+}
+
+static void UpdatePeakInfo() {
+  // FIXME: peak > rssiMax is temporary solution to listen highest peak
+  if (peak.f && peak.t < 1024 && peak.rssi >= scanInfo.rssiMax)
+    return;
+
+  UpdatePeakInfoForce();
 }
 
 static void Measure() { rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi(); }
@@ -588,32 +585,66 @@ static void UpdateScanStep(int diff) {
 }
 
 static void UpdateCurrentFreq(long int diff) {
-  if (settings.isStillMode) {
-    uint8_t offset = 50;
-    switch (settings.modulationType) {
-    case MOD_FM:
-      offset = 100;
-      break;
-    case MOD_AM:
-      offset = 50;
-      break;
-    case MOD_USB:
-      offset = 10;
-      break;
-    }
-    settings.stillOffset += diff > 0 ? offset : -offset;
-    TuneToPeak();
-    ResetRSSIHistory();
-    return;
-  }
   if ((diff > 0 && currentFreq < F_MAX) || (diff < 0 && currentFreq > F_MIN)) {
     currentFreq += diff;
+  }
+}
+
+static void UpdateCurrentFreqStill(long int diff) {
+  uint8_t offset = 50;
+  switch (settings.modulationType) {
+  case MOD_FM:
+    offset = 100;
+    break;
+  case MOD_AM:
+    offset = 50;
+    break;
+  case MOD_USB:
+    offset = 10;
+    break;
+  }
+  if ((offset > 0 && peak.f < F_MAX) || (offset < 0 && peak.f > F_MIN)) {
+    peak.f += diff * offset;
   }
 }
 
 static void UpdateFreqChangeStep(long int diff) {
   settings.frequencyChangeStep =
       clamp(settings.frequencyChangeStep + diff, 10000, 200000);
+}
+
+static void ToggleModulation() {
+  if (settings.modulationType < MOD_USB) {
+    settings.modulationType++;
+  } else {
+    settings.modulationType = MOD_FM;
+  }
+}
+
+static void ToggleBW() {
+  if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
+    settings.listenBw = BK4819_FILTER_BW_WIDE;
+    return;
+  }
+  settings.listenBw++;
+}
+
+static void ToggleBacklight() {
+  settings.backlightState = !settings.backlightState;
+  if (settings.backlightState) {
+    GPIO_SetBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
+  } else {
+    GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
+  }
+}
+
+static void ToggleStepsCount() {
+  if (settings.stepsCount == STEPS_128) {
+    settings.stepsCount = STEPS_16;
+  } else {
+    settings.stepsCount--;
+  }
+  settings.frequencyChangeStep = GetBW() >> 1;
 }
 
 char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
@@ -630,7 +661,7 @@ static void FreqInput() {
   freqInputIndex = 0;
   freqInputDotIndex = 0;
   ResetFreqInput();
-  currentState = FREQ_INPUT;
+  SetState(FREQ_INPUT);
 }
 
 static void UpdateFreqInput(KEY_Code_t key) {
@@ -697,10 +728,8 @@ static void DrawSpectrum() {
 static void DrawStatus() {
   char String[32];
 
-  if (settings.isStillMode) {
-    sprintf(String, "Df: %d.%02dkHz %s %s", settings.stillOffset / 100,
-            settings.stillOffset % 100,
-            modulationTypeOptions[settings.modulationType],
+  if (currentState == STILL) {
+    sprintf(String, "%s %s", modulationTypeOptions[settings.modulationType],
             bwOptions[settings.listenBw]);
     GUI_DisplaySmallest(String, 1, 2, true, true);
     if (menuState != MENU_OFF) {
@@ -718,13 +747,15 @@ static void DrawStatus() {
   }
 }
 
-static void DrawNums() {
+static void DrawCurrentF() {
   char String[16];
 
-  if (peak.f) {
-    sprintf(String, "%3d.%04d", GetPeakF() / 100000, GetPeakF() % 100000);
-    UI_PrintString(String, 2, 127, 0, 8, 1);
-  }
+  sprintf(String, "%3d.%04d", fMeasure / 100000, fMeasure % 100000);
+  UI_PrintString(String, 2, 127, 0, 8, 1);
+}
+
+static void DrawNums() {
+  char String[16];
 
   if (IsCenterMode()) {
     sprintf(String, "%04d.%04d \xB1%d.%02dk", currentFreq / 100000,
@@ -852,64 +883,27 @@ static void OnKeyDown(uint8_t key) {
     FreqInput();
     break;
   case KEY_0:
-    if (settings.modulationType < MOD_USB) {
-      settings.modulationType++;
-    } else {
-      settings.modulationType = MOD_FM;
-    }
+    ToggleModulation();
     SetModulation(settings.modulationType);
     break;
   case KEY_6:
-    if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
-      settings.listenBw = BK4819_FILTER_BW_WIDE;
-      break;
-    }
-    settings.listenBw++;
+    ToggleBW();
     break;
   case KEY_4:
-    if (settings.stepsCount == STEPS_128) {
-      settings.stepsCount = STEPS_16;
-    } else {
-      settings.stepsCount--;
-    }
-    settings.frequencyChangeStep = GetBW() >> 1;
+    ToggleStepsCount();
     NewBandOrLevel();
     break;
   case KEY_SIDE2:
-    settings.backlightState = !settings.backlightState;
-    if (settings.backlightState) {
-      GPIO_SetBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
-    } else {
-      GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
-    }
-    NewBandOrLevel();
+    ToggleBacklight();
     break;
   case KEY_PTT:
-    settings.isStillMode = true;
-    // TODO: start transmit
-    /* if (settings.isStillMode) {
-        BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
-        BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true);
-    } */
-    ResetRSSIHistory();
+    SetState(STILL);
     break;
   case KEY_MENU:
-    if (settings.isStillMode) {
-      if (menuState < MENU_RFW) {
-        menuState++;
-      } else {
-        menuState = MENU_AFDAC;
-      }
-    }
     break;
   case KEY_EXIT:
     if (menuState != MENU_OFF) {
       menuState = MENU_OFF;
-      break;
-    }
-    if (settings.isStillMode) {
-      settings.isStillMode = false;
-      settings.stillOffset = 0;
       break;
     }
     DeInitSpectrum();
@@ -935,7 +929,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
     break;
   case KEY_EXIT:
     if (freqInputIndex == 0) {
-      currentState = SPECTRUM;
+      SetState(previousState);
       break;
     }
     UpdateFreqInput(key);
@@ -943,14 +937,75 @@ static void OnKeyDownFreqInput(uint8_t key) {
   case KEY_MENU:
     if (tempFreq >= F_MIN && tempFreq <= F_MAX) {
       peak.f = currentFreq = tempFreq;
-      settings.stillOffset = 0;
       NewBandOrLevel();
-      currentState = SPECTRUM;
+      SetState(previousState);
       peak.i = GetStepsCount() >> 1;
       ResetRSSIHistory();
     }
     break;
   }
+}
+
+void OnKeyDownStill(KEY_Code_t key) {
+  switch (key) {
+  case KEY_UP:
+    if (menuState != MENU_OFF) {
+      SetRegMenuValue(menuState, true);
+      break;
+    }
+    UpdateCurrentFreqStill(1);
+    TuneToPeak();
+    break;
+  case KEY_DOWN:
+    if (menuState != MENU_OFF) {
+      SetRegMenuValue(menuState, false);
+      break;
+    }
+    UpdateCurrentFreqStill(-1);
+    TuneToPeak();
+    break;
+  case KEY_STAR:
+    UpdateRssiTriggerLevel(1);
+    break;
+  case KEY_F:
+    UpdateRssiTriggerLevel(-1);
+    break;
+  case KEY_5:
+    FreqInput();
+    break;
+  case KEY_0:
+    ToggleModulation();
+    SetModulation(settings.modulationType);
+    break;
+  case KEY_6:
+    ToggleBW();
+    break;
+  case KEY_SIDE2:
+    ToggleBacklight();
+    break;
+  case KEY_PTT:
+    // TODO: start transmit
+    /* BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
+    BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
+    break;
+  case KEY_MENU:
+    if (menuState < MENU_RFW) {
+      menuState++;
+    } else {
+      menuState = MENU_AFDAC;
+    }
+    break;
+  case KEY_EXIT:
+    if (menuState == MENU_OFF) {
+      SetState(SPECTRUM);
+      break;
+    }
+    menuState = MENU_OFF;
+    break;
+  default:
+    break;
+  }
+  redrawScreen = true;
 }
 
 static void RenderFreqInput() {
@@ -963,18 +1018,41 @@ static void RenderStatus() {
   ST7565_BlitStatusLine();
 }
 
-static void Render() {
-  memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
-  if (currentState == SPECTRUM) {
-    DrawTicks();
-    DrawArrow(peak.i << settings.stepsCount);
-    DrawSpectrum();
-    DrawRssiTriggerLevel();
-    DrawNums();
+static void RenderSpectrum() {
+  DrawTicks();
+  DrawArrow(peak.i << settings.stepsCount);
+  DrawSpectrum();
+  DrawRssiTriggerLevel();
+  DrawCurrentF();
+  DrawNums();
+}
+
+static void RenderStill() {
+  DrawCurrentF();
+
+  for (int i = 0; i < 128; i += 4) {
+    gFrameBuffer[2][i] = 0b11000000;
   }
 
-  if (currentState == FREQ_INPUT) {
+  for (int i = 0; i < peak.rssi; ++i) {
+    gFrameBuffer[2][i] |= 0b00011110;
+  }
+  gFrameBuffer[2][settings.rssiTriggerLevel] = 0b11111111;
+}
+
+static void Render() {
+  memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+
+  switch (currentState) {
+  case SPECTRUM:
+    RenderSpectrum();
+    break;
+  case FREQ_INPUT:
     RenderFreqInput();
+    break;
+  case STILL:
+    RenderStill();
+    break;
   }
 
   ST7565_BlitFullScreen();
@@ -986,7 +1064,6 @@ bool HandleUserInput() {
 
   if (btn == 255) {
     btnCounter = 0;
-
     return true;
   }
 
@@ -994,6 +1071,7 @@ bool HandleUserInput() {
     btnCounter++;
     SYSTEM_DelayMs(20);
   }
+
   if (btnPrev == 255 || btnCounter > 16) {
     switch (currentState) {
     case SPECTRUM:
@@ -1001,6 +1079,9 @@ bool HandleUserInput() {
       break;
     case FREQ_INPUT:
       OnKeyDownFreqInput(btn);
+      break;
+    case STILL:
+      OnKeyDownStill(btn);
       break;
     }
     RenderStatus();
@@ -1049,9 +1130,10 @@ static void Update() {
   }
 
   // check peak & (re)start listening mode if peak over level
-  if (ScanDone() || isListening || settings.isStillMode) {
+  if (ScanDone() || isListening) {
     redrawScreen = true;
     UpdatePeakInfo();
+    TuneToPeak();
     if (IsPeakOverLevel()) {
       TuneToPeak();
       ToggleRX(true);
@@ -1066,10 +1148,45 @@ static void Update() {
   NextScanStep();
 }
 
+static void UpdateStill() {
+  // skip scanning while listening
+  if (isListening && listenT) {
+    listenT--;
+    SYSTEM_DelayMs(1);
+    return;
+  }
+
+  peak.rssi = 0;
+  scanInfo.rssi = 0;
+  scanInfo.rssiMax = 0;
+
+  // prepare to check if peak over level while listening
+  if (isListening) {
+    SetBW(GetBWIndex());
+    Scan();
+    SetBW(settings.listenBw);
+  } else {
+    Scan();
+  }
+
+  redrawScreen = true;
+  UpdatePeakInfoForce();
+
+  if (IsPeakOverLevel()) {
+    ToggleRX(true);
+    listenT = 1000;
+    return;
+  }
+
+  ToggleRX(false);
+}
+
 static void Tick() {
   if (HandleUserInput()) {
     switch (currentState) {
-    // case MENU:
+    case STILL:
+      UpdateStill();
+      break;
     case SPECTRUM:
       Update();
       break;
