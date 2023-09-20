@@ -241,14 +241,16 @@ void UI_DisplayMain(void)
 								Channel = gEeprom.TX_CHANNEL;
 							}
 							if (Channel == i) {
-								NUMBER_ToDigits(gEeprom.VfoInfo[i].pTX->Frequency, String);
+								frequency = gEeprom.VfoInfo[i].pTX->Frequency;
 							} else {
-								NUMBER_ToDigits(gEeprom.VfoInfo[i].pRX->Frequency, String);
+								frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 							}
 						} else {
-							NUMBER_ToDigits(gEeprom.VfoInfo[i].pRX->Frequency, String);
+							frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 						}
-						UI_DisplayFrequency(String, 31, i * 4, false, false);
+						// UI_DisplayFrequency(String, 31, i * 4, false, false);
+                        sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                        UI_PrintString(String, 31, 112, i * 4, 8, true);
 						if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
 							const uint8_t Attributes = gMR_ChannelAttributes[gEeprom.ScreenChannel[i]];
 							if (Attributes & MR_CH_SCANLIST1) {
@@ -258,7 +260,7 @@ void UI_DisplayMain(void)
 								memcpy(pLine0 + 120, BITMAP_ScanList, sizeof(BITMAP_ScanList));
 							}
 						}
-						UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
+						// UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
 						break;
 					case MDF_CHANNEL:
 						sprintf(String, "CH-%03d", gEeprom.ScreenChannel[i] + 1);
@@ -283,13 +285,11 @@ void UI_DisplayMain(void)
                             memset(String, 0, sizeof(String));
                             memmove(String, gEeprom.VfoInfo[i].Name, 10);
                         }
-                        UI_PrintString(String, 31, 112, Line, 8 , true);
+                        UI_PrintStringSmall(String, 31 + 8, 0, Line);
 
                         // show the channel frequency below the channel number/name
-                        /* sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
-                        UI_PrintString(String, 31, 112, Line + 1, 8, true); */
-                        NUMBER_ToDigits(frequency, String);
-                        UI_DisplaySmallDigits(2, String, 31, Line + 2);
+                        sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                        UI_PrintStringSmall(String, 31 + 8, 0, Line + 1);
 
                         break;
 					}
@@ -300,15 +300,17 @@ void UI_DisplayMain(void)
 						} else {
 							Channel = gEeprom.TX_CHANNEL;
 						}
-						if (Channel == i) {
-							NUMBER_ToDigits(gEeprom.VfoInfo[i].pTX->Frequency, String);
+							if (Channel == i) {
+								frequency = gEeprom.VfoInfo[i].pTX->Frequency;
+							} else {
+								frequency = gEeprom.VfoInfo[i].pRX->Frequency;
+							}
 						} else {
-							NUMBER_ToDigits(gEeprom.VfoInfo[i].pRX->Frequency, String);
+							frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 						}
-					} else {
-						NUMBER_ToDigits(gEeprom.VfoInfo[i].pRX->Frequency, String);
-					}
-					UI_DisplayFrequency(String, 31, i * 4, false, false);
+					// UI_DisplayFrequency(String, 31, i * 4, false, false);
+                        sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                        UI_PrintString(String, 31, 112, i * 4, 8, true);
 					if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
 						const uint8_t Attributes = gMR_ChannelAttributes[gEeprom.ScreenChannel[i]];
 						if (Attributes & MR_CH_SCANLIST1) {
@@ -318,7 +320,7 @@ void UI_DisplayMain(void)
 							memcpy(pLine0 + 120, BITMAP_ScanList, sizeof(BITMAP_ScanList));
 						}
 					}
-					UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
+					// UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
 				}
 			}
 		}
