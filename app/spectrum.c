@@ -29,8 +29,8 @@
 #include "radio.h"
 #include "settings.h"
 #include "ui/helper.h"
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 
 static uint16_t R30, R37, R3D, R43, R47, R48, R4B, R7E;
 const static uint32_t F_MIN = 1800000;
@@ -674,6 +674,7 @@ static void UpdateFreqInput(KEY_Code_t key) {
       base /= 10;
     }
   }
+  redrawScreen = true;
 }
 
 static void Blacklist() { rssiHistory[peak.i] = 255; }
