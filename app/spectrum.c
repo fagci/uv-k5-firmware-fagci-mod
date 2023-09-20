@@ -940,6 +940,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
             }
             break;
     }
+    redrawScreen = true;
 }
 
 static void RenderFreqInput() {
