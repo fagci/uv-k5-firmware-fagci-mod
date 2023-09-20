@@ -230,6 +230,7 @@ void UI_DisplayMain(void)
 			if (gInputBoxIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) && gEeprom.TX_CHANNEL == i) {
 				UI_DisplayFrequency(gInputBox, 31, i * 4, true, false);
 			} else {
+				uint32_t frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 				if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i]) || gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
 					if (gCurrentFunction == FUNCTION_TRANSMIT) {
 						if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
@@ -257,7 +258,6 @@ void UI_DisplayMain(void)
 							memcpy(pLine0 + 120, BITMAP_ScanList, sizeof(BITMAP_ScanList));
 						}
 					}
-					UI_DisplaySmallDigits(2, String + 6, 112, Line + 1);
 				} else if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_CHANNEL) {
 					sprintf(String, "CH-%03d", gEeprom.ScreenChannel[i] + 1);
 					UI_PrintString(String, 31, 112, i * 4, 8, true);
