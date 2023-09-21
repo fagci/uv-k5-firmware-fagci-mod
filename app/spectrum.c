@@ -43,7 +43,8 @@ enum State {
   SPECTRUM,
   FREQ_INPUT,
   STILL,
-} currentState = SPECTRUM, previousState = SPECTRUM;
+} currentState = SPECTRUM,
+  previousState = SPECTRUM;
 
 struct PeakInfo {
   uint16_t t;
@@ -97,10 +98,14 @@ enum MenuState {
   MENU_IF,
   MENU_RF,
   MENU_RFW,
+  MENU_AGC_FIX_MODE,
+  MENU_AGC_FIX_INDEX,
+  MENU_AGCDC,
 } menuState;
 
 char *menuItems[] = {
-    "", "AFDAC", "PGA", "MIXER", "LNA", "LNAS", "IF", "RF", "RFWe",
+    "",   "AFDAC", "PGA",  "MIXER", "LNA",  "LNAS",
+    "IF", "RF",    "RFWe", "AGCM",  "AGCI", "AGCDC",
 };
 
 static uint16_t GetRegMenuValue(enum MenuState st) {
@@ -121,6 +126,12 @@ static uint16_t GetRegMenuValue(enum MenuState st) {
     return (BK4819_ReadRegister(0x43) >> 12) & 0b111;
   case MENU_RFW:
     return (BK4819_ReadRegister(0x43) >> 9) & 0b111;
+  case MENU_AGC_FIX_MODE:
+    return (BK4819_ReadRegister(0x7E) >> 15) & 0b1;
+  case MENU_AGC_FIX_INDEX:
+    return (BK4819_ReadRegister(0x7E) >> 12) & 0b111;
+  case MENU_AGCDC:
+    return BK4819_ReadRegister(0x7E) & 0b111;
   default:
     return 0;
   }
@@ -169,6 +180,20 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
     vmax = 0b111;
     offset = 9;
     break;
+  case MENU_AGC_FIX_MODE:
+    regnum = 0x7E;
+    vmax = 0b1;
+    offset = 15;
+    break;
+  case MENU_AGC_FIX_INDEX:
+    regnum = 0x7E;
+    vmax = 0b111;
+    offset = 12;
+    break;
+  case MENU_AGCDC:
+    regnum = 0x7E;
+    vmax = 0b111;
+    break;
   default:
     return;
   }
@@ -184,8 +209,8 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
 }
 
 void SetState(enum State state) {
-    previousState = currentState;
-    currentState = state;
+  previousState = currentState;
+  currentState = state;
 }
 
 char *bwOptions[] = {"25k", "12.5k", "6.25k"};
@@ -331,6 +356,7 @@ static void SetModulation(ModulationType type) {
     reg |= 0b101 << 8;
     break;
   }
+  BK4819_WriteRegister(BK4819_REG_47, reg);
   if (type == MOD_USB) {
     BK4819_WriteRegister(0x3D, 0b010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
@@ -338,14 +364,14 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(0x4B, R4B | (1 << 5));
     BK4819_WriteRegister(0x7E, R7E);
   } else if (type == MOD_AM) {
-    uint16_t r7e = BK4819_ReadRegister(0x7E);
-    r7e &= ~(0b111);
-    r7e |= 0b101;
-    r7e &= ~(0b111 << 12);
-    r7e |= 0b010 << 12;
-    r7e &= ~(1 << 15);
-    r7e |= 1 << 15;
-    BK4819_WriteRegister(0x7E, R7E);
+    reg = BK4819_ReadRegister(0x7E);
+    reg &= ~(0b111);
+    reg |= 0b101;
+    reg &= ~(0b111 << 12);
+    reg |= 0b010 << 12;
+    reg &= ~(1 << 15);
+    reg |= 1 << 15;
+    BK4819_WriteRegister(0x7E, reg);
   } else {
     BK4819_WriteRegister(0x3D, R3D);
     BK4819_WriteRegister(BK4819_REG_37, R37);
@@ -353,7 +379,6 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(0x4B, R4B);
     BK4819_WriteRegister(0x7E, R7E);
   }
-  BK4819_WriteRegister(BK4819_REG_47, reg);
 }
 
 static void ToggleAFDAC(bool on) {
@@ -416,7 +441,9 @@ static void ResetPeak() {
   peak.f = 0;
 }
 
-bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
+bool IsCenterMode() {
+  return false; /*settings.scanStepIndex < S_STEP_2_5kHz;*/
+}
 uint8_t GetStepsCount() { return 128 >> settings.stepsCount; }
 uint16_t GetScanStep() { return scanStepValues[settings.scanStepIndex]; }
 uint32_t GetBW() { return GetStepsCount() * GetScanStep(); }
@@ -529,7 +556,6 @@ static void ResetBlacklist() {
 
 static void NewBandOrLevel() {
   ResetPeak();
-  ResetBlacklist();
   InitScan();
   ToggleRX(false);
   scanInfo.rssiMin = 255;
@@ -554,16 +580,13 @@ static void UpdatePeakInfoForce() {
   peak.f = scanInfo.fPeak;
   peak.i = scanInfo.iPeak;
   if (settings.rssiTriggerLevel == 255) {
-    settings.rssiTriggerLevel = scanInfo.rssiMax;
+    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax, 0, 255);
   }
 }
 
 static void UpdatePeakInfo() {
-  // FIXME: peak > rssiMax is temporary solution to listen highest peak
-  if (peak.f && peak.t < 1024 && peak.rssi >= scanInfo.rssiMax)
-    return;
-
-  UpdatePeakInfoForce();
+  if (peak.f == 0 || peak.t >= 512 || peak.rssi < scanInfo.rssiMax)
+    UpdatePeakInfoForce();
 }
 
 static void Measure() { rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi(); }
@@ -738,7 +761,7 @@ static void DrawStatus() {
       GUI_DisplaySmallest(String, 88, 2, true, true);
     }
   } else {
-    sprintf(String, "%dx%3d.%02dk %d.%03dms %s %s", GetStepsCount(),
+    sprintf(String, "%ux%u.%02uk %u.%ums %s %s", GetStepsCount(),
             GetScanStep() / 100, GetScanStep() % 100, settings.scanDelay / 1000,
             settings.scanDelay % 1000,
             modulationTypeOptions[settings.modulationType],
@@ -750,27 +773,27 @@ static void DrawStatus() {
 static void DrawCurrentF() {
   char String[16];
 
-  sprintf(String, "%3d.%04d", fMeasure / 100000, fMeasure % 100000);
-  UI_PrintString(String, 2, 127, 0, 8, 1);
+  sprintf(String, "%u.%04u", fMeasure / 100000, fMeasure % 100000);
+  UI_PrintString(String, 0, 127, 0, 8, 1);
 }
 
 static void DrawNums() {
   char String[16];
 
   if (IsCenterMode()) {
-    sprintf(String, "%04d.%04d \xB1%d.%02dk", currentFreq / 100000,
+    sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
             currentFreq % 100000, settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
     GUI_DisplaySmallest(String, 36, 49, false, true);
   } else {
-    sprintf(String, "%04d.%04d", GetFStart() / 100000, GetFStart() % 100000);
+    sprintf(String, "%u.%04u", GetFStart() / 100000, GetFStart() % 100000);
     GUI_DisplaySmallest(String, 0, 49, false, true);
 
-    sprintf(String, "\xB1%d.%02dk", settings.frequencyChangeStep / 100,
+    sprintf(String, "\xB1%u.%02uk", settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
-    GUI_DisplaySmallest(String, 56, 49, false, true);
+    GUI_DisplaySmallest(String, 48, 49, false, true);
 
-    sprintf(String, "%04d.%04d", GetFEnd() / 100000, GetFEnd() % 100000);
+    sprintf(String, "%u.%04u", GetFEnd() / 100000, GetFEnd() % 100000);
     GUI_DisplaySmallest(String, 93, 49, false, true);
   }
 }
@@ -841,10 +864,12 @@ static void OnKeyDown(uint8_t key) {
   case KEY_3:
     UpdateScanStep(1);
     NewBandOrLevel();
+    ResetBlacklist();
     break;
   case KEY_9:
     UpdateScanStep(-1);
     NewBandOrLevel();
+    ResetBlacklist();
     break;
   case KEY_2:
     UpdateFreqChangeStep(GetScanStep() * 4);
@@ -859,6 +884,7 @@ static void OnKeyDown(uint8_t key) {
     }
     UpdateCurrentFreq(settings.frequencyChangeStep);
     NewBandOrLevel();
+    ResetBlacklist();
     break;
   case KEY_DOWN:
     if (menuState != MENU_OFF) {
@@ -867,9 +893,11 @@ static void OnKeyDown(uint8_t key) {
     }
     UpdateCurrentFreq(-settings.frequencyChangeStep);
     NewBandOrLevel();
+    ResetBlacklist();
     break;
   case KEY_SIDE1:
     Blacklist();
+    ResetPeak();
     break;
   case KEY_STAR:
     UpdateRssiTriggerLevel(1);
@@ -892,6 +920,7 @@ static void OnKeyDown(uint8_t key) {
   case KEY_4:
     ToggleStepsCount();
     NewBandOrLevel();
+    ResetBlacklist();
     break;
   case KEY_SIDE2:
     ToggleBacklight();
@@ -938,6 +967,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
     if (tempFreq >= F_MIN && tempFreq <= F_MAX) {
       peak.f = currentFreq = tempFreq;
       NewBandOrLevel();
+      ResetBlacklist();
       SetState(previousState);
       peak.i = GetStepsCount() >> 1;
       ResetRSSIHistory();
@@ -989,10 +1019,10 @@ void OnKeyDownStill(KEY_Code_t key) {
     BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
     break;
   case KEY_MENU:
-    if (menuState < MENU_RFW) {
+    if (menuState < MENU_AGCDC) {
       menuState++;
     } else {
-      menuState = MENU_AFDAC;
+      menuState = MENU_OFF;
     }
     break;
   case KEY_EXIT:
@@ -1000,6 +1030,7 @@ void OnKeyDownStill(KEY_Code_t key) {
       SetState(SPECTRUM);
       break;
     }
+    NewBandOrLevel();
     menuState = MENU_OFF;
     break;
   default:
@@ -1034,10 +1065,11 @@ static void RenderStill() {
     gFrameBuffer[2][i] = 0b11000000;
   }
 
-  for (int i = 0; i < peak.rssi; ++i) {
+  for (int i = 0; i < (peak.rssi >> 1); ++i) {
     gFrameBuffer[2][i] |= 0b00011110;
   }
-  gFrameBuffer[2][settings.rssiTriggerLevel] = 0b11111111;
+
+  gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
 }
 
 static void Render() {
@@ -1072,7 +1104,7 @@ bool HandleUserInput() {
     SYSTEM_DelayMs(20);
   }
 
-  if (btnPrev == 255 || btnCounter > 16) {
+  if (btnPrev == 255 || btnCounter > 40) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(btn);
