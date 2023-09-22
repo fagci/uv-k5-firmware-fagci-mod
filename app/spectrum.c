@@ -540,7 +540,6 @@ static void ResetScanStats() {
 }
 
 static void InitScan() {
-  preventKeypress = true;
   ResetScanStats();
   scanInfo.i = 0;
   scanInfo.f = GetFStart();
@@ -855,12 +854,14 @@ static void OnKeyDown(uint8_t key) {
     if (settings.scanDelay < 8000) {
       settings.scanDelay += 100;
       NewBandOrLevel();
+      preventKeypress = true;
     }
     break;
   case KEY_7:
     if (settings.scanDelay > 400) {
       settings.scanDelay -= 100;
       NewBandOrLevel();
+      preventKeypress = true;
     }
     break;
   case KEY_3:
@@ -887,6 +888,7 @@ static void OnKeyDown(uint8_t key) {
     UpdateCurrentFreq(settings.frequencyChangeStep);
     NewBandOrLevel();
     ResetBlacklist();
+    preventKeypress = true;
     break;
   case KEY_DOWN:
     if (menuState != MENU_OFF) {
@@ -896,6 +898,7 @@ static void OnKeyDown(uint8_t key) {
     UpdateCurrentFreq(-settings.frequencyChangeStep);
     NewBandOrLevel();
     ResetBlacklist();
+    preventKeypress = true;
     break;
   case KEY_SIDE1:
     Blacklist();
@@ -961,6 +964,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
   case KEY_EXIT:
     if (freqInputIndex == 0) {
       SetState(previousState);
+      preventKeypress = true;
       break;
     }
     UpdateFreqInput(key);
@@ -973,6 +977,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
       SetState(previousState);
       peak.i = GetStepsCount() >> 1;
       ResetRSSIHistory();
+      preventKeypress = true;
     }
     break;
   }
@@ -1034,6 +1039,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     }
     NewBandOrLevel();
     menuState = MENU_OFF;
+    preventKeypress = true;
     break;
   default:
     break;
