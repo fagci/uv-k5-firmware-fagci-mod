@@ -756,14 +756,14 @@ static void DrawStatus() {
             bwOptions[settings.listenBw]);
     GUI_DisplaySmallest(String, 1, 2, true, true);
     if (menuState != MENU_OFF) {
-      sprintf(String, "%s:%d", menuItems[menuState],
+      sprintf(String, "%s:%u", menuItems[menuState],
               GetRegMenuValue(menuState));
       GUI_DisplaySmallest(String, 88, 2, true, true);
     }
   } else {
     sprintf(String, "%ux%u.%02uk %u.%ums %s %s", GetStepsCount(),
             GetScanStep() / 100, GetScanStep() % 100, settings.scanDelay / 1000,
-            settings.scanDelay % 1000,
+            settings.scanDelay / 100 % 10,
             modulationTypeOptions[settings.modulationType],
             bwOptions[settings.listenBw]);
     GUI_DisplaySmallest(String, 1, 2, true, true);
@@ -773,7 +773,7 @@ static void DrawStatus() {
 static void DrawCurrentF() {
   char String[16];
 
-  sprintf(String, "%u.%04u", fMeasure / 100000, fMeasure % 100000);
+  sprintf(String, "%u.%05u", fMeasure / 100000, fMeasure % 100000);
   UI_PrintString(String, 0, 127, 0, 8, 1);
 }
 
@@ -786,14 +786,14 @@ static void DrawNums() {
             settings.frequencyChangeStep % 100);
     GUI_DisplaySmallest(String, 36, 49, false, true);
   } else {
-    sprintf(String, "%u.%04u", GetFStart() / 100000, GetFStart() % 100000);
+    sprintf(String, "%u.%05u", GetFStart() / 100000, GetFStart() % 100000);
     GUI_DisplaySmallest(String, 0, 49, false, true);
 
     sprintf(String, "\xB1%u.%02uk", settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
     GUI_DisplaySmallest(String, 48, 49, false, true);
 
-    sprintf(String, "%u.%04u", GetFEnd() / 100000, GetFEnd() % 100000);
+    sprintf(String, "%u.%05u", GetFEnd() / 100000, GetFEnd() % 100000);
     GUI_DisplaySmallest(String, 93, 49, false, true);
   }
 }
