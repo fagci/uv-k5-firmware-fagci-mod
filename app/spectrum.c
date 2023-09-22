@@ -344,7 +344,18 @@ static void ToggleAFBit(bool on) {
   BK4819_WriteRegister(BK4819_REG_47, reg);
 }
 
-static void ResetRegisters() {
+static void BackupRegisters() {
+  R30 = BK4819_ReadRegister(0x30);
+  R37 = BK4819_ReadRegister(0x37);
+  R3D = BK4819_ReadRegister(0x3D);
+  R43 = BK4819_ReadRegister(0x43);
+  R47 = BK4819_ReadRegister(0x47);
+  R48 = BK4819_ReadRegister(0x48);
+  R4B = BK4819_ReadRegister(0x4B);
+  R7E = BK4819_ReadRegister(0x7E);
+}
+
+static void RestoreRegisters() {
   BK4819_WriteRegister(0x30, R30);
   BK4819_WriteRegister(0x37, R37);
   BK4819_WriteRegister(0x3D, R3D);
@@ -355,23 +366,13 @@ static void ResetRegisters() {
   BK4819_WriteRegister(0x7E, R7E);
 }
 
+uint8_t reg47values[] = {1, 7, 5};
+
 static void SetModulation(ModulationType type) {
-  ResetRegisters();
+  RestoreRegisters();
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
   reg &= ~(0b111 << 8);
-  reg |= 0b1 << 8;
-  switch (type) {
-  case MOD_FM:
-    reg |= 0b1 << 8;
-    break;
-  case MOD_AM:
-    reg |= 0b111 << 8;
-    break;
-  case MOD_USB:
-    reg |= 0b101 << 8;
-    break;
-  }
-  BK4819_WriteRegister(BK4819_REG_47, reg);
+  BK4819_WriteRegister(BK4819_REG_47, reg | (reg47values[type] << 8));
   if (type == MOD_USB) {
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
@@ -464,7 +465,7 @@ static void TuneToPeak() { SetF(scanInfo.f = peak.f); }
 
 static void DeInitSpectrum() {
   SetF(currentFreq);
-  ResetRegisters();
+  RestoreRegisters();
   isInitialized = false;
 }
 
@@ -483,14 +484,6 @@ uint8_t GetRssi() {
   ResetRSSI();
   SYSTICK_DelayUs(settings.scanDelay);
   return clamp(BK4819_GetRSSI(), 0, 255);
-}
-
-static void ListenBK1080() { BK1080_Mute(false); }
-
-static void ListenBK4819() {
-  SetBW(settings.listenBw);
-  ToggleAFDAC(true);
-  ToggleAFBit(true);
 }
 
 static bool audioState = true;
@@ -517,10 +510,12 @@ static void ToggleRX(bool on) {
 
   if (on) {
     if (IsBroadcastFM(peak.f)) {
-      ListenBK1080();
+      BK1080_Mute(false);
     } else {
       SetBW(settings.listenBw);
-      ListenBK4819();
+  SetBW(settings.listenBw);
+  ToggleAFDAC(true);
+  ToggleAFBit(true);
     }
   } else {
     ToggleAFDAC(false);
@@ -549,10 +544,10 @@ static void InitScan() {
 }
 
 static void ResetBlacklist() {
-  ResetRSSIHistory();
-  /* for (int i = 0; i < 128; ++i) {
-      if (rssiHistory[i] == 255) rssiHistory[i] = 0;
-  } */
+  for (int i = 0; i < 128; ++i) {
+    if (rssiHistory[i] == 255)
+      rssiHistory[i] = 0;
+  }
 }
 
 static void NewBandOrLevel() {
@@ -975,7 +970,6 @@ static void OnKeyDownFreqInput(uint8_t key) {
       NewBandOrLevel();
       ResetBlacklist();
       SetState(previousState);
-      peak.i = GetStepsCount() >> 1;
       ResetRSSIHistory();
       preventKeypress = true;
     }
@@ -1246,14 +1240,7 @@ void APP_RunSpectrum() {
   // TX here coz it always? set to active VFO
   currentFreq = gEeprom.VfoInfo[gEeprom.TX_CHANNEL].pRX->Frequency;
 
-  R30 = BK4819_ReadRegister(0x30);
-  R37 = BK4819_ReadRegister(0x37);
-  R3D = BK4819_ReadRegister(0x3D);
-  R43 = BK4819_ReadRegister(0x43);
-  R47 = BK4819_ReadRegister(0x47);
-  R48 = BK4819_ReadRegister(0x48);
-  R4B = BK4819_ReadRegister(0x4B);
-  R7E = BK4819_ReadRegister(0x7E);
+  BackupRegisters();
 
   // as in initial settings of spectrum
   BK4819_SetFilterBandwidth(BK4819_FILTER_BW_WIDE);
