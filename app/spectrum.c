@@ -142,6 +142,7 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   uint16_t vmin = 0, vmax;
   uint8_t regnum = 0;
   uint8_t offset = 0;
+  uint16_t inc = 1;
   switch (st) {
   case MENU_AFDAC:
     regnum = 0x48;
@@ -169,6 +170,7 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   case MENU_IF:
     regnum = 0x3D;
     vmax = 0xFFFF;
+    inc = 0x2aab;
     break;
   case MENU_RF:
     regnum = 0x43;
@@ -199,10 +201,10 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   }
   uint16_t reg = BK4819_ReadRegister(regnum);
   if (add && v < vmax) {
-    v++;
+    v += inc;
   }
   if (!add && v > vmin) {
-    v--;
+    v -= inc;
   }
   reg &= ~(vmax << offset);
   BK4819_WriteRegister(regnum, reg | (v << offset));
@@ -261,6 +263,7 @@ bool isInitialized;
 
 bool isListening = false;
 bool redrawScreen = true;
+bool preventKeypress = true;
 
 // GUI functions
 
@@ -341,7 +344,19 @@ static void ToggleAFBit(bool on) {
   BK4819_WriteRegister(BK4819_REG_47, reg);
 }
 
+static void ResetRegisters() {
+  BK4819_WriteRegister(0x30, R30);
+  BK4819_WriteRegister(0x37, R37);
+  BK4819_WriteRegister(0x3D, R3D);
+  BK4819_WriteRegister(0x43, R43);
+  BK4819_WriteRegister(0x47, R47);
+  BK4819_WriteRegister(0x48, R48);
+  BK4819_WriteRegister(0x4B, R4B);
+  BK4819_WriteRegister(0x7E, R7E);
+}
+
 static void SetModulation(ModulationType type) {
+  ResetRegisters();
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
   reg &= ~(0b111 << 8);
   reg |= 0b1 << 8;
@@ -358,26 +373,19 @@ static void SetModulation(ModulationType type) {
   }
   BK4819_WriteRegister(BK4819_REG_47, reg);
   if (type == MOD_USB) {
-    BK4819_WriteRegister(0x3D, 0b010101101000101);
+    BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
     BK4819_WriteRegister(0x4B, R4B | (1 << 5));
-    BK4819_WriteRegister(0x7E, R7E);
   } else if (type == MOD_AM) {
-    reg = BK4819_ReadRegister(0x7E);
+    /* reg = BK4819_ReadRegister(0x7E);
     reg &= ~(0b111);
     reg |= 0b101;
     reg &= ~(0b111 << 12);
     reg |= 0b010 << 12;
     reg &= ~(1 << 15);
     reg |= 1 << 15;
-    BK4819_WriteRegister(0x7E, reg);
-  } else {
-    BK4819_WriteRegister(0x3D, R3D);
-    BK4819_WriteRegister(BK4819_REG_37, R37);
-    BK4819_WriteRegister(0x48, R48);
-    BK4819_WriteRegister(0x4B, R4B);
-    BK4819_WriteRegister(0x7E, R7E);
+    BK4819_WriteRegister(0x7E, reg); */
   }
 }
 
@@ -456,14 +464,7 @@ static void TuneToPeak() { SetF(scanInfo.f = peak.f); }
 
 static void DeInitSpectrum() {
   SetF(currentFreq);
-  BK4819_WriteRegister(0x30, R30);
-  BK4819_WriteRegister(0x37, R37);
-  BK4819_WriteRegister(0x3D, R3D);
-  BK4819_WriteRegister(0x43, R43);
-  BK4819_WriteRegister(0x47, R47);
-  BK4819_WriteRegister(0x48, R48);
-  BK4819_WriteRegister(0x4B, R4B);
-  BK4819_WriteRegister(0x7E, R7E);
+  ResetRegisters();
   isInitialized = false;
 }
 
@@ -539,6 +540,7 @@ static void ResetScanStats() {
 }
 
 static void InitScan() {
+  preventKeypress = true;
   ResetScanStats();
   scanInfo.i = 0;
   scanInfo.f = GetFStart();
@@ -580,7 +582,7 @@ static void UpdatePeakInfoForce() {
   peak.f = scanInfo.fPeak;
   peak.i = scanInfo.iPeak;
   if (settings.rssiTriggerLevel == 255) {
-    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax, 0, 255);
+    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax + 2, 0, 255);
   }
 }
 
@@ -1164,6 +1166,7 @@ static void Update() {
   // check peak & (re)start listening mode if peak over level
   if (ScanDone() || isListening) {
     redrawScreen = true;
+    preventKeypress = false;
     UpdatePeakInfo();
     TuneToPeak();
     if (IsPeakOverLevel()) {
@@ -1214,21 +1217,22 @@ static void UpdateStill() {
 }
 
 static void Tick() {
-  if (HandleUserInput()) {
-    switch (currentState) {
-    case STILL:
-      UpdateStill();
-      break;
-    case SPECTRUM:
-      Update();
-      break;
-    case FREQ_INPUT:
-      break;
-    }
-    if (redrawScreen) {
-      Render();
-      redrawScreen = false;
-    }
+  if (!preventKeypress) {
+    HandleUserInput();
+  }
+  switch (currentState) {
+  case STILL:
+    UpdateStill();
+    break;
+  case SPECTRUM:
+    Update();
+    break;
+  case FREQ_INPUT:
+    break;
+  }
+  if (redrawScreen) {
+    Render();
+    redrawScreen = false;
   }
 }
 
@@ -1250,6 +1254,7 @@ void APP_RunSpectrum() {
 
   NewBandOrLevel();
   ResetRSSIHistory();
+  SetModulation(settings.modulationType = MOD_FM);
   // HACK: to make sure that all params are set to our default
   ToggleRX(true), ToggleRX(false);
   isInitialized = true;
