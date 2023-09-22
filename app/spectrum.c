@@ -898,6 +898,7 @@ static void OnKeyDown(uint8_t key) {
   case KEY_SIDE1:
     Blacklist();
     ResetPeak();
+    preventKeypress = true;
     break;
   case KEY_STAR:
     UpdateRssiTriggerLevel(1);
