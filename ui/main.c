@@ -247,7 +247,7 @@ void UI_DisplayMain(void)
 							frequency = gEeprom.VfoInfo[i].pRX->Frequency;
 						}
 					// UI_DisplayFrequency(String, 31, i * 4, false, false);
-                        sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                        sprintf(String, "%u.%05u", frequency / 100000, frequency % 100000);
                         UI_PrintString(String, 31, 112, i * 4, 8, true);
 					if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
 						const uint8_t Attributes = gMR_ChannelAttributes[gEeprom.ScreenChannel[i]];
@@ -282,7 +282,7 @@ void UI_DisplayMain(void)
                     UI_PrintStringSmall(String, 31 + 8, 0, Line);
 
                     // show the channel frequency below the channel number/name
-                    sprintf(String, "%03u.%05u", frequency / 100000, frequency % 100000);
+                    sprintf(String, "%u.%05u", frequency / 100000, frequency % 100000);
                     UI_PrintStringSmall(String, 31 + 8, 0, Line + 1);
                 }
 			}

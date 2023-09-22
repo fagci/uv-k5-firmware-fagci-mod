@@ -1171,7 +1171,6 @@ static void Update() {
     UpdatePeakInfo();
     TuneToPeak();
     if (IsPeakOverLevel()) {
-      TuneToPeak();
       ToggleRX(true);
       listenT = 1000;
       return;
