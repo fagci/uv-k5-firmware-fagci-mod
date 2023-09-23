@@ -264,6 +264,7 @@ bool isInitialized;
 bool isListening = false;
 bool redrawScreen = true;
 bool preventKeypress = true;
+static char String[32];
 
 // GUI functions
 
@@ -513,9 +514,9 @@ static void ToggleRX(bool on) {
       BK1080_Mute(false);
     } else {
       SetBW(settings.listenBw);
-  SetBW(settings.listenBw);
-  ToggleAFDAC(true);
-  ToggleAFBit(true);
+      SetBW(settings.listenBw);
+      ToggleAFDAC(true);
+      ToggleAFBit(true);
     }
   } else {
     ToggleAFDAC(false);
@@ -589,27 +590,48 @@ static void Measure() { rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi(); }
 
 // Update things by keypress
 
-static void UpdateRssiTriggerLevel(int diff) {
-  settings.rssiTriggerLevel += diff;
+static void UpdateRssiTriggerLevel(bool inc) {
+  if (inc)
+    settings.rssiTriggerLevel++;
+  else
+    settings.rssiTriggerLevel--;
 }
 
-static void UpdateScanStep(int diff) {
-  if ((diff > 0 && settings.scanStepIndex < S_STEP_100_0kHz) ||
-      (diff < 0 && settings.scanStepIndex > 0)) {
-    settings.scanStepIndex += diff;
-    SetBW(GetBWIndex());
-    scanInfo.rssiMin = 255;
-    settings.frequencyChangeStep = GetBW() >> 1;
+static void UpdateScanDelay(bool inc) {
+  if (inc && settings.scanDelay < 8000) {
+    settings.scanDelay += 100;
+  } else if (inc && settings.scanDelay < 8000) {
+    settings.scanDelay -= 100;
+  } else {
+    return;
+  }
+  NewBandOrLevel();
+  preventKeypress = true;
+}
+
+static void UpdateScanStep(bool inc) {
+  if (inc && settings.scanStepIndex < S_STEP_100_0kHz) {
+    settings.scanStepIndex++;
+  } else if (!inc && settings.scanStepIndex > 0) {
+    settings.scanStepIndex--;
+  } else {
+    return;
+  }
+  SetBW(GetBWIndex());
+  scanInfo.rssiMin = 255;
+  settings.frequencyChangeStep = GetBW() >> 1;
+}
+
+static void UpdateCurrentFreq(bool inc) {
+  if (inc && currentFreq < F_MAX) {
+    currentFreq += settings.frequencyChangeStep;
+  }
+  if (!inc && currentFreq > F_MIN) {
+    currentFreq -= settings.frequencyChangeStep;
   }
 }
 
-static void UpdateCurrentFreq(long int diff) {
-  if ((diff > 0 && currentFreq < F_MAX) || (diff < 0 && currentFreq > F_MIN)) {
-    currentFreq += diff;
-  }
-}
-
-static void UpdateCurrentFreqStill(long int diff) {
+static void UpdateCurrentFreqStill(bool inc) {
   uint8_t offset = 50;
   switch (settings.modulationType) {
   case MOD_FM:
@@ -622,8 +644,11 @@ static void UpdateCurrentFreqStill(long int diff) {
     offset = 10;
     break;
   }
-  if ((offset > 0 && peak.f < F_MAX) || (offset < 0 && peak.f > F_MIN)) {
-    peak.f += diff * offset;
+  if (inc && fMeasure < F_MAX) {
+    fMeasure += offset;
+  }
+  if (!inc && fMeasure > F_MIN) {
+    fMeasure -= offset;
   }
 }
 
@@ -635,9 +660,9 @@ static void UpdateFreqChangeStep(long int diff) {
 static void ToggleModulation() {
   if (settings.modulationType < MOD_USB) {
     settings.modulationType++;
-  } else {
-    settings.modulationType = MOD_FM;
+    return;
   }
+  settings.modulationType = MOD_FM;
 }
 
 static void ToggleBW() {
@@ -745,8 +770,6 @@ static void DrawSpectrum() {
 }
 
 static void DrawStatus() {
-  char String[32];
-
   if (currentState == STILL) {
     sprintf(String, "%s %s", modulationTypeOptions[settings.modulationType],
             bwOptions[settings.listenBw]);
@@ -766,16 +789,12 @@ static void DrawStatus() {
   }
 }
 
-static void DrawCurrentF() {
-  char String[16];
-
-  sprintf(String, "%u.%05u", fMeasure / 100000, fMeasure % 100000);
+static void DrawF(uint32_t f) {
+  sprintf(String, "%u.%05u", f / 100000, f % 100000);
   UI_PrintString(String, 0, 127, 0, 8, 1);
 }
 
 static void DrawNums() {
-  char String[16];
-
   if (IsCenterMode()) {
     sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
             currentFreq % 100000, settings.frequencyChangeStep / 100,
@@ -846,26 +865,18 @@ static void DrawArrow(uint8_t x) {
 static void OnKeyDown(uint8_t key) {
   switch (key) {
   case KEY_1:
-    if (settings.scanDelay < 8000) {
-      settings.scanDelay += 100;
-      NewBandOrLevel();
-      preventKeypress = true;
-    }
+    UpdateScanDelay(true);
     break;
   case KEY_7:
-    if (settings.scanDelay > 400) {
-      settings.scanDelay -= 100;
-      NewBandOrLevel();
-      preventKeypress = true;
-    }
+    UpdateScanDelay(false);
     break;
   case KEY_3:
-    UpdateScanStep(1);
+    UpdateScanStep(true);
     NewBandOrLevel();
     ResetBlacklist();
     break;
   case KEY_9:
-    UpdateScanStep(-1);
+    UpdateScanStep(false);
     NewBandOrLevel();
     ResetBlacklist();
     break;
@@ -880,7 +891,7 @@ static void OnKeyDown(uint8_t key) {
       SetRegMenuValue(menuState, true);
       break;
     }
-    UpdateCurrentFreq(settings.frequencyChangeStep);
+    UpdateCurrentFreq(true);
     NewBandOrLevel();
     ResetBlacklist();
     preventKeypress = true;
@@ -890,7 +901,7 @@ static void OnKeyDown(uint8_t key) {
       SetRegMenuValue(menuState, false);
       break;
     }
-    UpdateCurrentFreq(-settings.frequencyChangeStep);
+    UpdateCurrentFreq(false);
     NewBandOrLevel();
     ResetBlacklist();
     preventKeypress = true;
@@ -901,12 +912,10 @@ static void OnKeyDown(uint8_t key) {
     preventKeypress = true;
     break;
   case KEY_STAR:
-    UpdateRssiTriggerLevel(1);
-    SYSTEM_DelayMs(90);
+    UpdateRssiTriggerLevel(true);
     break;
   case KEY_F:
-    UpdateRssiTriggerLevel(-1);
-    SYSTEM_DelayMs(90);
+    UpdateRssiTriggerLevel(false);
     break;
   case KEY_5:
     FreqInput();
@@ -928,6 +937,7 @@ static void OnKeyDown(uint8_t key) {
     break;
   case KEY_PTT:
     SetState(STILL);
+    TuneToPeak();
     break;
   case KEY_MENU:
     break;
@@ -985,22 +995,20 @@ void OnKeyDownStill(KEY_Code_t key) {
       SetRegMenuValue(menuState, true);
       break;
     }
-    UpdateCurrentFreqStill(1);
-    TuneToPeak();
+    UpdateCurrentFreqStill(true);
     break;
   case KEY_DOWN:
     if (menuState != MENU_OFF) {
       SetRegMenuValue(menuState, false);
       break;
     }
-    UpdateCurrentFreqStill(-1);
-    TuneToPeak();
+    UpdateCurrentFreqStill(false);
     break;
   case KEY_STAR:
-    UpdateRssiTriggerLevel(1);
+    UpdateRssiTriggerLevel(true);
     break;
   case KEY_F:
-    UpdateRssiTriggerLevel(-1);
+    UpdateRssiTriggerLevel(false);
     break;
   case KEY_5:
     FreqInput();
@@ -1032,6 +1040,7 @@ void OnKeyDownStill(KEY_Code_t key) {
       SetState(SPECTRUM);
       break;
     }
+    TuneToPeak();
     NewBandOrLevel();
     menuState = MENU_OFF;
     preventKeypress = true;
@@ -1057,12 +1066,12 @@ static void RenderSpectrum() {
   DrawArrow(peak.i << settings.stepsCount);
   DrawSpectrum();
   DrawRssiTriggerLevel();
-  DrawCurrentF();
+  DrawF(peak.f);
   DrawNums();
 }
 
 static void RenderStill() {
-  DrawCurrentF();
+  DrawF(fMeasure);
 
   for (int i = 0; i < 128; i += 4) {
     gFrameBuffer[2][i] = 0b11000000;
@@ -1169,7 +1178,6 @@ static void Update() {
     redrawScreen = true;
     preventKeypress = false;
     UpdatePeakInfo();
-    TuneToPeak();
     if (IsPeakOverLevel()) {
       ToggleRX(true);
       listenT = 1000;
