@@ -598,7 +598,7 @@ static void UpdateFreqChangeStep(bool inc) {
   if (inc && settings.frequencyChangeStep < 200000) {
     settings.frequencyChangeStep += diff;
   } else if (!inc && settings.frequencyChangeStep > 10000) {
-    settings.frequencyChangeStep += diff;
+    settings.frequencyChangeStep -= diff;
   }
 }
 
