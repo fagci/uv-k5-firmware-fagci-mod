@@ -586,11 +586,14 @@ static void UpdateCurrentFreq(bool inc) {
 
 static void UpdateCurrentFreqStill(bool inc) {
   uint8_t offset = modulationTypeOffsets[settings.modulationType];
-  if (inc && fMeasure < F_MAX) {
-    fMeasure += offset;
-  } else if (!inc && fMeasure > F_MIN) {
-    fMeasure -= offset;
+  uint32_t f = fMeasure;
+  if (inc && f < F_MAX) {
+    f += offset;
+  } else if (!inc && f > F_MIN) {
+    f -= offset;
   }
+  SetF(f);
+  redrawScreen = true;
 }
 
 static void UpdateFreqChangeStep(bool inc) {
