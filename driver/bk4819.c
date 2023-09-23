@@ -379,7 +379,6 @@ void BK4819_RX_TurnOn(void)
 	// Disable TX DSP
 	// Enable RX DSP
 	BK4819_WriteRegister(BK4819_REG_30, 0xBFF1);
-	BK4819_WriteRegister(BK4819_REG_7E, 0x902E); // 0x302E
 }
 
 void BK4819_PickRXFilterPathBasedOnFrequency(uint32_t Frequency)
@@ -527,7 +526,7 @@ void BK4819_Idle(void)
 void BK4819_ExitBypass(void)
 {
 	BK4819_SetAF(BK4819_AF_MUTE);
-	BK4819_WriteRegister(BK4819_REG_7E, 0x902E); // 0x302E
+	BK4819_WriteRegister(BK4819_REG_7E, 0x302E);
 }
 
 void BK4819_PrepareTransmit(void)
