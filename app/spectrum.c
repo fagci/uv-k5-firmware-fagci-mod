@@ -975,7 +975,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     break;
   case KEY_MENU:
     if (menuState == MENU_AGC) {
-      menuState = MENU_OFF;
+      menuState = MENU_PGA;
     } else {
       menuState++;
     }
