@@ -1046,10 +1046,10 @@ static void RenderStill() {
       }
     }
     sprintf(String, "%s", menuItems[idx]);
-    GUI_DisplaySmallest(String, offset + 1, row * 8 + 2, false,
+    GUI_DisplaySmallest(String, offset + 2, row * 8 + 2, false,
                         menuState != idx);
     sprintf(String, "%u", GetRegMenuValue(idx));
-    GUI_DisplaySmallest(String, offset + 1, (row + 1) * 8 + 1, false,
+    GUI_DisplaySmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                         menuState != idx);
   }
 }
