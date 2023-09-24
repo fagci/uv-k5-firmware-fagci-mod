@@ -42,6 +42,7 @@ const static uint32_t F_MAX = 130000000;
 bool isInitialized;
 
 bool isListening = true;
+bool monitorMode = false;
 bool redrawStatus = true;
 bool redrawScreen = false;
 bool newScanStart = true;
@@ -96,6 +97,34 @@ const uint16_t scanStepValues[] = {
     1,   10,  50,  100,
 
     250, 500, 625, 833, 1000, 1250, 2500, 10000,
+};
+
+const uint16_t scanStepBWRegValues[] = {
+    //  RX  RXw TX  BW
+    // 1
+    0b0000000001011000, // 6.25
+    // 10
+    0b0000000001011000, // 6.25
+    // 50
+    0b0000000001011000, // 6.25
+    // 100
+    0b0000000001011000, // 6.25
+    // 250
+    0b0000000001011000, // 6.25
+    // 500
+    0b0010010001011000, // 6.25
+    // 625
+    0b0100100001011000, // 6.25
+    // 833
+    0b0110110001001000, // 6.25
+    // 1000
+    0b0110110001001000, // 6.25
+    // 1250
+    0b0111111100001000, // 6.25
+    // 2500
+    0b0011000000101000, // 25
+    // 10000
+    0b0011000000101000, // 25
 };
 
 enum MenuState {
@@ -430,15 +459,8 @@ static void DeInitSpectrum() {
   isInitialized = false;
 }
 
-uint8_t GetBWIndex() {
-  uint16_t step = GetScanStep();
-  if (step < 1250) {
-    return BK4819_FILTER_BW_NARROWER;
-  } else if (step < 2500) {
-    return BK4819_FILTER_BW_NARROW;
-  } else {
-    return BK4819_FILTER_BW_WIDE;
-  }
+uint8_t GetBWRegValueForScan() {
+  return scanStepBWRegValues[settings.scanStepIndex];
 }
 
 uint8_t GetRssi() {
@@ -469,7 +491,11 @@ static void ToggleRX(bool on) {
   ToggleAFDAC(on);
   ToggleAFBit(on);
 
-  BK4819_SetFilterBandwidth(on ? settings.listenBw : GetBWIndex());
+  if (on) {
+    BK4819_SetFilterBandwidth(settings.listenBw);
+  } else {
+    BK4819_WriteRegister(0x47, GetBWRegValueForScan());
+  }
 }
 
 // Scan info
@@ -538,6 +564,11 @@ static void UpdatePeakInfo() {
 }
 
 static void Measure() { rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi(); }
+
+static void StartListening() {
+  listenT = 1000;
+  ToggleRX(true);
+}
 
 // Update things by keypress
 
@@ -813,7 +844,7 @@ static void DrawNums() {
 }
 
 static void DrawRssiTriggerLevel() {
-  if (settings.rssiTriggerLevel == 255)
+  if (settings.rssiTriggerLevel == 255 || monitorMode)
     return;
   uint8_t y = Rssi2Y(settings.rssiTriggerLevel);
   for (uint8_t x = 0; x < 128; x += 2) {
@@ -1009,6 +1040,10 @@ void OnKeyDownStill(KEY_Code_t key) {
   case KEY_6:
     ToggleListeningBW();
     break;
+  case KEY_SIDE1:
+    monitorMode = !monitorMode;
+    StartListening();
+    break;
   case KEY_SIDE2:
     ToggleBacklight();
     break;
@@ -1078,7 +1113,9 @@ static void RenderStill() {
     }
   }
 
-  gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
+  if (!monitorMode) {
+    gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
+  }
 
   const uint8_t PAD_LEFT = 4;
   const uint8_t CELL_WIDTH = 28;
@@ -1171,11 +1208,6 @@ static void NextScanStep() {
 
 static bool ScanDone() { return scanInfo.i >= scanInfo.measurementsCount; }
 
-static void StartListening() {
-  listenT = 1000;
-  ToggleRX(true);
-}
-
 static void UpdateScan() {
   Scan();
 
@@ -1219,14 +1251,14 @@ static void UpdateListening() {
     return;
   }
 
-  BK4819_SetFilterBandwidth(GetBWIndex());
+  BK4819_WriteRegister(0x47, GetBWRegValueForScan());
   Measure();
   BK4819_SetFilterBandwidth(settings.listenBw);
 
   peak.rssi = scanInfo.rssi;
   redrawScreen = true;
 
-  if (IsPeakOverLevel()) {
+  if (IsPeakOverLevel() || monitorMode) {
     StartListening();
     return;
   }
