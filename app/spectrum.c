@@ -50,6 +50,23 @@ bool preventKeypress = true;
 uint16_t statuslineUpdateTimer = 0;
 static char String[32];
 
+const uint8_t U8RssiMap[] = {
+    121, 115, 109, 103, 97, 91, 85, 79, 73, 63,
+};
+
+static uint8_t DBm2S(int dbm) {
+  uint8_t i = 0;
+  dbm *= -1;
+  for (i = 0; i < sizeof(U8RssiMap); i++) {
+    if (dbm >= U8RssiMap[i]) {
+      return i;
+    }
+  }
+  return i;
+}
+
+static int Rssi2DBm(uint8_t rssi) { return (rssi >> 1) - 160; }
+
 enum State {
   SPECTRUM,
   FREQ_INPUT,
@@ -1030,6 +1047,7 @@ void OnKeyDownStill(KEY_Code_t key) {
   case KEY_EXIT:
     if (menuState == MENU_OFF) {
       SetState(SPECTRUM);
+      monitorMode = false;
       RelaunchScan();
       break;
     }
@@ -1079,6 +1097,13 @@ static void RenderStill() {
       gFrameBuffer[2][i + METER_PAD_LEFT] |= 0b00000111;
     }
   }
+
+  int dbm = Rssi2DBm(scanInfo.rssi);
+  uint8_t s = DBm2S(dbm);
+  sprintf(String, "S: %u", s);
+  GUI_DisplaySmallest(String, 4, 25, false, true);
+  sprintf(String, "%d DBm", dbm);
+  GUI_DisplaySmallest(String, 28, 25, false, true);
 
   if (!monitorMode) {
     gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
