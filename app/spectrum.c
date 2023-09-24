@@ -1106,7 +1106,7 @@ static void RenderStill() {
   GUI_DisplaySmallest(String, 28, 25, false, true);
 
   if (!monitorMode) {
-    gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
+    gFrameBuffer[2][METER_PAD_LEFT + (settings.rssiTriggerLevel >> 1)] = 0b11111111;
   }
 
   const uint8_t PAD_LEFT = 4;
