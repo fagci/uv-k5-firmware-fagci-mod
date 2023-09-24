@@ -409,9 +409,7 @@ static void ResetPeak() {
   peak.rssi = 0;
 }
 
-bool IsCenterMode() {
-  return false; /*settings.scanStepIndex < S_STEP_2_5kHz;*/
-}
+bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
 uint8_t GetStepsCount() { return 128 >> settings.stepsCount; }
 uint16_t GetScanStep() { return scanStepValues[settings.scanStepIndex]; }
 uint32_t GetBW() { return GetStepsCount() * GetScanStep(); }
@@ -463,7 +461,7 @@ static void ToggleRX(bool on) {
   if (on) {
     BK4819_SetFilterBandwidth(settings.listenBw);
   } else {
-    BK4819_WriteRegister(0x47, GetBWRegValueForScan());
+    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
 }
 
@@ -1220,7 +1218,7 @@ static void UpdateListening() {
     return;
   }
 
-  BK4819_WriteRegister(0x47, GetBWRegValueForScan());
+  BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   Measure();
   BK4819_SetFilterBandwidth(settings.listenBw);
 
