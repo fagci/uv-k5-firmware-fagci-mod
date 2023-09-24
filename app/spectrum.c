@@ -1016,21 +1016,29 @@ static void RenderSpectrum() {
 static void RenderStill() {
   DrawF(fMeasure);
 
-  for (int i = 0; i < 128; i += 4) {
-    gFrameBuffer[2][i] = 0b11000000;
+  const uint8_t METER_PAD_LEFT = 3;
+
+  for (int i = 0; i < 121; i++) {
+    if (i % 10 == 0) {
+      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b01110000;
+    } else if (i % 5 == 0) {
+      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b00110000;
+    } else {
+      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b00010000;
+    }
   }
 
-  for (int i = 0; i < (peak.rssi >> 1); ++i) {
-    if (i & 3) {
-      gFrameBuffer[2][i] |= 0b00011110;
+  for (int i = 0; i < (scanInfo.rssi >> 1); ++i) {
+    if (i % 5) {
+      gFrameBuffer[2][i + METER_PAD_LEFT] |= 0b00000111;
     }
   }
 
   gFrameBuffer[2][settings.rssiTriggerLevel >> 1] = 0b11111111;
 
-  const uint8_t padLeft = 4;
-  const uint8_t cellWidth = 28;
-  uint8_t offset = padLeft;
+  const uint8_t PAD_LEFT = 4;
+  const uint8_t CELL_WIDTH = 28;
+  uint8_t offset = PAD_LEFT;
   uint8_t row = 3;
 
   for (int i = 0, idx = 1; idx <= 8; ++i, ++idx) {
@@ -1038,9 +1046,9 @@ static void RenderStill() {
       row += 2;
       i = 0;
     }
-    offset = padLeft + i * cellWidth;
+    offset = PAD_LEFT + i * CELL_WIDTH;
     if (menuState == idx) {
-      for (int j = 0; j < cellWidth; ++j) {
+      for (int j = 0; j < CELL_WIDTH; ++j) {
         gFrameBuffer[row][j + offset] = 0xFF;
         gFrameBuffer[row + 1][j + offset] = 0xFF;
       }
