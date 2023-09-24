@@ -129,34 +129,22 @@ const uint16_t scanStepBWRegValues[] = {
 
 enum MenuState {
   MENU_OFF,
-  MENU_PGA,
   MENU_LNA,
-  MENU_LNA_SHORT,
-  MENU_IF,
-  MENU_RF,
-  MENU_RFW,
   MENU_AGC_MANUAL,
   MENU_AGC,
+  MENU_IF,
 } menuState;
 
 char *menuItems[] = {
-    "", "PGA", "LNA", "LNAs", "IF", "RF", "RFWeak", "AGC M", "AGC",
+    "", "LNA", "AGC M", "AGC", "IF",
 };
 
 static uint16_t GetRegMenuValue(enum MenuState st) {
   switch (st) {
-  case MENU_PGA:
-    return BK4819_ReadRegister(0x13) & 0b111;
   case MENU_LNA:
     return (BK4819_ReadRegister(0x13) >> 5) & 0b111;
-  case MENU_LNA_SHORT:
-    return (BK4819_ReadRegister(0x13) >> 8) & 0b11;
   case MENU_IF:
     return BK4819_ReadRegister(0x3D);
-  case MENU_RF:
-    return (BK4819_ReadRegister(0x43) >> 12) & 0b111;
-  case MENU_RFW:
-    return (BK4819_ReadRegister(0x43) >> 9) & 0b111;
   case MENU_AGC_MANUAL:
     return (BK4819_ReadRegister(0x7E) >> 15) & 0b1;
   case MENU_AGC:
@@ -173,34 +161,15 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   uint8_t offset = 0;
   uint16_t inc = 1;
   switch (st) {
-  case MENU_PGA:
-    regnum = 0x13;
-    vmax = 0b111;
-    break;
   case MENU_LNA:
     regnum = 0x13;
     vmax = 0b111;
     offset = 5;
     break;
-  case MENU_LNA_SHORT:
-    regnum = 0x13;
-    vmax = 0b11;
-    offset = 8;
-    break;
   case MENU_IF:
     regnum = 0x3D;
     vmax = 0xFFFF;
     inc = 0x2aab;
-    break;
-  case MENU_RF:
-    regnum = 0x43;
-    vmax = 0b111;
-    offset = 12;
-    break;
-  case MENU_RFW:
-    regnum = 0x43;
-    vmax = 0b111;
-    offset = 9;
     break;
   case MENU_AGC_MANUAL:
     regnum = 0x7E;
@@ -1042,7 +1011,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     break;
   case KEY_SIDE1:
     monitorMode = !monitorMode;
-    StartListening();
+    listenT = 0;
     break;
   case KEY_SIDE2:
     ToggleBacklight();
@@ -1053,8 +1022,8 @@ void OnKeyDownStill(KEY_Code_t key) {
     BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
     break;
   case KEY_MENU:
-    if (menuState == MENU_AGC) {
-      menuState = MENU_PGA;
+    if (menuState == MENU_IF) {
+      menuState = MENU_LNA;
     } else {
       menuState++;
     }
@@ -1118,11 +1087,11 @@ static void RenderStill() {
   }
 
   const uint8_t PAD_LEFT = 4;
-  const uint8_t CELL_WIDTH = 28;
+  const uint8_t CELL_WIDTH = 30;
   uint8_t offset = PAD_LEFT;
-  uint8_t row = 3;
+  uint8_t row = 4;
 
-  for (int i = 0, idx = 1; idx <= 8; ++i, ++idx) {
+  for (int i = 0, idx = 1; idx <= 4; ++i, ++idx) {
     if (idx == 5) {
       row += 2;
       i = 0;
@@ -1235,7 +1204,7 @@ static void UpdateStill() {
   peak.rssi = scanInfo.rssiMax = scanInfo.rssi;
   AutoTriggerLevel();
 
-  if (IsPeakOverLevel()) {
+  if (IsPeakOverLevel() || monitorMode) {
     StartListening();
     return;
   }
