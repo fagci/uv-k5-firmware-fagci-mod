@@ -497,7 +497,6 @@ static void RelaunchScan() {
   InitScan();
   ResetPeak();
   ToggleRX(false);
-  settings.frequencyChangeStep = GetBW() >> 1;
   settings.rssiTriggerLevel = 255;
   preventKeypress = true;
   scanInfo.rssiMin = 255;
@@ -566,6 +565,7 @@ static void UpdateScanStep(bool inc) {
   } else {
     return;
   }
+  settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
   ResetBlacklist();
   redrawStatus = true;
@@ -639,6 +639,7 @@ static void ToggleStepsCount() {
   } else {
     settings.stepsCount--;
   }
+  settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
   ResetBlacklist();
   redrawStatus = true;
