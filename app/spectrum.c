@@ -729,12 +729,8 @@ static void UpdateFreqInput(KEY_Code_t key) {
 }
 
 static void Blacklist() {
-  if (peak.i < 128) {
-    rssiHistory[peak.i] = 255;
-    newScanStart = true;
-    ResetPeak();
-    ToggleRX(false);
-  }
+  rssiHistory[peak.i] = 255;
+  RelaunchScan();
 }
 
 // Draw things
@@ -851,22 +847,22 @@ static void DrawTicks() {
   }
 
   // center
-  /* if (IsCenterMode()) {
-      gFrameBuffer[5][62] = 0x80;
-      gFrameBuffer[5][63] = 0x80;
-      gFrameBuffer[5][64] = 0xff;
-      gFrameBuffer[5][65] = 0x80;
-      gFrameBuffer[5][66] = 0x80;
+  if (IsCenterMode()) {
+    gFrameBuffer[5][62] = 0x80;
+    gFrameBuffer[5][63] = 0x80;
+    gFrameBuffer[5][64] = 0xff;
+    gFrameBuffer[5][65] = 0x80;
+    gFrameBuffer[5][66] = 0x80;
   } else {
-      gFrameBuffer[5][0] = 0xff;
-      gFrameBuffer[5][1] = 0x80;
-      gFrameBuffer[5][2] = 0x80;
-      gFrameBuffer[5][3] = 0x80;
-      gFrameBuffer[5][124] = 0x80;
-      gFrameBuffer[5][125] = 0x80;
-      gFrameBuffer[5][126] = 0x80;
-      gFrameBuffer[5][127] = 0xff;
-  } */
+    gFrameBuffer[5][0] = 0xff;
+    gFrameBuffer[5][1] = 0x80;
+    gFrameBuffer[5][2] = 0x80;
+    gFrameBuffer[5][3] = 0x80;
+    gFrameBuffer[5][124] = 0x80;
+    gFrameBuffer[5][125] = 0x80;
+    gFrameBuffer[5][126] = 0x80;
+    gFrameBuffer[5][127] = 0xff;
+  }
 }
 
 static void DrawArrow(uint8_t x) {
@@ -949,6 +945,8 @@ static void OnKeyDown(uint8_t key) {
     }
     DeInitSpectrum();
     break;
+  default:
+    break;
   }
 }
 
@@ -985,6 +983,8 @@ static void OnKeyDownFreqInput(uint8_t key) {
     } else {
       SetF(currentFreq);
     }
+    break;
+  default:
     break;
   }
 }
@@ -1167,10 +1167,10 @@ bool HandleUserInput() {
 
   if (btn == btnPrev && btnCounter < 255) {
     btnCounter++;
-    SYSTEM_DelayMs(90);
+    SYSTEM_DelayMs(20);
   }
 
-  if (btnPrev == 255 || btnCounter > 5) {
+  if (btnCounter == 3 || btnCounter > 26) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(btn);
