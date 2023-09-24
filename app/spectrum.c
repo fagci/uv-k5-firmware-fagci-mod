@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static uint16_t R30, R37, R3D, R43, R47, R48, R4B, R7E;
+static uint16_t R30, R37, R3D, R43, R47, R48, /*R4B,*/ R7E;
 static uint32_t initialFreq;
 const static uint32_t F_MIN = 0;
 const static uint32_t F_MAX = 130000000;
@@ -347,7 +347,7 @@ static void BackupRegisters() {
   R43 = BK4819_ReadRegister(0x43);
   R47 = BK4819_ReadRegister(0x47);
   R48 = BK4819_ReadRegister(0x48);
-  R4B = BK4819_ReadRegister(0x4B);
+  // R4B = BK4819_ReadRegister(0x4B);
   R7E = BK4819_ReadRegister(0x7E);
 }
 
@@ -358,7 +358,7 @@ static void RestoreRegisters() {
   BK4819_WriteRegister(0x43, R43);
   BK4819_WriteRegister(0x47, R47);
   BK4819_WriteRegister(0x48, R48);
-  BK4819_WriteRegister(0x4B, R4B);
+  // BK4819_WriteRegister(0x4B, R4B);
   BK4819_WriteRegister(0x7E, R7E);
 }
 
@@ -373,7 +373,7 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
-    BK4819_WriteRegister(0x4B, R4B | (1 << 5));
+    // BK4819_WriteRegister(0x4B, R4B | (1 << 5));
     /* } else if (type == MOD_AM) {
       reg = BK4819_ReadRegister(0x7E);
       reg &= ~(0b111);
