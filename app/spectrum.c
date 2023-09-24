@@ -729,10 +729,12 @@ static void UpdateFreqInput(KEY_Code_t key) {
 }
 
 static void Blacklist() {
-  rssiHistory[peak.i] = 255;
-  newScanStart = true;
-  ResetPeak();
-  ToggleRX(false);
+  if (peak.i < 128) {
+    rssiHistory[peak.i] = 255;
+    newScanStart = true;
+    ResetPeak();
+    ToggleRX(false);
+  }
 }
 
 // Draw things
@@ -1102,11 +1104,12 @@ static void RenderStill() {
   uint8_t s = DBm2S(dbm);
   sprintf(String, "S: %u", s);
   GUI_DisplaySmallest(String, 4, 25, false, true);
-  sprintf(String, "%d DBm", dbm);
+  sprintf(String, "%d dBm", dbm);
   GUI_DisplaySmallest(String, 28, 25, false, true);
 
   if (!monitorMode) {
-    gFrameBuffer[2][METER_PAD_LEFT + (settings.rssiTriggerLevel >> 1)] = 0b11111111;
+    gFrameBuffer[2][METER_PAD_LEFT + (settings.rssiTriggerLevel >> 1)] =
+        0b11111111;
   }
 
   const uint8_t PAD_LEFT = 4;

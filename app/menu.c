@@ -122,12 +122,13 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax)
 		*pMax = 9;
 		break;
 	case MENU_STEP:
+        *pMin = 0;
 		if (gTxVfo->Band == BAND2_108MHz) {
-			*pMin = 0;
 			*pMax = 6;
-			break;
-		}
-		// Fallthrough
+		} else {
+			*pMax = 5;
+        }
+        break;
 	case MENU_ABR:
 		*pMin = 0;
 		*pMax = 60;
