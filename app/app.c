@@ -1233,6 +1233,7 @@ void APP_TimeSlice500ms(void)
 
 	if (gScreenToDisplay == DISPLAY_SCANNER && gScannerEditState == 0 && gScanCssState < SCAN_CSS_STATE_FOUND) {
 		gScanProgressIndicator++;
+#ifndef ENABLE_NOSCANTIMEOUT					
 		if (gScanProgressIndicator > 32) {
 			if (gScanCssState == SCAN_CSS_STATE_SCANNING && !gScanSingleFrequency) {
 				gScanCssState = SCAN_CSS_STATE_FOUND;
@@ -1240,6 +1241,7 @@ void APP_TimeSlice500ms(void)
 				gScanCssState = SCAN_CSS_STATE_FAILED;
 			}
 		}
+#endif	  
 		gUpdateDisplay = true;
 	}
 
