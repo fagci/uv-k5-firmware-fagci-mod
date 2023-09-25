@@ -321,7 +321,11 @@ void MENU_AcceptSetting(void)
 	case MENU_MEM_CH:
 		gTxVfo->CHANNEL_SAVE = gSubMenuSelection;
 		gRequestSaveChannel = 2;
+#ifndef ENABLE_KEEPNAMEONSAVE														   									 
 		gEeprom.MrChannel[0] = gSubMenuSelection;
+#else
+		gEeprom.MrChannel[gEeprom.TX_CHANNEL] = gSubMenuSelection;
+#endif
 		return;
 
 	case MENU_SAVE:
@@ -682,7 +686,11 @@ void MENU_ShowCurrentSetting(void)
 		break;
 
 	case MENU_MEM_CH:
+#ifndef ENABLE_KEEPNAMEONSAVE														   
 		gSubMenuSelection = gEeprom.MrChannel[0];
+#else
+		gSubMenuSelection = gEeprom.MrChannel[gEeprom.TX_CHANNEL];
+#endif		 
 		break;
 
 	case MENU_SAVE:
@@ -822,7 +830,11 @@ void MENU_ShowCurrentSetting(void)
 #endif
 
 	case MENU_DEL_CH:
+#ifndef ENABLE_KEEPNAMEONSAVE															   
 		gSubMenuSelection = RADIO_FindNextChannel(gEeprom.MrChannel[0], 1, false, 1);
+#else
+		gSubMenuSelection = RADIO_FindNextChannel(gEeprom.MrChannel[gEeprom.TX_CHANNEL], 1, false, 1);
+#endif	 
 		break;
 
 	case MENU_350TX:

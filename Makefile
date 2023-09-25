@@ -10,6 +10,7 @@ ENABLE_SWD := 0
 ENABLE_TX1750 := 1
 ENABLE_UART := 1
 ENABLE_NOSCANTIMEOUT := 1
+ENABLE_KEEPNAMEONSAVE := 1
 
 BSP_DEFINITIONS := $(wildcard hardware/*/*.def)
 BSP_HEADERS := $(patsubst hardware/%,bsp/%,$(BSP_DEFINITIONS))
@@ -157,6 +158,9 @@ endif
 LDFLAGS = -mcpu=cortex-m0 -nostartfiles -Wl,-T,firmware.ld
 ifeq ($(ENABLE_NOSCANTIMEOUT),1)
 CFLAGS += -DENABLE_NOSCANTIMEOUT
+endif
+ifeq ($(ENABLE_KEEPNAMEONSAVE),1)
+CFLAGS += -DENABLE_KEEPNAMEONSAVE
 endif
 
 ifeq ($(DEBUG),1)
