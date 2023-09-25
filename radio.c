@@ -420,10 +420,10 @@ void RADIO_ApplyOffset(VFO_Info_t *pInfo)
 		break;
 	}
 
-	if (Frequency < 5000000) {
+	if (Frequency < 1800000) {
 		Frequency = 5000000;
 	} else if (Frequency > 60000000) {
-		Frequency = 60000000;
+		Frequency = 130000000;
 	}
 
 	pInfo->ConfigTX.Frequency = Frequency;
