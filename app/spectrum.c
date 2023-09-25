@@ -186,7 +186,7 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
   case MENU_IF:
     regnum = 0x3D;
     vmax = 0xFFFF;
-    inc = 0x2aab;
+    inc = 0x2aaa;
     break;
   case MENU_AGC_MANUAL:
     regnum = 0x7E;
@@ -202,10 +202,10 @@ static void SetRegMenuValue(enum MenuState st, bool add) {
     return;
   }
   uint16_t reg = BK4819_ReadRegister(regnum);
-  if (add && v < vmax) {
+  if (add && v <= vmax - inc) {
     v += inc;
   }
-  if (!add && v > vmin) {
+  if (!add && v >= vmin + inc) {
     v -= inc;
   }
   reg &= ~(vmax << offset);
