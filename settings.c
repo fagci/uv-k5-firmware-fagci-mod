@@ -230,9 +230,19 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 			SETTINGS_UpdateChannel(Channel, pVFO, true);
 
 			if (IS_MR_CHANNEL(Channel)) {
+#ifndef ENABLE_KEEPNAMEONSAVE					
 				memset(&State32, 0xFF, sizeof(State32));
 				EEPROM_WriteBuffer(OffsetMR + 0x0F50, State32);
 				EEPROM_WriteBuffer(OffsetMR + 0x0F58, State32);
+#else				  
+				if (Mode >= 3) {	// save the channel name - source OneOfEleven
+					memmove(State8, pVFO->Name + 0, 8);
+					EEPROM_WriteBuffer(0x0F50 + OffsetMR, State8);
+					memset(State8, 0xFF, sizeof(State8));
+					memmove(State8, pVFO->Name + 8, 2);
+					EEPROM_WriteBuffer(0x0F58 + OffsetMR, State8);
+				}
+#endif													 
 			}
 		}
 	}
