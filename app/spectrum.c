@@ -449,7 +449,8 @@ uint8_t GetBWRegValueForScan() {
 
 uint8_t GetRssi() {
   ResetRSSI();
-  SYSTICK_DelayUs(settings.scanDelay);
+  SYSTICK_DelayUs(settings.scanDelay
+                  << (settings.scanStepIndex < S_STEP_25_0kHz));
   return clamp(BK4819_GetRSSI(), 0, 255);
 }
 
