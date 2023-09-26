@@ -30,6 +30,43 @@ bool preventKeypress = true;
 uint16_t statuslineUpdateTimer = 0;
 static char String[32];
 
+State currentState = SPECTRUM, previousState = SPECTRUM;
+PeakInfo peak;
+ScanInfo scanInfo;
+uint8_t menuState = 0;
+
+const char *bwOptions[] = {"25k", "12.5k", "6.25k"};
+const char *modulationTypeOptions[] = {"FM", "AM", "USB"};
+const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
+SpectrumSettings settings = {STEPS_64,
+                             S_STEP_25_0kHz,
+                             80000,
+                             800,
+                             0,
+                             true,
+                             BK4819_FILTER_BW_WIDE,
+                             BK4819_FILTER_BW_WIDE,
+                             false};
+
+uint8_t rssiHistory[128] = {};
+uint16_t listenT = 0;
+
+KEY_Code_t btn;
+uint8_t btnCounter = 0;
+uint8_t btnPrev;
+uint32_t currentFreq, tempFreq;
+uint8_t freqInputIndex = 0;
+KEY_Code_t freqInputArr[10];
+
+RegisterSpec registerSpecs[] = {
+    {},
+    {"LNAs", 0x13, 8, 0b11, 1},
+    {"LNA", 0x13, 5, 0b111, 1},
+    {"PGA", 0x13, 0, 0b111, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+    {"MIX", 0x13, 3, 0b11, 1}, // HIDDEN
+};
+
 static uint8_t DBm2S(int dbm) {
   uint8_t i = 0;
   dbm *= -1;
@@ -42,20 +79,6 @@ static uint8_t DBm2S(int dbm) {
 }
 
 static int Rssi2DBm(uint8_t rssi) { return (rssi >> 1) - 160; }
-
-State currentState = SPECTRUM, previousState = SPECTRUM;
-PeakInfo peak;
-ScanInfo scanInfo;
-
-RegisterSpec registerSpecs[] = {
-    {},
-    {"LNAs", 0x13, 8, 0b11, 1},
-    {"LNA", 0x13, 5, 0b111, 1},
-    {"MIX", 0x13, 3, 0b11, 1},
-    {"PGA", 0x13, 0, 0b111, 1},
-    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
-};
-uint8_t menuState = 0;
 
 static uint16_t GetRegMenuValue(uint8_t st) {
   RegisterSpec s = registerSpecs[st];
@@ -72,35 +95,12 @@ static void SetRegMenuValue(uint8_t st, bool add) {
   } else if (!add && v >= 0 + s.inc) {
     v -= s.inc;
   }
+  // TODO: use max value for bits count in max value, or reset by additional
+  // mask in spec
   reg &= ~(s.maxValue << s.offset);
   BK4819_WriteRegister(s.num, reg | (v << s.offset));
   redrawScreen = true;
 }
-
-const char *bwOptions[] = {"25k", "12.5k", "6.25k"};
-const char *modulationTypeOptions[] = {"FM", "AM", "USB"};
-const uint8_t modulationTypeOffsets[] = {100, 50, 10};
-SpectrumSettings settings = {STEPS_64,
-                             S_STEP_25_0kHz,
-                             80000,
-                             800,
-                             0,
-                             true,
-                             BK4819_FILTER_BW_WIDE,
-                             BK4819_FILTER_BW_WIDE,
-                             false};
-
-static const uint8_t DrawingEndY = 42;
-
-uint8_t rssiHistory[128] = {};
-uint16_t listenT = 0;
-
-KEY_Code_t btn;
-uint8_t btnCounter = 0;
-uint8_t btnPrev;
-uint32_t currentFreq, tempFreq;
-uint8_t freqInputIndex = 0;
-KEY_Code_t freqInputArr[10];
 
 // GUI functions
 
@@ -437,7 +437,7 @@ static void UpdateCurrentFreq(bool inc) {
 }
 
 static void UpdateCurrentFreqStill(bool inc) {
-  uint8_t offset = modulationTypeOffsets[settings.modulationType];
+  uint8_t offset = modulationTypeTuneSteps[settings.modulationType];
   uint32_t f = fMeasure;
   if (inc && f < F_MAX) {
     f += offset;
@@ -804,6 +804,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
     SetState(previousState);
     currentFreq = tempFreq;
     if (currentState == SPECTRUM) {
+      ResetBlacklist();
       RelaunchScan();
     } else {
       SetF(currentFreq);
@@ -931,6 +932,13 @@ static void RenderStill() {
   GUI_DisplaySmallest(String, 4, 25, false, true);
   sprintf(String, "%d dBm", dbm);
   GUI_DisplaySmallest(String, 28, 25, false, true);
+
+  sprintf(String, "%d", BK4819_ReadRegister(0x65) & 0b1111111);
+  GUI_DisplaySmallest(String, 0, 0, false, true);
+  sprintf(String, "%d", BK4819_ReadRegister(0x63) & 0b11111111);
+  GUI_DisplaySmallest(String, 0, 6, false, true);
+  sprintf(String, "%d", BK4819_ReadRegister(0x64));
+  GUI_DisplaySmallest(String, 0, 12, false, true);
 
   if (!monitorMode) {
     gFrameBuffer[2][METER_PAD_LEFT + (settings.rssiTriggerLevel >> 1)] =

@@ -39,6 +39,7 @@
 
 const static uint32_t F_MIN = 0;
 const static uint32_t F_MAX = 130000000;
+static const uint8_t DrawingEndY = 42;
 
 static const uint8_t U8RssiMap[] = {
     121, 115, 109, 103, 97, 91, 85, 79, 73, 63,
