@@ -18,6 +18,7 @@
 
 static uint16_t R30, R37, R3D, R43, R47, R48, R7E;
 static uint32_t initialFreq;
+static char String[32];
 
 bool isInitialized = false;
 bool isListening = true;
@@ -27,17 +28,17 @@ bool redrawScreen = false;
 bool newScanStart = true;
 bool preventKeypress = true;
 
-uint16_t statuslineUpdateTimer = 0;
-static char String[32];
-
 State currentState = SPECTRUM, previousState = SPECTRUM;
+
 PeakInfo peak;
 ScanInfo scanInfo;
-uint8_t menuState = 0;
+KeyboardState kbd = {KEY_INVALID, KEY_INVALID, 0};
 
 const char *bwOptions[] = {"25k", "12.5k", "6.25k"};
 const char *modulationTypeOptions[] = {"FM", "AM", "USB"};
 const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
+const uint8_t modTypeReg47Values[] = {1, 7, 5};
+
 SpectrumSettings settings = {STEPS_64,
                              S_STEP_25_0kHz,
                              80000,
@@ -48,15 +49,18 @@ SpectrumSettings settings = {STEPS_64,
                              BK4819_FILTER_BW_WIDE,
                              false};
 
+uint32_t fMeasure = 0;
+uint32_t currentFreq, tempFreq;
 uint8_t rssiHistory[128] = {};
+
 uint16_t listenT = 0;
 
-KEY_Code_t btn;
-uint8_t btnCounter = 0;
-uint8_t btnPrev;
-uint32_t currentFreq, tempFreq;
 uint8_t freqInputIndex = 0;
+uint8_t freqInputDotIndex = 0;
 KEY_Code_t freqInputArr[10];
+char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
+
+uint8_t menuState = 0;
 
 RegisterSpec registerSpecs[] = {
     {},
@@ -64,13 +68,15 @@ RegisterSpec registerSpecs[] = {
     {"LNA", 0x13, 5, 0b111, 1},
     {"PGA", 0x13, 0, 0b111, 1},
     {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
-    {"MIX", 0x13, 3, 0b11, 1}, // HIDDEN
+    {"MIX", 0x13, 3, 0b11, 1}, // TODO: hidden
 };
+
+uint16_t statuslineUpdateTimer = 0;
 
 static uint8_t DBm2S(int dbm) {
   uint8_t i = 0;
   dbm *= -1;
-  for (i = 0; i < sizeof(U8RssiMap); i++) {
+  for (i = 0; i < sizeof(U8RssiMap)/sizeof(U8RssiMap[0]); i++) {
     if (dbm >= U8RssiMap[i]) {
       return i;
     }
@@ -204,13 +210,11 @@ static void RestoreRegisters() {
   BK4819_WriteRegister(0x7E, R7E);
 }
 
-static uint8_t reg47values[] = {1, 7, 5};
-
 static void SetModulation(ModulationType type) {
   RestoreRegisters();
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
   reg &= ~(0b111 << 8);
-  BK4819_WriteRegister(BK4819_REG_47, reg | (reg47values[type] << 8));
+  BK4819_WriteRegister(BK4819_REG_47, reg | (modTypeReg47Values[type] << 8));
   if (type == MOD_USB) {
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
@@ -234,7 +238,6 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-uint32_t fMeasure = 0;
 static void SetF(uint32_t f) {
   if (fMeasure == f) {
     return;
@@ -496,9 +499,6 @@ static void ToggleStepsCount() {
   ResetBlacklist();
   redrawStatus = true;
 }
-
-char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
-uint8_t freqInputDotIndex = 0;
 
 static void ResetFreqInput() {
   tempFreq = 0;
@@ -933,13 +933,6 @@ static void RenderStill() {
   sprintf(String, "%d dBm", dbm);
   GUI_DisplaySmallest(String, 28, 25, false, true);
 
-  sprintf(String, "%d", BK4819_ReadRegister(0x65) & 0b1111111);
-  GUI_DisplaySmallest(String, 0, 0, false, true);
-  sprintf(String, "%d", BK4819_ReadRegister(0x63) & 0b11111111);
-  GUI_DisplaySmallest(String, 0, 6, false, true);
-  sprintf(String, "%d", BK4819_ReadRegister(0x64));
-  GUI_DisplaySmallest(String, 0, 12, false, true);
-
   if (!monitorMode) {
     gFrameBuffer[2][METER_PAD_LEFT + (settings.rssiTriggerLevel >> 1)] =
         0b11111111;
@@ -951,7 +944,7 @@ static void RenderStill() {
   uint8_t row = 4;
 
   for (int i = 0, idx = 1; idx <= 5; ++i, ++idx) {
-    if (idx == 6) {
+    if (idx == 5) {
       row += 2;
       i = 0;
     }
@@ -990,29 +983,29 @@ static void Render() {
 }
 
 bool HandleUserInput() {
-  btnPrev = btn;
-  btn = GetKey();
+  kbd.prev = kbd.current;
+  kbd.current = GetKey();
 
-  if (btn == 255) {
-    btnCounter = 0;
+  if (kbd.current == KEY_INVALID) {
+    kbd.counter = 0;
     return true;
   }
 
-  if (btn == btnPrev && btnCounter < 255) {
-    btnCounter++;
+  if (kbd.current == kbd.prev && kbd.counter < 255) {
+    kbd.counter++;
     SYSTEM_DelayMs(20);
   }
 
-  if (btnCounter == 3 || btnCounter > 30) {
+  if (kbd.counter == 3 || kbd.counter > 30) {
     switch (currentState) {
     case SPECTRUM:
-      OnKeyDown(btn);
+      OnKeyDown(kbd.current);
       break;
     case FREQ_INPUT:
-      OnKeyDownFreqInput(btn);
+      OnKeyDownFreqInput(kbd.current);
       break;
     case STILL:
-      OnKeyDownStill(btn);
+      OnKeyDownStill(kbd.current);
       break;
     }
   }

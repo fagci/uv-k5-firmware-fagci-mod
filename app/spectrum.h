@@ -74,9 +74,9 @@ static const uint16_t scanStepBWRegValues[] = {
     // 1250
     0b0111111100001000, // 6.25
     // 2500
-    0b0011000000101000, // 25
+    0b0011011000101000, // 25
     // 10000
-    0b0011000000101000, // 25
+    0b0011011000101000, // 25
 };
 
 typedef enum State {
@@ -126,6 +126,12 @@ typedef struct SpectrumSettings {
   BK4819_FilterBandwidth_t listenBw;
   ModulationType modulationType;
 } SpectrumSettings;
+
+typedef struct KeyboardState {
+  KEY_Code_t current;
+  KEY_Code_t prev;
+  uint8_t counter;
+} KeyboardState;
 
 typedef struct ScanInfo {
   uint8_t rssi, rssiMin, rssiMax;
