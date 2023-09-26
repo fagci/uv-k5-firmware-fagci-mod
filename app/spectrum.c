@@ -14,45 +14,21 @@
  *     limitations under the License.
  */
 
-#include "app/spectrum.h"
-#include "bitmaps.h"
-#include "board.h"
-#include "bsp/dp32g030/gpio.h"
-#include "driver/bk4819-regs.h"
-#include "driver/bk4819.h"
-#include "driver/gpio.h"
-#include "driver/keyboard.h"
-#include "driver/st7565.h"
-#include "driver/system.h"
-#include "driver/systick.h"
-#include "external/printf/printf.h"
-#include "font.h"
-#include "helper/battery.h"
-#include "radio.h"
-#include "settings.h"
-#include "ui/helper.h"
-#include <stdint.h>
-#include <string.h>
+#include "../app/spectrum.h"
 
-static uint16_t R30, R37, R3D, R43, R47, R48, /*R4B,*/ R7E;
+static uint16_t R30, R37, R3D, R43, R47, R48, R7E;
 static uint32_t initialFreq;
-const static uint32_t F_MIN = 0;
-const static uint32_t F_MAX = 130000000;
 
-bool isInitialized;
-
+bool isInitialized = false;
 bool isListening = true;
 bool monitorMode = false;
 bool redrawStatus = true;
 bool redrawScreen = false;
 bool newScanStart = true;
 bool preventKeypress = true;
+
 uint16_t statuslineUpdateTimer = 0;
 static char String[32];
-
-const uint8_t U8RssiMap[] = {
-    121, 115, 109, 103, 97, 91, 85, 79, 73, 63,
-};
 
 static uint8_t DBm2S(int dbm) {
   uint8_t i = 0;
@@ -67,90 +43,9 @@ static uint8_t DBm2S(int dbm) {
 
 static int Rssi2DBm(uint8_t rssi) { return (rssi >> 1) - 160; }
 
-enum State {
-  SPECTRUM,
-  FREQ_INPUT,
-  STILL,
-} currentState = SPECTRUM,
-  previousState = SPECTRUM;
-
-struct PeakInfo {
-  uint16_t t;
-  uint8_t rssi;
-  uint8_t i;
-  uint32_t f;
-} peak;
-
-enum StepsCount {
-  STEPS_128,
-  STEPS_64,
-  STEPS_32,
-  STEPS_16,
-};
-
-typedef enum ModulationType {
-  MOD_FM,
-  MOD_AM,
-  MOD_USB,
-} ModulationType;
-
-enum ScanStep {
-  S_STEP_0_01kHz,
-  S_STEP_0_1kHz,
-  S_STEP_0_5kHz,
-  S_STEP_1_0kHz,
-
-  S_STEP_2_5kHz,
-  S_STEP_5_0kHz,
-  S_STEP_6_25kHz,
-  S_STEP_8_33kHz,
-  S_STEP_10_0kHz,
-  S_STEP_12_5kHz,
-  S_STEP_25_0kHz,
-  S_STEP_100_0kHz,
-};
-
-const uint16_t scanStepValues[] = {
-    1,   10,  50,  100,
-
-    250, 500, 625, 833, 1000, 1250, 2500, 10000,
-};
-
-const uint16_t scanStepBWRegValues[] = {
-    //  RX  RXw TX  BW
-    // 1
-    0b0000000001011000, // 6.25
-    // 10
-    0b0000000001011000, // 6.25
-    // 50
-    0b0000000001011000, // 6.25
-    // 100
-    0b0000000001011000, // 6.25
-    // 250
-    0b0000000001011000, // 6.25
-    // 500
-    0b0010010001011000, // 6.25
-    // 625
-    0b0100100001011000, // 6.25
-    // 833
-    0b0110110001001000, // 6.25
-    // 1000
-    0b0110110001001000, // 6.25
-    // 1250
-    0b0111111100001000, // 6.25
-    // 2500
-    0b0011000000101000, // 25
-    // 10000
-    0b0011000000101000, // 25
-};
-
-typedef struct RegisterSpec {
-  char *name;
-  uint8_t num;
-  uint8_t offset;
-  uint16_t maxValue;
-  uint16_t inc;
-} RegisterSpec;
+State currentState = SPECTRUM, previousState = SPECTRUM;
+PeakInfo peak;
+ScanInfo scanInfo;
 
 RegisterSpec registerSpecs[] = {
     {},
@@ -184,39 +79,19 @@ static void SetRegMenuValue(uint8_t st, bool add) {
 const char *bwOptions[] = {"25k", "12.5k", "6.25k"};
 const char *modulationTypeOptions[] = {"FM", "AM", "USB"};
 const uint8_t modulationTypeOffsets[] = {100, 50, 10};
-
-struct SpectrumSettings {
-  enum StepsCount stepsCount;
-  enum ScanStep scanStepIndex;
-  uint32_t frequencyChangeStep;
-  uint16_t scanDelay;
-  uint8_t rssiTriggerLevel;
-
-  bool backlightState;
-  BK4819_FilterBandwidth_t bw;
-  BK4819_FilterBandwidth_t listenBw;
-  ModulationType modulationType;
-} settings = {STEPS_64,
-              S_STEP_25_0kHz,
-              80000,
-              800,
-              0,
-              true,
-              BK4819_FILTER_BW_WIDE,
-              BK4819_FILTER_BW_WIDE,
-              false};
+SpectrumSettings settings = {STEPS_64,
+                             S_STEP_25_0kHz,
+                             80000,
+                             800,
+                             0,
+                             true,
+                             BK4819_FILTER_BW_WIDE,
+                             BK4819_FILTER_BW_WIDE,
+                             false};
 
 static const uint8_t DrawingEndY = 42;
 
 uint8_t rssiHistory[128] = {};
-
-struct ScanInfo {
-  uint8_t rssi, rssiMin, rssiMax;
-  uint8_t i, iPeak;
-  uint32_t f, fPeak;
-  uint16_t scanStep;
-  uint8_t measurementsCount;
-} scanInfo;
 uint16_t listenT = 0;
 
 KEY_Code_t btn;
@@ -291,7 +166,7 @@ static int clamp(int v, int min, int max) {
 
 static uint8_t my_abs(signed v) { return v > 0 ? v : -v; }
 
-void SetState(enum State state) {
+void SetState(State state) {
   previousState = currentState;
   currentState = state;
   redrawScreen = true;
@@ -315,7 +190,6 @@ static void BackupRegisters() {
   R43 = BK4819_ReadRegister(0x43);
   R47 = BK4819_ReadRegister(0x47);
   R48 = BK4819_ReadRegister(0x48);
-  // R4B = BK4819_ReadRegister(0x4B);
   R7E = BK4819_ReadRegister(0x7E);
 }
 
@@ -326,7 +200,6 @@ static void RestoreRegisters() {
   BK4819_WriteRegister(0x43, R43);
   BK4819_WriteRegister(0x47, R47);
   BK4819_WriteRegister(0x48, R48);
-  // BK4819_WriteRegister(0x4B, R4B);
   BK4819_WriteRegister(0x7E, R7E);
 }
 
@@ -341,16 +214,6 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
-    // BK4819_WriteRegister(0x4B, R4B | (1 << 5));
-    /* } else if (type == MOD_AM) {
-      reg = BK4819_ReadRegister(0x7E);
-      reg &= ~(0b111);
-      reg |= 0b101;
-      reg &= ~(0b111 << 12);
-      reg |= 0b010 << 12;
-      reg &= ~(1 << 15);
-      reg |= 1 << 15;
-      BK4819_WriteRegister(0x7E, reg); */
   }
 }
 
