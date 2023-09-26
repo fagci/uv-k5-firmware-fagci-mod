@@ -49,9 +49,10 @@ ScanInfo scanInfo;
 
 RegisterSpec registerSpecs[] = {
     {},
+    {"LNAs", 0x13, 8, 0b11, 1},
     {"LNA", 0x13, 5, 0b111, 1},
-    {"AGC M", 0x7E, 15, 0b1, 1},
-    {"AGC", 0x7E, 12, 0b111, 1},
+    {"MIX", 0x13, 3, 0b11, 1},
+    {"PGA", 0x13, 0, 0b111, 1},
     {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
 };
 uint8_t menuState = 0;
@@ -937,12 +938,12 @@ static void RenderStill() {
   }
 
   const uint8_t PAD_LEFT = 4;
-  const uint8_t CELL_WIDTH = 30;
+  const uint8_t CELL_WIDTH = 24;
   uint8_t offset = PAD_LEFT;
   uint8_t row = 4;
 
-  for (int i = 0, idx = 1; idx <= 4; ++i, ++idx) {
-    if (idx == 5) {
+  for (int i = 0, idx = 1; idx <= 5; ++i, ++idx) {
+    if (idx == 6) {
       row += 2;
       i = 0;
     }
