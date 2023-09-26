@@ -144,72 +144,40 @@ const uint16_t scanStepBWRegValues[] = {
     0b0011000000101000, // 25
 };
 
-enum MenuState {
-  MENU_OFF,
-  MENU_LNA,
-  MENU_AGC_MANUAL,
-  MENU_AGC,
-  MENU_IF,
-} menuState;
+typedef struct RegisterSpec {
+  char *name;
+  uint8_t num;
+  uint8_t offset;
+  uint16_t maxValue;
+  uint16_t inc;
+} RegisterSpec;
 
-char *menuItems[] = {
-    "", "LNA", "AGC M", "AGC", "IF",
+RegisterSpec registerSpecs[] = {
+    {},
+    {"LNA", 0x13, 5, 0b111, 1},
+    {"AGC M", 0x7E, 15, 0b1, 1},
+    {"AGC", 0x7E, 12, 0b111, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
 };
+uint8_t menuState = 0;
 
-static uint16_t GetRegMenuValue(enum MenuState st) {
-  switch (st) {
-  case MENU_LNA:
-    return (BK4819_ReadRegister(0x13) >> 5) & 0b111;
-  case MENU_IF:
-    return BK4819_ReadRegister(0x3D);
-  case MENU_AGC_MANUAL:
-    return (BK4819_ReadRegister(0x7E) >> 15) & 0b1;
-  case MENU_AGC:
-    return (BK4819_ReadRegister(0x7E) >> 12) & 0b111;
-  default:
-    return 0;
-  }
+static uint16_t GetRegMenuValue(uint8_t st) {
+  RegisterSpec s = registerSpecs[st];
+  return (BK4819_ReadRegister(s.num) >> s.offset) & s.maxValue;
 }
 
-static void SetRegMenuValue(enum MenuState st, bool add) {
+static void SetRegMenuValue(uint8_t st, bool add) {
   uint16_t v = GetRegMenuValue(st);
-  uint16_t vmin = 0, vmax;
-  uint8_t regnum = 0;
-  uint8_t offset = 0;
-  uint16_t inc = 1;
-  switch (st) {
-  case MENU_LNA:
-    regnum = 0x13;
-    vmax = 0b111;
-    offset = 5;
-    break;
-  case MENU_IF:
-    regnum = 0x3D;
-    vmax = 0xFFFF;
-    inc = 0x2aaa;
-    break;
-  case MENU_AGC_MANUAL:
-    regnum = 0x7E;
-    vmax = 0b1;
-    offset = 15;
-    break;
-  case MENU_AGC:
-    regnum = 0x7E;
-    vmax = 0b111;
-    offset = 12;
-    break;
-  default:
-    return;
+  RegisterSpec s = registerSpecs[st];
+
+  uint16_t reg = BK4819_ReadRegister(s.num);
+  if (add && v <= s.maxValue - s.inc) {
+    v += s.inc;
+  } else if (!add && v >= 0 + s.inc) {
+    v -= s.inc;
   }
-  uint16_t reg = BK4819_ReadRegister(regnum);
-  if (add && v <= vmax - inc) {
-    v += inc;
-  }
-  if (!add && v >= vmin + inc) {
-    v -= inc;
-  }
-  reg &= ~(vmax << offset);
-  BK4819_WriteRegister(regnum, reg | (v << offset));
+  reg &= ~(s.maxValue << s.offset);
+  BK4819_WriteRegister(s.num, reg | (v << s.offset));
   redrawScreen = true;
 }
 
@@ -896,17 +864,9 @@ static void OnKeyDown(uint8_t key) {
     UpdateFreqChangeStep(false);
     break;
   case KEY_UP:
-    if (menuState != MENU_OFF) {
-      SetRegMenuValue(menuState, true);
-      break;
-    }
     UpdateCurrentFreq(true);
     break;
   case KEY_DOWN:
-    if (menuState != MENU_OFF) {
-      SetRegMenuValue(menuState, false);
-      break;
-    }
     UpdateCurrentFreq(false);
     break;
   case KEY_SIDE1:
@@ -940,8 +900,8 @@ static void OnKeyDown(uint8_t key) {
   case KEY_MENU:
     break;
   case KEY_EXIT:
-    if (menuState != MENU_OFF) {
-      menuState = MENU_OFF;
+    if (menuState) {
+      menuState = 0;
       break;
     }
     DeInitSpectrum();
@@ -999,14 +959,14 @@ void OnKeyDownStill(KEY_Code_t key) {
     UpdateScanDelay(false);
     break;
   case KEY_UP:
-    if (menuState != MENU_OFF) {
+    if (menuState) {
       SetRegMenuValue(menuState, true);
       break;
     }
     UpdateCurrentFreqStill(true);
     break;
   case KEY_DOWN:
-    if (menuState != MENU_OFF) {
+    if (menuState) {
       SetRegMenuValue(menuState, false);
       break;
     }
@@ -1040,21 +1000,21 @@ void OnKeyDownStill(KEY_Code_t key) {
     BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
     break;
   case KEY_MENU:
-    if (menuState == MENU_IF) {
-      menuState = MENU_LNA;
+    if (menuState == sizeof(registerSpecs) / sizeof(registerSpecs[0]) - 1) {
+      menuState = 1;
     } else {
       menuState++;
     }
     redrawScreen = true;
     break;
   case KEY_EXIT:
-    if (menuState == MENU_OFF) {
+    if (!menuState) {
       SetState(SPECTRUM);
       monitorMode = false;
       RelaunchScan();
       break;
     }
-    menuState = MENU_OFF;
+    menuState = 0;
     break;
   default:
     break;
@@ -1130,7 +1090,7 @@ static void RenderStill() {
         gFrameBuffer[row + 1][j + offset] = 0xFF;
       }
     }
-    sprintf(String, "%s", menuItems[idx]);
+    sprintf(String, "%s", registerSpecs[idx].name);
     GUI_DisplaySmallest(String, offset + 2, row * 8 + 2, false,
                         menuState != idx);
     sprintf(String, "%u", GetRegMenuValue(idx));
@@ -1171,7 +1131,7 @@ bool HandleUserInput() {
     SYSTEM_DelayMs(20);
   }
 
-  if (btnCounter == 3 || btnCounter > 26) {
+  if (btnCounter == 3 || btnCounter > 30) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(btn);
