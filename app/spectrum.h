@@ -39,7 +39,7 @@
 
 const static uint32_t F_MIN = 0;
 const static uint32_t F_MAX = 130000000;
-static const uint8_t DrawingEndY = 42;
+static const uint8_t DrawingEndY = 40;
 
 static const uint8_t U8RssiMap[] = {
     121, 115, 109, 103, 97, 91, 85, 79, 73, 63,
@@ -119,7 +119,7 @@ typedef struct SpectrumSettings {
   ScanStep scanStepIndex;
   uint32_t frequencyChangeStep;
   uint16_t scanDelay;
-  uint8_t rssiTriggerLevel;
+  uint16_t rssiTriggerLevel;
 
   bool backlightState;
   BK4819_FilterBandwidth_t bw;
@@ -134,7 +134,7 @@ typedef struct KeyboardState {
 } KeyboardState;
 
 typedef struct ScanInfo {
-  uint8_t rssi, rssiMin, rssiMax;
+  uint16_t rssi, rssiMin, rssiMax;
   uint8_t i, iPeak;
   uint32_t f, fPeak;
   uint16_t scanStep;
@@ -151,7 +151,7 @@ typedef struct RegisterSpec {
 
 typedef struct PeakInfo {
   uint16_t t;
-  uint8_t rssi;
+  uint16_t rssi;
   uint8_t i;
   uint32_t f;
 } PeakInfo;
