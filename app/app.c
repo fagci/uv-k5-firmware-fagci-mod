@@ -783,8 +783,10 @@ void APP_Update(void)
 			gBatterySave = 10;
 			gRxIdleMode = false;
 		} else if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF || gScanState != SCAN_OFF || gCssScanMode != CSS_SCAN_MODE_OFF || gUpdateRSSI) {
+#ifndef ENABLE_RSSIBAR
 			gCurrentRSSI = BK4819_GetRSSI();
 			UI_UpdateRSSI(gCurrentRSSI);
+#endif
 			gBatterySave = gEeprom.BATTERY_SAVE * 10;
 			gRxIdleMode = true;
 			BK4819_DisableVox();
@@ -1130,10 +1132,12 @@ void APP_TimeSlice500ms(void)
 			}
 			BATTERY_GetReadings(true);
 		}
+#ifndef ENABLE_RSSIBAR
 		if (gCurrentFunction != FUNCTION_POWER_SAVE) {
 			gCurrentRSSI = BK4819_GetRSSI();
 			UI_UpdateRSSI(gCurrentRSSI);
 		}
+#endif
 		if (
 #if defined(ENABLE_FMRADIO)
 			(gFM_ScanState == FM_SCAN_OFF || gAskToSave) &&
