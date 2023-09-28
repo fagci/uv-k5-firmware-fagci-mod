@@ -1,8 +1,6 @@
 *.o
 *.d
-firmware
-firmware.bin
-firmware.packed.bin
+/compiled-firmware
 link-overlay.S
 sram-overlay
 sram-overlay.bin
