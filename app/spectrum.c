@@ -53,7 +53,9 @@ SpectrumSettings settings = {STEPS_64,
                              true,
                              BK4819_FILTER_BW_WIDE,
                              BK4819_FILTER_BW_WIDE,
-                             false};
+                             false,
+                             -130,
+                             -50};
 
 uint32_t fMeasure = 0;
 uint32_t currentFreq, tempFreq;
@@ -365,6 +367,7 @@ static void UpdateScanInfo() {
 
   if (scanInfo.rssi < scanInfo.rssiMin) {
     scanInfo.rssiMin = scanInfo.rssi;
+    settings.dbMin = Rssi2DBm(scanInfo.rssiMin);
   }
 }
 
@@ -399,7 +402,7 @@ static void UpdateRssiTriggerLevel(bool inc) {
   redrawScreen = true;
 }
 
-static void UpdateScanDelay(bool inc) {
+/* static void UpdateScanDelay(bool inc) {
   if (inc && settings.scanDelay < 8000) {
     settings.scanDelay += 100;
   } else if (!inc && settings.scanDelay > 800) {
@@ -409,6 +412,19 @@ static void UpdateScanDelay(bool inc) {
   }
   RelaunchScan();
   redrawStatus = true;
+} */
+
+static void UpdateDBMax(bool inc) {
+  if (inc && settings.dbMax < 10) {
+    settings.dbMax += 1;
+  } else if (!inc && settings.dbMax > settings.dbMin) {
+    settings.dbMax -= 1;
+  } else {
+    return;
+  }
+  // RelaunchScan();
+  redrawStatus = true;
+  SYSTEM_DelayMs(20);
 }
 
 static void UpdateScanStep(bool inc) {
@@ -568,13 +584,13 @@ static void Blacklist() {
 // Draw things
 
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
-  const int DB_MIN = -130;
-  const int DB_MAX = -30;
+  const int DB_MIN = settings.dbMin;
+  const int DB_MAX = settings.dbMax;
   const int DB_RANGE = DB_MAX - DB_MIN;
 
   const uint8_t PX_RANGE = pxMax - pxMin;
 
-  int dbm = Rssi2DBm(rssi);
+  int dbm = clamp(Rssi2DBm(rssi), DB_MIN, DB_MAX);
 
   return ((dbm - DB_MIN) * PX_RANGE + DB_RANGE / 2) / DB_RANGE + pxMin;
 }
@@ -593,16 +609,8 @@ static void DrawSpectrum() {
 }
 
 static void DrawStatus() {
-  if (currentState == SPECTRUM) {
-    sprintf(String, "%ux%u.%02uk", GetStepsCount(), GetScanStep() / 100,
-            GetScanStep() % 100);
-    GUI_DisplaySmallest(String, 1, 2, true, true);
-  }
-  sprintf(String, "%u.%ums %s %s", settings.scanDelay / 1000,
-          settings.scanDelay / 100 % 10,
-          modulationTypeOptions[settings.modulationType],
-          bwOptions[settings.listenBw]);
-  GUI_DisplaySmallest(String, 48, 2, true, true);
+  sprintf(String, "%d/%d", settings.dbMin, settings.dbMax);
+  GUI_DisplaySmallest(String, 0, 2, true, true);
   for (int i = 0; i < 4; i++) {
     BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
   }
@@ -628,7 +636,6 @@ static void DrawStatus() {
     v = 1;
   }
 
-  sprintf(String, "%u", v);
   gStatusLine[127] = 0b01111110;
   for (int i = 126; i >= 116; i--) {
     gStatusLine[i] = 0b01000010;
@@ -645,14 +652,26 @@ static void DrawStatus() {
 
 static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
-  UI_PrintString(String, 0, 127, 0, 8, 1);
+  UI_PrintStringSmall(String, 0, 127, 0);
 }
 
 static void DrawNums() {
   sprintf(String, "P:%d", Rssi2DBm(peak.rssi));
-  GUI_DisplaySmallest(String, 0, 0, false, true);
+  GUI_DisplaySmallest(String, 32, 8, false, true);
   sprintf(String, "T:%d", Rssi2DBm(settings.rssiTriggerLevel));
-  GUI_DisplaySmallest(String, 0, 6, false, true);
+  GUI_DisplaySmallest(String, 64, 8, false, true);
+
+  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
+  GUI_DisplaySmallest(String, 115, 1, false, true);
+  sprintf(String, "%s", bwOptions[settings.listenBw]);
+  GUI_DisplaySmallest(String, 107, 7, false, true);
+  if (currentState == SPECTRUM) {
+    sprintf(String, "%ux", GetStepsCount());
+    GUI_DisplaySmallest(String, 0, 1, false, true);
+    sprintf(String, "%u.%02uk", GetScanStep() / 100, GetScanStep() % 100);
+    GUI_DisplaySmallest(String, 0, 7, false, true);
+  }
+
   if (IsCenterMode()) {
     sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
             currentFreq % 100000, settings.frequencyChangeStep / 100,
@@ -722,16 +741,16 @@ static void DrawArrow(uint8_t x) {
 
 static void OnKeyDown(uint8_t key) {
   switch (key) {
-  case KEY_1:
-    UpdateScanDelay(true);
-    break;
-  case KEY_7:
-    UpdateScanDelay(false);
-    break;
   case KEY_3:
-    UpdateScanStep(true);
+    UpdateDBMax(true);
     break;
   case KEY_9:
+    UpdateDBMax(false);
+    break;
+  case KEY_1:
+    UpdateScanStep(true);
+    break;
+  case KEY_7:
     UpdateScanStep(false);
     break;
   case KEY_2:
@@ -830,11 +849,11 @@ static void OnKeyDownFreqInput(uint8_t key) {
 
 void OnKeyDownStill(KEY_Code_t key) {
   switch (key) {
-  case KEY_1:
-    UpdateScanDelay(true);
+  case KEY_3:
+    UpdateDBMax(true);
     break;
-  case KEY_7:
-    UpdateScanDelay(false);
+  case KEY_9:
+    UpdateDBMax(false);
     break;
   case KEY_UP:
     if (menuState) {

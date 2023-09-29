@@ -132,6 +132,8 @@ typedef struct SpectrumSettings {
   BK4819_FilterBandwidth_t bw;
   BK4819_FilterBandwidth_t listenBw;
   ModulationType modulationType;
+  int dbMin;
+  int dbMax;
 } SpectrumSettings;
 
 typedef struct KeyboardState {
