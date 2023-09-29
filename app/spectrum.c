@@ -474,6 +474,8 @@ static void UpdateFreqChangeStep(bool inc) {
   } else if (!inc && settings.frequencyChangeStep > 10000) {
     settings.frequencyChangeStep -= diff;
   }
+  SYSTEM_DelayMs(100);
+  redrawScreen = true;
 }
 
 static void ToggleModulation() {
