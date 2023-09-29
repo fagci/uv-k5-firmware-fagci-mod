@@ -62,6 +62,7 @@ KEY_Code_t freqInputArr[10];
 char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
 
 uint8_t menuState = 0;
+uint16_t listenT = 0;
 
 RegisterSpec registerSpecs[] = {
     {},
@@ -303,7 +304,8 @@ static void ToggleRX(bool on) {
   ToggleAFBit(on);
 
   if (on) {
-    BK4819_SetFilterBandwidth(settings.listenBw);
+    listenT = 1000;
+    BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
@@ -1051,7 +1053,7 @@ static void UpdateScan() {
 }
 
 static void UpdateStill() {
-  SetF(fMeasure);
+  // SetF(fMeasure);
   Measure();
   redrawScreen = true;
   preventKeypress = false;
@@ -1064,8 +1066,13 @@ static void UpdateStill() {
 
 static void UpdateListening() {
   preventKeypress = false;
+  if (listenT) {
+    listenT--;
+    SYSTEM_DelayMs(1);
+    return;
+  }
 
-  SetF(fMeasure);
+  // SetF(fMeasure);
   BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   Measure();
   BK4819_SetFilterBandwidth(settings.listenBw);

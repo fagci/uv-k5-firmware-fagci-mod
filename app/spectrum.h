@@ -52,7 +52,8 @@ static const uint16_t scanStepValues[] = {
 };
 
 static const uint16_t scanStepBWRegValues[] = {
-    //  RX  RXw TX  BW
+    //     RX  RXw TX  BW
+    // 0b0 000 000 001 01 1000
     // 1
     0b0000000001011000, // 6.25
     // 10
@@ -77,6 +78,12 @@ static const uint16_t scanStepBWRegValues[] = {
     0b0011011000101000, // 25
     // 10000
     0b0011011000101000, // 25
+};
+
+static const uint16_t listenBWRegValues[] = {
+    0b0011011000101000, // 25
+    0b0111111100001000, // 12.5
+    0b0100100001011000, // 6.25
 };
 
 typedef enum State {
@@ -160,4 +167,4 @@ void APP_RunSpectrum(void);
 
 #endif /* ifndef SPECTRUM_H */
 
-// vi: ft=c
+// vim: ft=c
