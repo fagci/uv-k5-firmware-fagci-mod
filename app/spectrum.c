@@ -368,6 +368,7 @@ static void UpdateScanInfo() {
   if (scanInfo.rssi < scanInfo.rssiMin) {
     scanInfo.rssiMin = scanInfo.rssi;
     settings.dbMin = Rssi2DBm(scanInfo.rssiMin);
+    redrawStatus = true;
   }
 }
 
