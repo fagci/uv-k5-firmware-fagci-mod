@@ -280,6 +280,14 @@ uint8_t GetBWRegValueForScan() {
   return scanStepBWRegValues[settings.scanStepIndex];
 }
 
+/* static void ResetRSSI() {
+  uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
+  Reg &= ~1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+  Reg |= 1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+} */
+
 uint16_t GetRssi() {
   SYSTICK_DelayUs(settings.scanDelay);
   return BK4819_GetRSSI();
@@ -362,7 +370,7 @@ static void UpdateScanInfo() {
 
 static void AutoTriggerLevel() {
   if (settings.rssiTriggerLevel == RSSI_MAX_VALUE) {
-    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax + 2, 0, RSSI_MAX_VALUE);
+    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax + 8, 0, RSSI_MAX_VALUE);
   }
 }
 
@@ -1075,7 +1083,8 @@ static void UpdateListening() {
     return;
   }
 
-  // SetF(fMeasure);
+  SetF(fMeasure);
+  // ResetRSSI();
   BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   Measure();
   BK4819_SetFilterBandwidth(settings.listenBw);
@@ -1084,6 +1093,7 @@ static void UpdateListening() {
   redrawScreen = true;
 
   if (IsPeakOverLevel() || monitorMode) {
+    listenT = 1000;
     return;
   }
 
