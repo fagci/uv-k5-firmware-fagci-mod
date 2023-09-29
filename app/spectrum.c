@@ -581,7 +581,8 @@ static void UpdateFreqInput(KEY_Code_t key) {
 
 static void Blacklist() {
   rssiHistory[peak.i] = RSSI_MAX_VALUE;
-  RelaunchScan();
+  ResetPeak();
+  newScanStart = true;
 }
 
 // Draw things
