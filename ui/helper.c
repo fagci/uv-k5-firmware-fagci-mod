@@ -18,12 +18,10 @@
 #include "driver/st7565.h"
 #include "external/printf/printf.h"
 #include "font.h"
+#include "misc.h"
 #include "ui/helper.h"
 #include "ui/inputbox.h"
 
-#ifndef ARRAY_SIZE
-	#define ARRAY_SIZE(arr) (sizeof(arr)/sizeof((arr)[0]))
-#endif
 
 void UI_GenerateChannelString(char *pString, uint8_t Channel)
 {

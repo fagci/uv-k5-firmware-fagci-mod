@@ -70,7 +70,7 @@ RegisterSpec registerSpecs[] = {
     {"LNA", 0x13, 5, 0b111, 1},
     {"PGA", 0x13, 0, 0b111, 1},
     {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
-    {"MIX", 0x13, 3, 0b11, 1}, // TODO: hidden
+    // {"MIX", 0x13, 3, 0b11, 1}, // TODO: hidden
 };
 
 uint16_t statuslineUpdateTimer = 0;
@@ -78,7 +78,7 @@ uint16_t statuslineUpdateTimer = 0;
 static uint8_t DBm2S(int dbm) {
   uint8_t i = 0;
   dbm *= -1;
-  for (i = 0; i < sizeof(U8RssiMap) / sizeof(U8RssiMap[0]); i++) {
+  for (i = 0; i < ARRAY_SIZE(U8RssiMap); i++) {
     if (dbm >= U8RssiMap[i]) {
       return i;
     }
@@ -866,7 +866,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
     break;
   case KEY_MENU:
-    if (menuState == sizeof(registerSpecs) / sizeof(registerSpecs[0]) - 1) {
+    if (menuState == ARRAY_SIZE(registerSpecs) - 1) {
       menuState = 1;
     } else {
       menuState++;
