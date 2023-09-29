@@ -1080,6 +1080,9 @@ static void UpdateStill() {
 
 static void UpdateListening() {
   preventKeypress = false;
+  if (currentState == STILL) {
+    listenT = 0;
+  }
   if (listenT) {
     listenT--;
     SYSTEM_DelayMs(1);
@@ -1088,10 +1091,12 @@ static void UpdateListening() {
 
   if (currentState == SPECTRUM) {
     SetF(fMeasure);
+    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+    Measure();
+    BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+  } else {
+    Measure();
   }
-  BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-  Measure();
-  BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
 
   peak.rssi = scanInfo.rssi;
   redrawScreen = true;
