@@ -26,6 +26,38 @@
 #include "ui/helper.h"
 #include "ui/inputbox.h"
 #include "ui/main.h"
+#include "driver/bk4819.h"
+
+#if defined(ENABLE_RSSIBAR)
+void UI_DisplayRSSIBar(int16_t rssi)
+{
+	if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_NAME_FREQ)
+	{
+		char String[16];
+		
+		const unsigned int line = 3;
+		const unsigned int lcd_width = sizeof(gFrameBuffer[line]) - 25;
+
+		const unsigned int max        = 350;
+		const unsigned int min        = 80;
+		const unsigned int adjusted_max = max - min;
+		const unsigned int level      = (((rssi - min) * lcd_width) + (adjusted_max / 2)) / adjusted_max;
+		const unsigned int len        = (level <= lcd_width) ? level : 0;
+		const int16_t dBm = (rssi / 2) - 160;
+
+		uint8_t *pLine = gFrameBuffer[line];
+		memset(pLine, 0, lcd_width);
+
+		for (unsigned int i = 34; i < (len+35); i += 2)
+			pLine[i] = 0x3e;
+
+		ST7565_BlitFullScreen();
+		
+		sprintf(String, "%d", dBm);
+		UI_PrintStringSmall(String, 0, 0, 3);
+	}
+}
+#endif
 
 void UI_DisplayMain(void)
 {
@@ -386,6 +418,15 @@ void UI_DisplayMain(void)
 			memcpy(pLine1 + 128 + 110, BITMAP_Scramble, sizeof(BITMAP_Scramble));
 		}
 	}
+
+#if defined(ENABLE_RSSIBAR)
+	int16_t rssi;
+		
+	if (gCurrentFunction == FUNCTION_RECEIVE || gCurrentFunction == FUNCTION_MONITOR || gCurrentFunction == FUNCTION_INCOMING) {
+		rssi = BK4819_GetRSSI();
+		UI_DisplayRSSIBar(rssi);
+	}
+#endif
 
 	ST7565_BlitFullScreen();
 }
