@@ -16,6 +16,9 @@
 
 #include "../app/spectrum.h"
 
+#define F_MIN FrequencyBandTable[0].lower
+#define F_MAX FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper
+
 const uint16_t RSSI_MAX_VALUE = 65535;
 
 static uint16_t R30, R37, R3D, R43, R47, R48, R7E;

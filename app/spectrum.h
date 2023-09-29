@@ -29,8 +29,9 @@
 #include "../driver/systick.h"
 #include "../external/printf/printf.h"
 #include "../font.h"
-#include "../misc.h"
+#include "../frequencies.h"
 #include "../helper/battery.h"
+#include "../misc.h"
 #include "../radio.h"
 #include "../settings.h"
 #include "../ui/helper.h"
@@ -38,8 +39,6 @@
 #include <stdint.h>
 #include <string.h>
 
-const static uint32_t F_MIN = 0;
-const static uint32_t F_MAX = 130000000;
 static const uint8_t DrawingEndY = 40;
 
 static const uint8_t U8RssiMap[] = {
