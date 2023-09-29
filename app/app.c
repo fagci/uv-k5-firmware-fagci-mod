@@ -384,7 +384,7 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step)
 	Frequency = pInfo->ConfigRX.Frequency + (Step * pInfo->StepFrequency);
 
 	if (pInfo->StepFrequency == 833) {
-		const uint32_t Lower = LowerLimitFrequencyBandTable[pInfo->Band];
+		const uint32_t Lower = FrequencyBandTable[pInfo->Band].lower;
 		const uint32_t Delta = Frequency - Lower;
 		uint32_t Base = (Delta / 2500) * 2500;
 		const uint32_t Index = ((Delta - Base) % 2500) / 833;
@@ -396,10 +396,10 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step)
 		Frequency = Lower + Base + (Index * 833);
 	}
 
-	if (Frequency > UpperLimitFrequencyBandTable[pInfo->Band]) {
-		pInfo->ConfigRX.Frequency = LowerLimitFrequencyBandTable[pInfo->Band];
-	} else if (Frequency < LowerLimitFrequencyBandTable[pInfo->Band]) {
-		pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(UpperLimitFrequencyBandTable[pInfo->Band], pInfo->StepFrequency, LowerLimitFrequencyBandTable[pInfo->Band]);
+    if (Frequency > FrequencyBandTable[pInfo->Band].upper) {
+		pInfo->ConfigRX.Frequency = FrequencyBandTable[pInfo->Band].lower;
+	} else if (Frequency < FrequencyBandTable[pInfo->Band].lower) {
+		pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(FrequencyBandTable[pInfo->Band].upper, pInfo->StepFrequency, FrequencyBandTable[pInfo->Band].lower);
 	} else {
 		pInfo->ConfigRX.Frequency = Frequency;
 	}
