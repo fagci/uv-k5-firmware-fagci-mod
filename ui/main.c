@@ -42,19 +42,19 @@ void UI_DisplayRSSIBar(int16_t rssi)
 		const unsigned int min        = 80;
 		const unsigned int adjusted_max = max - min;
 		const unsigned int level      = (((rssi - min) * lcd_width) + (adjusted_max / 2)) / adjusted_max;
-		const unsigned int len        = (level <= lcd_width) ? level : lcd_width;
+		const unsigned int len        = (level <= lcd_width) ? level : 0;
+		const int16_t dBm = (rssi / 2) - 160;
 
 		uint8_t *pLine = gFrameBuffer[line];
 		memset(pLine, 0, lcd_width);
 
-		for (unsigned int i = 24; i < (len+25); i += 2)
+		for (unsigned int i = 34; i < (len+35); i += 2)
 			pLine[i] = 0x3e;
 
 		ST7565_BlitFullScreen();
 		
-		sprintf(String, "%u", rssi);
+		sprintf(String, "%d", dBm);
 		UI_PrintStringSmall(String, 0, 0, 3);
-		//UI_PrintStringSmall(String, 105, 0, 3);
 	}
 }
 #endif
