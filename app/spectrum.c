@@ -242,9 +242,8 @@ static void SetF(uint32_t f) {
 
   BK4819_SetFrequency(fMeasure);
   BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
-  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   BK4819_WriteRegister(BK4819_REG_30, 0);
-  BK4819_WriteRegister(BK4819_REG_30, reg);
+  BK4819_WriteRegister(BK4819_REG_30, 0xbff1);
 }
 
 // Spectrum related
@@ -278,20 +277,12 @@ static void DeInitSpectrum() {
   isInitialized = false;
 }
 
-uint8_t GetBWRegValueForScan() {
-  return scanStepBWRegValues[settings.scanStepIndex];
-}
-
-/* static void ResetRSSI() {
-  uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
-  Reg &= ~1;
-  BK4819_WriteRegister(BK4819_REG_30, Reg);
-  Reg |= 1;
-  BK4819_WriteRegister(BK4819_REG_30, Reg);
-} */
+uint8_t GetBWRegValueForScan() { return scanStepBWRegValues[0]; }
 
 uint16_t GetRssi() {
   SYSTICK_DelayUs(settings.scanDelay);
+  /* while ((BK4819_ReadRegister(0x63) & 0b11111111) >= 255)
+    ; */
   return BK4819_GetRSSI();
 }
 
@@ -403,18 +394,6 @@ static void UpdateRssiTriggerLevel(bool inc) {
   redrawScreen = true;
 }
 
-/* static void UpdateScanDelay(bool inc) {
-  if (inc && settings.scanDelay < 8000) {
-    settings.scanDelay += 100;
-  } else if (!inc && settings.scanDelay > 800) {
-    settings.scanDelay -= 100;
-  } else {
-    return;
-  }
-  RelaunchScan();
-  redrawStatus = true;
-} */
-
 static void UpdateDBMax(bool inc) {
   if (inc && settings.dbMax < 10) {
     settings.dbMax += 1;
@@ -485,7 +464,7 @@ static void ToggleModulation() {
     settings.modulationType = MOD_FM;
   }
   SetModulation(settings.modulationType);
-  redrawStatus = true;
+  redrawScreen = true;
 }
 
 static void ToggleListeningBW() {
@@ -494,7 +473,7 @@ static void ToggleListeningBW() {
   } else {
     settings.listenBw++;
   }
-  redrawStatus = true;
+  redrawScreen = true;
 }
 
 static void ToggleBacklight() {
@@ -582,6 +561,7 @@ static void UpdateFreqInput(KEY_Code_t key) {
 static void Blacklist() {
   rssiHistory[peak.i] = RSSI_MAX_VALUE;
   ResetPeak();
+  ToggleRX(false);
   newScanStart = true;
 }
 
@@ -657,6 +637,11 @@ static void DrawStatus() {
 static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
   UI_PrintStringSmall(String, 0, 127, 0);
+
+  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
+  GUI_DisplaySmallest(String, 115, 1, false, true);
+  sprintf(String, "%s", bwOptions[settings.listenBw]);
+  GUI_DisplaySmallest(String, 107, 7, false, true);
 }
 
 static void DrawNums() {
@@ -665,10 +650,6 @@ static void DrawNums() {
   sprintf(String, "T:%d", Rssi2DBm(settings.rssiTriggerLevel));
   GUI_DisplaySmallest(String, 64, 8, false, true);
 
-  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  GUI_DisplaySmallest(String, 115, 1, false, true);
-  sprintf(String, "%s", bwOptions[settings.listenBw]);
-  GUI_DisplaySmallest(String, 107, 7, false, true);
   if (currentState == SPECTRUM) {
     sprintf(String, "%ux", GetStepsCount());
     GUI_DisplaySmallest(String, 0, 1, false, true);
@@ -1087,7 +1068,6 @@ static void UpdateScan() {
 }
 
 static void UpdateStill() {
-  // SetF(fMeasure);
   Measure();
   redrawScreen = true;
   preventKeypress = false;
@@ -1106,11 +1086,12 @@ static void UpdateListening() {
     return;
   }
 
-  SetF(fMeasure);
-  // ResetRSSI();
+  if (currentState == SPECTRUM) {
+    SetF(fMeasure);
+  }
   BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   Measure();
-  BK4819_SetFilterBandwidth(settings.listenBw);
+  BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
 
   peak.rssi = scanInfo.rssi;
   redrawScreen = true;
