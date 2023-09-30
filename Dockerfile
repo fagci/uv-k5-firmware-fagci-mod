@@ -10,7 +10,7 @@ RUN set -eux; \
   arm-none-eabi-gcc \
   arm-none-eabi-newlib \
   base-devel \
-  git
+  git \
+  python-crcmod
 
 RUN git submodule update --init --recursive
-#RUN make && cp firmware* compiled-firmware/
