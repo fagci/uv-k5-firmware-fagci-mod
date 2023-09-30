@@ -31,25 +31,31 @@
 #if defined(ENABLE_RSSIBAR)
 void UI_DisplayRSSIBar(int16_t rssi)
 {
-    char String[16];
-    const int16_t dBm = (rssi / 2) - 160;
-		
-    const unsigned int line = 3;
-    const unsigned int bar_width = 92;
+	char String[16];
+	
+	const unsigned int lcd_width = 128;
 
-    const unsigned int max        = 350;
-    const unsigned int min        = 80;
-    const unsigned int adjusted_max = max - min;
-    const unsigned int level      = (((rssi - min) * bar_width) + (adjusted_max / 2)) / adjusted_max;
-    const unsigned int len        = level < bar_width ? level : bar_width;
+	const unsigned int txt_width   = 7 * 5;         // 7 per char
+	const unsigned int bar_x       = txt_width + 4;
+	const unsigned int bar_width   = lcd_width - 1 - bar_x;
 
-    uint8_t *pLine = gFrameBuffer[line];
+	const unsigned int max        = 350;
+	const unsigned int min        = 80;
+	const unsigned int adjusted_max = max - min;
+	const unsigned int level      = (((rssi - min) * bar_width) + (adjusted_max / 2)) / adjusted_max;
+	const unsigned int len        = (level > bar_width) ? bar_width : (level < 1) ? 1: level;
+	const int16_t dBm = (rssi / 2) - 160;
 
-    for (unsigned int i = 34; i < (len+35); i += 2)
-        pLine[i] = 0x3e;
+	uint8_t *pLine = gFrameBuffer[3];
+	memset(pLine, 0, lcd_width);
 
-    sprintf(String, "%d", dBm);
-    UI_PrintStringSmall(String, 0, 0, 3);
+	for (unsigned int i = 0; i < len; i += 2)
+		pLine[bar_x + i] = 0x3e;
+
+	ST7565_BlitFullScreen();
+	
+	sprintf(String, "%d", dBm);
+	UI_PrintStringSmall(String, 0, 0, 3);
 }
 #endif
 
