@@ -40,8 +40,8 @@ PeakInfo peak;
 ScanInfo scanInfo;
 KeyboardState kbd = {KEY_INVALID, KEY_INVALID, 0};
 
-const char *bwOptions[] = {"25k", "12.5k", "6.25k"};
-const char *modulationTypeOptions[] = {"FM", "AM", "USB"};
+const char *bwOptions[] = {"  25k", "12.5k", "6.25k"};
+const char *modulationTypeOptions[] = {" FM", " AM", "USB"};
 const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
 const uint8_t modTypeReg47Values[] = {1, 7, 5};
 
@@ -280,9 +280,11 @@ static void DeInitSpectrum() {
 uint8_t GetBWRegValueForScan() { return scanStepBWRegValues[0]; }
 
 uint16_t GetRssi() {
-  SYSTICK_DelayUs(settings.scanDelay);
-  /* while ((BK4819_ReadRegister(0x63) & 0b11111111) >= 255)
-    ; */
+  // SYSTICK_DelayUs(settings.scanDelay);
+  // testing autodelay based on Glitch value
+  while ((BK4819_ReadRegister(0x63) & 0b11111111) >= 255) {
+    SYSTICK_DelayUs(100);
+  }
   return BK4819_GetRSSI();
 }
 
@@ -392,6 +394,7 @@ static void UpdateRssiTriggerLevel(bool inc) {
   else
     settings.rssiTriggerLevel -= 2;
   redrawScreen = true;
+  redrawStatus = true;
 }
 
 static void UpdateDBMax(bool inc) {
@@ -402,8 +405,8 @@ static void UpdateDBMax(bool inc) {
   } else {
     return;
   }
-  // RelaunchScan();
   redrawStatus = true;
+  redrawScreen = true;
   SYSTEM_DelayMs(20);
 }
 
@@ -418,7 +421,7 @@ static void UpdateScanStep(bool inc) {
   settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
   ResetBlacklist();
-  redrawStatus = true;
+  redrawScreen = true;
 }
 
 static void UpdateCurrentFreq(bool inc) {
@@ -494,7 +497,7 @@ static void ToggleStepsCount() {
   settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
   ResetBlacklist();
-  redrawStatus = true;
+  redrawScreen = true;
 }
 
 static void ResetFreqInput() {
@@ -567,14 +570,15 @@ static void Blacklist() {
 
 // Draw things
 
+// applied x2 to prevent iitial rounding
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
-  const int DB_MIN = settings.dbMin;
-  const int DB_MAX = settings.dbMax;
+  const int DB_MIN = settings.dbMin << 1;
+  const int DB_MAX = settings.dbMax << 1;
   const int DB_RANGE = DB_MAX - DB_MIN;
 
   const uint8_t PX_RANGE = pxMax - pxMin;
 
-  int dbm = clamp(Rssi2DBm(rssi), DB_MIN, DB_MAX);
+  int dbm = clamp(rssi - (160 << 1), DB_MIN, DB_MAX);
 
   return ((dbm - DB_MIN) * PX_RANGE + DB_RANGE / 2) / DB_RANGE + pxMin;
 }
@@ -593,8 +597,10 @@ static void DrawSpectrum() {
 }
 
 static void DrawStatus() {
-  sprintf(String, "%d/%d", settings.dbMin, settings.dbMax);
-  GUI_DisplaySmallest(String, 0, 2, true, true);
+  sprintf(String, "%d/%d P:%d T:%d", settings.dbMin, settings.dbMax,
+          Rssi2DBm(peak.rssi), Rssi2DBm(settings.rssiTriggerLevel));
+  GUI_DisplaySmallest(String, 0, 1, true, true);
+
   for (int i = 0; i < 4; i++) {
     BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
   }
@@ -636,19 +642,15 @@ static void DrawStatus() {
 
 static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
-  UI_PrintStringSmall(String, 0, 127, 0);
+  UI_PrintStringSmall(String, 8, 127, 0);
 
   sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  GUI_DisplaySmallest(String, 115, 1, false, true);
+  GUI_DisplaySmallest(String, 116, 1, false, true);
   sprintf(String, "%s", bwOptions[settings.listenBw]);
-  GUI_DisplaySmallest(String, 107, 7, false, true);
+  GUI_DisplaySmallest(String, 108, 7, false, true);
 }
 
 static void DrawNums() {
-  sprintf(String, "P:%d", Rssi2DBm(peak.rssi));
-  GUI_DisplaySmallest(String, 32, 8, false, true);
-  sprintf(String, "T:%d", Rssi2DBm(settings.rssiTriggerLevel));
-  GUI_DisplaySmallest(String, 64, 8, false, true);
 
   if (currentState == SPECTRUM) {
     sprintf(String, "%ux", GetStepsCount());
@@ -949,8 +951,6 @@ static void RenderStill() {
   GUI_DisplaySmallest(String, 4, 25, false, true);
   sprintf(String, "%d dBm", dbm);
   GUI_DisplaySmallest(String, 28, 25, false, true);
-  sprintf(String, "V: %d", scanInfo.rssi);
-  GUI_DisplaySmallest(String, 64, 25, false, true);
 
   if (!monitorMode) {
     uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
