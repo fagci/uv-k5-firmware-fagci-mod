@@ -346,7 +346,9 @@ static void RelaunchScan() {
   InitScan();
   ResetPeak();
   ToggleRX(false);
+#ifdef SPECTRUM_AUTOMATIC_SQUELCH
   settings.rssiTriggerLevel = RSSI_MAX_VALUE;
+#endif
   preventKeypress = true;
   scanInfo.rssiMin = RSSI_MAX_VALUE;
 }
@@ -1150,7 +1152,7 @@ void APP_RunSpectrum() {
   redrawScreen = false; // we will wait until scan done
   newScanStart = true;
 
-  ToggleRX(false);
+  ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off
   SetModulation(settings.modulationType = MOD_FM);
   BK4819_SetFilterBandwidth(settings.listenBw = BK4819_FILTER_BW_WIDE);
 

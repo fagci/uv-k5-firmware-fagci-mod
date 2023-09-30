@@ -83,7 +83,7 @@ extern bool gSetting_350TX;
 extern bool gSetting_KILLED;
 extern bool gSetting_200TX;
 extern bool gSetting_500TX;
-extern bool gSetting_ALL_TX;
+extern uint8_t gSetting_ALL_TX;
 extern uint8_t gSetting_F_LOCK;
 extern bool gSetting_ScrambleEnable;
 extern uint8_t gSetting_F_LOCK;

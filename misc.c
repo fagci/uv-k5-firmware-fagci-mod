@@ -24,7 +24,7 @@ bool gSetting_350TX;
 bool gSetting_KILLED;
 bool gSetting_200TX;
 bool gSetting_500TX;
-bool gSetting_ALL_TX;
+uint8_t gSetting_ALL_TX;
 uint8_t gSetting_F_LOCK;
 bool gSetting_ScrambleEnable;
 

@@ -13,6 +13,8 @@ ENABLE_NOSCANTIMEOUT := 1
 ENABLE_KEEPNAMEONSAVE := 1
 ENABLE_RSSIBAR := 1
 
+SPECTRUM_AUTOMATIC_SQUELCH := 1
+
 BSP_DEFINITIONS := $(wildcard hardware/*/*.def)
 BSP_HEADERS := $(patsubst hardware/%,bsp/%,$(BSP_DEFINITIONS))
 BSP_HEADERS := $(patsubst %.def,%.h,$(BSP_HEADERS))

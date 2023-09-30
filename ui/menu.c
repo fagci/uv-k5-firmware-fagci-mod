@@ -88,11 +88,6 @@ static const char gSubMenu_W_N[2][7] = {
 	"NARROW",
 };
 
-static const char gSubMenu_OFF_ON[2][4] = {
-	"OFF",
-	"ON",
-};
-
 static const char gSubMenu_SAVE[5][4] = {
 	"OFF",
 	"1:1",
@@ -172,6 +167,8 @@ static const char gSubMenu_F_LOCK[6][4] = {
 	"430",
 	"438",
 };
+
+static const char *defaultEnableDisable[3] = {"DEFAULT", "ENABLE", "DISABLE"};
 
 bool gIsInSubMenu;
 
@@ -306,7 +303,7 @@ void UI_DisplayMenu(void)
 	case MENU_500TX:
 	case MENU_ALL_TX:
 	case MENU_SCREN:
-		strcpy(String, gSubMenu_OFF_ON[gSubMenuSelection]);
+		strcpy(String, defaultEnableDisable[gSubMenuSelection]);
 		break;
 
 	case MENU_MEM_CH:

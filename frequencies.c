@@ -19,8 +19,8 @@
 #include "settings.h"
 
 const struct FrequencyBandInfo FrequencyBandTable[7] = {
-       [BAND1_50MHz ] = {.lower =  1600000, .middle =  6500000, .upper =  7600000},
-       [BAND2_108MHz] = {.lower = 10800000, .middle = 12200000, .upper = 13599990},
+       [BAND1_50MHz ] = {.lower =  1600000, .middle =  6500000, .upper =  7599990},
+       [BAND2_108MHz] = {.lower = 7600000, .middle = 12200000, .upper = 13599990},
        [BAND3_136MHz] = {.lower = 13600000, .middle = 15000000, .upper = 17399990},
        [BAND4_174MHz] = {.lower = 17400000, .middle = 26000000, .upper = 34999990},
        [BAND5_350MHz] = {.lower = 35000000, .middle = 37000000, .upper = 39999990},
@@ -110,8 +110,11 @@ int FREQUENCY_Check(VFO_Info_t *pInfo)
 		return -1;
 	}
 	Frequency = pInfo->pTX->Frequency;
-    if (gSetting_ALL_TX) {
+    if (gSetting_ALL_TX == 1) {
         return 0;
+    }
+    if (gSetting_ALL_TX == 2) {
+        return -1;
     }
 	switch (gSetting_F_LOCK) {
 	case F_LOCK_FCC:

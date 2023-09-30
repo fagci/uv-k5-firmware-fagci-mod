@@ -149,13 +149,9 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 			return;
 		}
 		Band = gTxVfo->Band + 1;
-		if (gSetting_ALL_TX || Band != BAND5_350MHz) {
-			if (BAND7_470MHz < Band) {
-				Band = BAND1_50MHz;
-			}
-		} else {
-			Band = BAND6_400MHz;
-		}
+        if (BAND7_470MHz < Band) {
+            Band = BAND1_50MHz;
+        }
 		gTxVfo->Band = Band;
 		gEeprom.ScreenChannel[Vfo] = FREQ_CHANNEL_FIRST + Band;
 		gEeprom.FreqChannel[Vfo] = FREQ_CHANNEL_FIRST + Band;

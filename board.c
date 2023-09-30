@@ -687,7 +687,7 @@ void BOARD_EEPROM_Init(void)
 	gSetting_KILLED         = (Data[2] < 2) ? Data[2] : false;
 	gSetting_200TX          = (Data[3] < 2) ? Data[3] : false;
 	gSetting_500TX          = (Data[4] < 2) ? Data[4] : false;
-	gSetting_ALL_TX          = (Data[5] < 2) ? Data[5] : true;
+	gSetting_ALL_TX          = (Data[5] < 2) ? Data[5] : 2;
 	gSetting_ScrambleEnable = (Data[6] < 2) ? Data[6] : true;
 
 	if (!gEeprom.VFO_OPEN) {

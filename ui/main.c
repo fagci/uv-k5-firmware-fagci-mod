@@ -31,31 +31,25 @@
 #if defined(ENABLE_RSSIBAR)
 void UI_DisplayRSSIBar(int16_t rssi)
 {
-	if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_NAME_FREQ)
-	{
-		char String[16];
+    char String[16];
+    const int16_t dBm = (rssi / 2) - 160;
 		
-		const unsigned int line = 3;
-		const unsigned int lcd_width = sizeof(gFrameBuffer[line]) - 25;
+    const unsigned int line = 3;
+    const unsigned int bar_width = 92;
 
-		const unsigned int max        = 350;
-		const unsigned int min        = 80;
-		const unsigned int adjusted_max = max - min;
-		const unsigned int level      = (((rssi - min) * lcd_width) + (adjusted_max / 2)) / adjusted_max;
-		const unsigned int len        = (level <= lcd_width) ? level : 0;
-		const int16_t dBm = (rssi / 2) - 160;
+    const unsigned int max        = 350;
+    const unsigned int min        = 80;
+    const unsigned int adjusted_max = max - min;
+    const unsigned int level      = (((rssi - min) * bar_width) + (adjusted_max / 2)) / adjusted_max;
+    const unsigned int len        = level < bar_width ? level : bar_width;
 
-		uint8_t *pLine = gFrameBuffer[line];
-		memset(pLine, 0, lcd_width);
+    uint8_t *pLine = gFrameBuffer[line];
 
-		for (unsigned int i = 34; i < (len+35); i += 2)
-			pLine[i] = 0x3e;
+    for (unsigned int i = 34; i < (len+35); i += 2)
+        pLine[i] = 0x3e;
 
-		ST7565_BlitFullScreen();
-		
-		sprintf(String, "%d", dBm);
-		UI_PrintStringSmall(String, 0, 0, 3);
-	}
+    sprintf(String, "%d", dBm);
+    UI_PrintStringSmall(String, 0, 0, 3);
 }
 #endif
 
