@@ -49,7 +49,7 @@ SpectrumSettings settings = {STEPS_64,
                              S_STEP_25_0kHz,
                              80000,
                              3200,
-                             0,
+                             150,
                              true,
                              BK4819_FILTER_BW_WIDE,
                              BK4819_FILTER_BW_WIDE,
@@ -242,8 +242,9 @@ static void SetF(uint32_t f) {
 
   BK4819_SetFrequency(fMeasure);
   BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
+  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   BK4819_WriteRegister(BK4819_REG_30, 0);
-  BK4819_WriteRegister(BK4819_REG_30, 0xbff1);
+  BK4819_WriteRegister(BK4819_REG_30, reg);
 }
 
 // Spectrum related
@@ -277,10 +278,20 @@ static void DeInitSpectrum() {
   isInitialized = false;
 }
 
-uint8_t GetBWRegValueForScan() { return scanStepBWRegValues[0]; }
+uint8_t GetBWRegValueForScan() {
+  return scanStepBWRegValues[settings.scanStepIndex];
+}
+
+/* static void ResetRSSI() {
+  uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
+  Reg &= ~1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+  Reg |= 1;
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+} */
 
 uint16_t GetRssi() {
-  // SYSTICK_DelayUs(settings.scanDelay);
+  // SYSTICK_DelayUs(800);
   // testing autodelay based on Glitch value
   while ((BK4819_ReadRegister(0x63) & 0b11111111) >= 255) {
     SYSTICK_DelayUs(100);
@@ -572,7 +583,7 @@ static void Blacklist() {
 
 // Draw things
 
-// applied x2 to prevent iitial rounding
+// applied x2 to prevent initial rounding
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
   const int DB_MIN = settings.dbMin << 1;
   const int DB_MAX = settings.dbMax << 1;
@@ -599,8 +610,12 @@ static void DrawSpectrum() {
 }
 
 static void DrawStatus() {
+#ifdef SPECTRUM_EXTRA_VALUES
   sprintf(String, "%d/%d P:%d T:%d", settings.dbMin, settings.dbMax,
           Rssi2DBm(peak.rssi), Rssi2DBm(settings.rssiTriggerLevel));
+#else
+  sprintf(String, "%d/%d", settings.dbMin, settings.dbMax);
+#endif
   GUI_DisplaySmallest(String, 0, 1, true, true);
 
   for (int i = 0; i < 4; i++) {
@@ -1092,7 +1107,6 @@ static void UpdateListening() {
   }
 
   if (currentState == SPECTRUM) {
-    SetF(fMeasure);
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     Measure();
     BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
