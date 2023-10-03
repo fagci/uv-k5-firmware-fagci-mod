@@ -65,7 +65,7 @@ uint16_t rssiHistory[128] = {0};
 
 typedef struct MovingAverage {
   uint16_t mean[128];
-  uint16_t buf[8][128];
+  uint16_t buf[4][128];
   uint16_t min, mid, max;
   uint16_t t;
 } MovingAverage;
@@ -271,8 +271,8 @@ static void ToggleAFDAC(bool on) {
 static void SetF(uint32_t f) {
   fMeasure = f;
 
-  BK4819_SetFrequency(fMeasure);
   BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
+  BK4819_SetFrequency(fMeasure);
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   BK4819_WriteRegister(BK4819_REG_30, 0);
   BK4819_WriteRegister(BK4819_REG_30, reg);
@@ -383,7 +383,7 @@ static void ResetRSSI() {
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
     ResetRSSI();
-    SYSTEM_DelayMs(2);
+    SYSTICK_DelayUs(1900);
   }
   return BK4819_GetRSSI();
 }
@@ -751,19 +751,8 @@ static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
   return ConvertDomain(rssi - 320, -260, -120, pxMin, pxMax);
 }
 
-static const uint8_t RT08[128] = {
-    0,  1,  2,  3,  4,  5,  5,  6,  7,  8,  9,  10, 11, 11,  12, 13, 14, 15, 16,
-    16, 17, 18, 19, 20, 20, 21, 22, 23, 24, 25, 25, 26, 27,  28, 29, 29, 30, 31,
-    32, 32, 33, 34, 35, 36, 36, 37, 38, 39, 40, 40, 41, 42,  43, 43, 44, 45, 46,
-    47, 47, 48, 49, 50, 50, 51, 52, 53, 54, 54, 55, 56, 57,  57, 58, 59, 60, 60,
-    61, 62, 63, 63, 64, 65, 66, 67, 67, 68, 69, 70, 70, 71,  72, 73, 73, 74, 75,
-    76, 76, 77, 78, 79, 79, 80, 81, 82, 82, 83, 84, 85, 85,  86, 87, 88, 88, 89,
-    90, 91, 91, 92, 93, 94, 94, 95, 96, 97, 97, 98, 99, 100,
-};
-
 static uint8_t Rssi2Y(uint16_t rssi) {
-  return DrawingEndY -
-         ConvertDomain(RT08[rssi], RT08[mov.min], 100, 0, DrawingEndY);
+  return DrawingEndY - ConvertDomain(rssi, mov.min, mov.max + 55, 0, DrawingEndY);
 }
 
 static void DrawSpectrum() {
