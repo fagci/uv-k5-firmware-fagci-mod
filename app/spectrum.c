@@ -26,13 +26,16 @@ static uint32_t initialFreq;
 static char String[32];
 
 bool isInitialized = false;
-bool isListening = true;
 bool monitorMode = false;
 bool redrawStatus = true;
 bool redrawScreen = false;
 bool newScanStart = true;
 bool preventKeypress = true;
-bool audioState = true;
+
+bool isListening = false;
+bool isTransmitting = false;
+
+bool isPttPressed = false;
 
 State currentState = SPECTRUM, previousState = SPECTRUM;
 
@@ -58,6 +61,7 @@ SpectrumSettings settings = {STEPS_64,
                              -50};
 
 uint32_t fMeasure = 0;
+uint32_t fTx = 0;
 uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {};
 
@@ -67,6 +71,8 @@ KEY_Code_t freqInputArr[10];
 char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
 
 uint8_t menuState = 0;
+uint8_t hiddenMenuState = 0;
+
 uint16_t listenT = 0;
 
 RegisterSpec registerSpecs[] = {
@@ -76,6 +82,92 @@ RegisterSpec registerSpecs[] = {
     {"PGA", 0x13, 0, 0b111, 1},
     {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
     // {"MIX", 0x13, 3, 0b11, 1}, // TODO: hidden
+};
+
+RegisterSpec hiddenRegisterSpecs[] = {
+    {},
+
+    {"Enable Compander", 0x31, 3, 1, 1},
+    {"Band-Gap Enable", 0x37, 0, 1, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+    {"Band Selection Thr", 0x3E, 0, 0xFFFF, 1},
+    {"RF filt BW ", 0x43, 12, 0b111, 1},
+    {"RF filt BW weak", 0x43, 9, 0b111, 1},
+    {"BW Mode Selection", 0x43, 4, 0b11, 1},
+    {"AF Output Inverse", 0x47, 13, 1, 1},
+    {"AF Output Select", 0x47, 8, 0b1111, 1},
+    {"AF ALC Disable", 0x4B, 5, 1, 1},
+    {"AFC Range Select", 0x73, 11, 0b111, 1},
+    {"AFC Disable", 0x73, 4, 1, 1},
+    {"AGC Fix Mode", 0x7E, 15, 1, 1},
+    {"AGC Fix Index", 0x7E, 12, 0b111, 1},
+
+    {"LNAs 10", 0x10, 8, 0b11, 1},
+    {"LNA 10", 0x10, 5, 0b111, 1},
+    {"MIX 10", 0x10, 3, 0b11, 1},
+    {"PGA 10", 0x10, 0, 0b111, 1},
+    {"LNAs 11", 0x11, 8, 0b11, 1},
+    {"LNA 11", 0x11, 5, 0b111, 1},
+    {"MIX 11", 0x11, 3, 0b11, 1},
+    {"PGA 11", 0x11, 0, 0b111, 1},
+    {"LNAs 12", 0x12, 8, 0b11, 1},
+    {"LNA 12", 0x12, 5, 0b111, 1},
+    {"MIX 12", 0x12, 3, 0b11, 1},
+    {"PGA 12", 0x12, 0, 0b111, 1},
+    {"LNAs 13", 0x13, 8, 0b11, 1},
+    {"LNA 13", 0x13, 5, 0b111, 1},
+    {"MIX 13", 0x13, 3, 0b11, 1},
+    {"PGA 13", 0x13, 0, 0b111, 1},
+    {"LNAs 14", 0x14, 8, 0b11, 1},
+    {"LNA 14", 0x14, 5, 0b111, 1},
+    {"MIX 14", 0x14, 3, 0b11, 1},
+    {"PGA 14", 0x14, 0, 0b111, 1},
+
+    {"Crystal vReg Bit", 0x1A, 12, 0b1111, 1},
+    {"Crystal iBit", 0x1A, 8, 0b1111, 1},
+    {"PLL CP bit", 0x1F, 0, 0b1111, 1},
+    {"PLL/VCO Enable", 0x30, 4, 0xF, 1},
+    {"XTAL Enable", 0x37, 1, 1, 1},
+    {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
+    {"XTAL F High-8bits", 0x3C, 8, 0xFF, 1},
+    {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
+
+    {"Exp AF Rx Ratio", 0x28, 14, 0b11, 1},
+    {"Exp AF Rx 0 dB", 0x28, 7, 0x7F, 1},
+    {"Exp AF Rx noise", 0x28, 0, 0x7F, 1},
+    {"OFF AFRxHPF300 flt", 0x2B, 10, 1, 1},
+    {"OFF AF RxLPF3K flt", 0x2B, 9, 1, 1},
+    {"OFF AF Rx de-emp", 0x2B, 8, 1, 1},
+    {"Gain after FM Demod", 0x43, 2, 1, 1},
+    {"AF Rx Gain1", 0x48, 10, 0x11, 1},
+    {"AF Rx Gain2", 0x48, 4, 0b111111, 1},
+    {"AF DAC G after G1 G2", 0x48, 0, 0b1111, 1},
+    {"300Hz AF Resp K Rx", 0x54, 0, 0xFFFF, 1},
+    {"300Hz AF Resp K Rx", 0x55, 0, 0xFFFF, 1},
+    {"3kHz AF Resp K Rx", 0x75, 0, 0xFFFF, 1},
+    {"DC Filt BW Rx IF In", 0x7E, 0, 0b111, 1},
+
+    {"MIC AGC Disable", 0x19, 15, 1, 1},
+    {"Compress AF Tx Ratio", 0x29, 14, 0b11, 1},
+    {"Compress AF Tx 0 dB", 0x29, 7, 0x7F, 1},
+    {"Compress AF Tx noise", 0x29, 0, 0x7F, 1},
+    {"OFF AFTxHPF300filter", 0x2B, 2, 1, 1},
+    {"OFF AFTxLPF1filter", 0x2B, 1, 1, 1},
+    {"OFF AFTxpre-emp flt", 0x2B, 0, 1, 1},
+    {"PA Gain Enable", 0x30, 3, 1, 1},
+    {"PA Biasoutput 0~3", 0x36, 8, 0xFF, 1},
+    {"PA Gain1 Tuning", 0x36, 3, 0b111, 1},
+    {"PA Gain2 Tuning", 0x36, 0, 0b111, 1},
+    {"RF TxDeviation ON", 0x40, 12, 1, 1},
+    {"RF Tx Deviation", 0x40, 0, 0xFFF, 1},
+    {"AFTxLPF2 filter BW", 0x43, 6, 0b111, 1},
+    {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 1},
+    {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 1},
+    {"AFTx Filt Bypass All", 0x47, 0, 1, 1},
+    {"3kHz AF Resp K Tx", 0x74, 0, 0xFFFF, 1},
+    {"MIC Sensit Tuning", 0x7D, 0, 0b11111, 1},
+    {"DC Filt BW Tx MIC In", 0x7E, 3, 0b111, 1},
+
 };
 
 uint16_t statuslineUpdateTimer = 0;
@@ -93,25 +185,39 @@ static uint8_t DBm2S(int dbm) {
 
 static int Rssi2DBm(uint16_t rssi) { return (rssi >> 1) - 160; }
 
-static uint16_t GetRegMenuValue(uint8_t st) {
-  RegisterSpec s = registerSpecs[st];
+uint8_t CountBits(uint16_t n) {
+  uint8_t count = 0;
+  while (n) {
+    count++;
+    n >>= 1;
+  }
+  return count;
+}
+
+static uint16_t GetRegMask(RegisterSpec s) {
+  return (1 << CountBits(s.maxValue)) - 1;
+}
+
+static uint16_t GetRegMenuValue(RegisterSpec s) {
   return (BK4819_ReadRegister(s.num) >> s.offset) & s.maxValue;
 }
 
-static void SetRegMenuValue(uint8_t st, bool add) {
-  uint16_t v = GetRegMenuValue(st);
-  RegisterSpec s = registerSpecs[st];
-
+static void SetRegMenuValue(RegisterSpec s, uint16_t v) {
   uint16_t reg = BK4819_ReadRegister(s.num);
+  reg &= ~(GetRegMask(s) << s.offset);
+  BK4819_WriteRegister(s.num, reg | (v << s.offset));
+}
+
+static void UpdateRegMenuValue(RegisterSpec s, bool add) {
+  uint16_t v = GetRegMenuValue(s);
+
   if (add && v <= s.maxValue - s.inc) {
     v += s.inc;
   } else if (!add && v >= 0 + s.inc) {
     v -= s.inc;
   }
-  // TODO: use max value for bits count in max value, or reset by additional
-  // mask in spec
-  reg &= ~(s.maxValue << s.offset);
-  BK4819_WriteRegister(s.num, reg | (v << s.offset));
+
+  SetRegMenuValue(s, v);
   redrawScreen = true;
 }
 
@@ -124,6 +230,7 @@ static void PutPixel(uint8_t x, uint8_t y, bool fill) {
     gFrameBuffer[y >> 3][x] &= ~(1 << (y & 7));
   }
 }
+
 static void PutPixelStatus(uint8_t x, uint8_t y, bool fill) {
   if (fill) {
     gStatusLine[x] |= 1 << y;
@@ -247,6 +354,15 @@ static void SetF(uint32_t f) {
   BK4819_WriteRegister(BK4819_REG_30, reg);
 }
 
+static void SetTxF(uint32_t f) {
+  fTx = f;
+  BK4819_SetFrequency(f);
+  BK4819_PickRXFilterPathBasedOnFrequency(f);
+  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
+  BK4819_WriteRegister(BK4819_REG_30, 0);
+  BK4819_WriteRegister(BK4819_REG_30, reg);
+}
+
 // Spectrum related
 
 bool IsPeakOverLevel() { return peak.rssi >= settings.rssiTriggerLevel; }
@@ -299,11 +415,25 @@ uint16_t GetRssi() {
   return BK4819_GetRSSI();
 }
 
-static void ToggleAudio(bool on) {
-  if (on == audioState) {
-    return;
+uint32_t GetOffsetedF(uint32_t f) {
+  switch (gCurrentVfo->FREQUENCY_DEVIATION_SETTING) {
+  case FREQUENCY_DEVIATION_OFF:
+    break;
+  case FREQUENCY_DEVIATION_ADD:
+    f += gCurrentVfo->FREQUENCY_OF_DEVIATION;
+    break;
+  case FREQUENCY_DEVIATION_SUB:
+    f -= gCurrentVfo->FREQUENCY_OF_DEVIATION;
+    break;
   }
-  audioState = on;
+
+  return clamp(f, FrequencyBandTable[0].lower,
+               FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper);
+}
+
+bool IsTXAllowed() { return gSetting_ALL_TX != 2; }
+
+static void ToggleAudio(bool on) {
   if (on) {
     GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
   } else {
@@ -311,10 +441,20 @@ static void ToggleAudio(bool on) {
   }
 }
 
+static void ToggleTX(bool);
+static void ToggleRX(bool);
+
 static void ToggleRX(bool on) {
+  if (isListening == on) {
+    return;
+  }
   isListening = on;
+  if (on) {
+    ToggleTX(false);
+  }
 
   BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, on);
+  BK4819_RX_TurnOn();
 
   ToggleAudio(on);
   ToggleAFDAC(on);
@@ -326,6 +466,65 @@ static void ToggleRX(bool on) {
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
+}
+
+uint16_t registersVault[128] = {0};
+
+static void RegBackupSet(uint8_t num, uint16_t value) {
+  registersVault[num] = BK4819_ReadRegister(num);
+  BK4819_WriteRegister(num, value);
+}
+
+static void RegRestore(uint8_t num) {
+  BK4819_WriteRegister(num, registersVault[num]);
+}
+
+static void ToggleTX(bool on) {
+  if (isTransmitting == on) {
+    return;
+  }
+  isTransmitting = on;
+  if (on) {
+    ToggleRX(false);
+  }
+
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, on);
+
+  if (on) {
+    ToggleAudio(false);
+
+    SetTxF(GetOffsetedF(fMeasure));
+
+    RegBackupSet(BK4819_REG_47, 0x6040);
+    RegBackupSet(BK4819_REG_7E, 0x302E);
+    RegBackupSet(BK4819_REG_50, 0x3B20);
+    RegBackupSet(BK4819_REG_37, 0x1D0F);
+    RegBackupSet(BK4819_REG_52, 0x028F);
+    RegBackupSet(BK4819_REG_30, 0x0000);
+    BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);
+    RegBackupSet(BK4819_REG_51, 0x0000);
+
+    BK4819_SetupPowerAmplifier(gCurrentVfo->TXP_CalculatedSetting,
+                               gCurrentVfo->pTX->Frequency);
+  } else {
+    RADIO_SendEndOfTransmission();
+    RADIO_EnableCxCSS();
+
+    BK4819_SetupPowerAmplifier(0, 0);
+
+    RegRestore(BK4819_REG_51);
+    BK4819_WriteRegister(BK4819_REG_30, 0);
+    RegRestore(BK4819_REG_30);
+    RegRestore(BK4819_REG_52);
+    RegRestore(BK4819_REG_37);
+    RegRestore(BK4819_REG_50);
+    RegRestore(BK4819_REG_7E);
+    RegRestore(BK4819_REG_47);
+
+    SetF(fMeasure);
+  }
+  BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, !on);
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, on);
 }
 
 // Scan info
@@ -583,17 +782,19 @@ static void Blacklist() {
 
 // Draw things
 
+int ConvertDomain(int aValue, int aMin, int aMax, int bMin, int bMax) {
+  int aRange = aMax - aMin;
+  int bRange = bMax - bMin;
+  aValue = clamp(aValue, aMin, aMax);
+  return ((aValue - aMin) * bRange + aRange / 2) / aRange + bMin;
+}
+
 // applied x2 to prevent initial rounding
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
   const int DB_MIN = settings.dbMin << 1;
   const int DB_MAX = settings.dbMax << 1;
-  const int DB_RANGE = DB_MAX - DB_MIN;
 
-  const uint8_t PX_RANGE = pxMax - pxMin;
-
-  int dbm = clamp(rssi - (160 << 1), DB_MIN, DB_MAX);
-
-  return ((dbm - DB_MIN) * PX_RANGE + DB_RANGE / 2) / DB_RANGE + pxMin;
+  return ConvertDomain(rssi - (160 << 1), DB_MIN, DB_MAX, pxMin, pxMax);
 }
 
 uint8_t Rssi2Y(uint16_t rssi) {
@@ -609,6 +810,33 @@ static void DrawSpectrum() {
   }
 }
 
+static void UpdateBatteryInfo() {
+  for (int i = 0; i < 4; i++) {
+    BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
+  }
+
+  uint16_t Voltage;
+  gBatteryDisplayLevel = 0;
+
+  Voltage = (gBatteryVoltages[0] + gBatteryVoltages[1] + gBatteryVoltages[2] +
+             gBatteryVoltages[3]) /
+            4;
+
+  if (gBatteryCalibration[5] < Voltage) {
+    gBatteryDisplayLevel = 6;
+  } else if (gBatteryCalibration[4] < Voltage) {
+    gBatteryDisplayLevel = 5;
+  } else if (gBatteryCalibration[3] < Voltage) {
+    gBatteryDisplayLevel = 4;
+  } else if (gBatteryCalibration[2] < Voltage) {
+    gBatteryDisplayLevel = 3;
+  } else if (gBatteryCalibration[1] < Voltage) {
+    gBatteryDisplayLevel = 2;
+  } else if (gBatteryCalibration[0] < Voltage) {
+    gBatteryDisplayLevel = 1;
+  }
+}
+
 static void DrawStatus() {
 #ifdef SPECTRUM_EXTRA_VALUES
   sprintf(String, "%d/%d P:%d T:%d", settings.dbMin, settings.dbMax,
@@ -618,35 +846,13 @@ static void DrawStatus() {
 #endif
   GUI_DisplaySmallest(String, 0, 1, true, true);
 
-  for (int i = 0; i < 4; i++) {
-    BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
-  }
-
-  uint16_t Voltage;
-  uint8_t v = 0;
-
-  Voltage = (gBatteryVoltages[0] + gBatteryVoltages[1] + gBatteryVoltages[2] +
-             gBatteryVoltages[3]) /
-            4;
-
-  if (gBatteryCalibration[5] < Voltage) {
-    v = 5;
-  } else if (gBatteryCalibration[4] < Voltage) {
-    v = 5;
-  } else if (gBatteryCalibration[3] < Voltage) {
-    v = 4;
-  } else if (gBatteryCalibration[2] < Voltage) {
-    v = 3;
-  } else if (gBatteryCalibration[1] < Voltage) {
-    v = 2;
-  } else if (gBatteryCalibration[0] < Voltage) {
-    v = 1;
-  }
+  UpdateBatteryInfo();
 
   gStatusLine[127] = 0b01111110;
   for (int i = 126; i >= 116; i--) {
     gStatusLine[i] = 0b01000010;
   }
+  uint8_t v = gBatteryDisplayLevel;
   v <<= 1;
   for (int i = 125; i >= 116; i--) {
     if (126 - i <= v) {
@@ -659,6 +865,17 @@ static void DrawStatus() {
 
 static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
+
+  if (currentState == STILL && isPttPressed) {
+    if (gBatteryDisplayLevel == 6) {
+      sprintf(String, "VOLTAGE HIGH");
+    } else if (!IsTXAllowed()) {
+      sprintf(String, "DISABLED");
+    } else {
+      f = GetOffsetedF(f);
+      sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
+    }
+  }
   UI_PrintStringSmall(String, 8, 127, 0);
 
   sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
@@ -861,14 +1078,22 @@ void OnKeyDownStill(KEY_Code_t key) {
     break;
   case KEY_UP:
     if (menuState) {
-      SetRegMenuValue(menuState, true);
+      UpdateRegMenuValue(registerSpecs[menuState], true);
+      break;
+    }
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], true);
       break;
     }
     UpdateCurrentFreqStill(true);
     break;
   case KEY_DOWN:
     if (menuState) {
-      SetRegMenuValue(menuState, false);
+      UpdateRegMenuValue(registerSpecs[menuState], false);
+      break;
+    }
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], false);
       break;
     }
     UpdateCurrentFreqStill(false);
@@ -895,11 +1120,16 @@ void OnKeyDownStill(KEY_Code_t key) {
     ToggleBacklight();
     break;
   case KEY_PTT:
-    // TODO: start transmit
-    /* BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
-    BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true); */
+    // start transmit
+    UpdateBatteryInfo();
+    isPttPressed = true;
+    if (gBatteryDisplayLevel != 6 && IsTXAllowed()) {
+      ToggleTX(true);
+    }
+    redrawScreen = true;
     break;
   case KEY_MENU:
+    hiddenMenuState = 0;
     if (menuState == ARRAY_SIZE(registerSpecs) - 1) {
       menuState = 1;
     } else {
@@ -907,17 +1137,46 @@ void OnKeyDownStill(KEY_Code_t key) {
     }
     redrawScreen = true;
     break;
+  case KEY_2:
+    menuState = 0;
+    if (hiddenMenuState <= 1) {
+      hiddenMenuState = ARRAY_SIZE(hiddenRegisterSpecs) - 1;
+    } else {
+      hiddenMenuState--;
+    }
+    SYSTEM_DelayMs(90);
+    break;
+  case KEY_8:
+    menuState = 0;
+    if (hiddenMenuState == ARRAY_SIZE(hiddenRegisterSpecs) - 1) {
+      hiddenMenuState = 1;
+    } else {
+      hiddenMenuState++;
+    }
+    SYSTEM_DelayMs(90);
+    break;
   case KEY_EXIT:
-    if (!menuState) {
-      SetState(SPECTRUM);
-      monitorMode = false;
-      RelaunchScan();
+    if (menuState) {
+      menuState = 0;
       break;
     }
-    menuState = 0;
+    if (hiddenMenuState) {
+      hiddenMenuState = 0;
+      break;
+    }
+    SetState(SPECTRUM);
+    monitorMode = false;
+    RelaunchScan();
     break;
   default:
     break;
+  }
+}
+
+static void OnKeysReleased() {
+  isPttPressed = false;
+  if (isTransmitting) {
+    ToggleTX(false);
   }
 }
 
@@ -965,38 +1224,59 @@ static void RenderStill() {
   int dbm = Rssi2DBm(scanInfo.rssi);
   uint8_t s = DBm2S(dbm);
   sprintf(String, "S: %u", s);
-  GUI_DisplaySmallest(String, 4, 25, false, true);
+  GUI_DisplaySmallest(String, 4, 9, false, true);
   sprintf(String, "%d dBm", dbm);
-  GUI_DisplaySmallest(String, 28, 25, false, true);
+  GUI_DisplaySmallest(String, 32, 9, false, true);
+
+  if (isTransmitting) {
+    uint8_t afDB = BK4819_ReadRegister(0x6F) & 0b1111111;
+    uint8_t afPX = ConvertDomain(afDB, 0, 120, 0, 121);
+    for (int i = 0; i < afPX; ++i) {
+      gFrameBuffer[3][i + METER_PAD_LEFT] |= 0b00000011;
+    }
+  }
 
   if (!monitorMode) {
     uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
     gFrameBuffer[2][METER_PAD_LEFT + x] = 0b11111111;
   }
 
-  const uint8_t PAD_LEFT = 4;
-  const uint8_t CELL_WIDTH = 30;
-  uint8_t offset = PAD_LEFT;
-  uint8_t row = 4;
+  if (!hiddenMenuState) {
+    const uint8_t PAD_LEFT = 4;
+    const uint8_t CELL_WIDTH = 30;
+    uint8_t offset = PAD_LEFT;
+    uint8_t row = 4;
 
-  for (int i = 0, idx = 1; idx <= 4; ++i, ++idx) {
-    if (idx == 5) {
-      row += 2;
-      i = 0;
-    }
-    offset = PAD_LEFT + i * CELL_WIDTH;
-    if (menuState == idx) {
-      for (int j = 0; j < CELL_WIDTH; ++j) {
-        gFrameBuffer[row][j + offset] = 0xFF;
-        gFrameBuffer[row + 1][j + offset] = 0xFF;
+    for (int i = 0, idx = 1; idx <= 4; ++i, ++idx) {
+      if (idx == 5) {
+        row += 2;
+        i = 0;
       }
+      offset = PAD_LEFT + i * CELL_WIDTH;
+      if (menuState == idx) {
+        for (int j = 0; j < CELL_WIDTH; ++j) {
+          gFrameBuffer[row][j + offset] = 0xFF;
+          gFrameBuffer[row + 1][j + offset] = 0xFF;
+        }
+      }
+      RegisterSpec s = registerSpecs[idx];
+      sprintf(String, "%s", s.name);
+      GUI_DisplaySmallest(String, offset + 2, row * 8 + 2, false,
+                          menuState != idx);
+      sprintf(String, "%u", GetRegMenuValue(s));
+      GUI_DisplaySmallest(String, offset + 2, (row + 1) * 8 + 1, false,
+                          menuState != idx);
     }
-    sprintf(String, "%s", registerSpecs[idx].name);
-    GUI_DisplaySmallest(String, offset + 2, row * 8 + 2, false,
-                        menuState != idx);
-    sprintf(String, "%u", GetRegMenuValue(idx));
-    GUI_DisplaySmallest(String, offset + 2, (row + 1) * 8 + 1, false,
-                        menuState != idx);
+  } else {
+    uint8_t hiddenMenuLen = ARRAY_SIZE(hiddenRegisterSpecs);
+    uint8_t offset = clamp(hiddenMenuState - 2, 1, hiddenMenuLen - 5);
+    for (int i = 0; i < 5; ++i) {
+      RegisterSpec s = hiddenRegisterSpecs[i + offset];
+      bool isCurrent = hiddenMenuState == i + offset;
+      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", s.num, s.name,
+              GetRegMenuValue(s));
+      GUI_DisplaySmallest(String, 0, i * 6 + 26, false, true);
+    }
   }
 }
 
@@ -1024,6 +1304,7 @@ bool HandleUserInput() {
 
   if (kbd.current == KEY_INVALID) {
     kbd.counter = 0;
+    OnKeysReleased();
     return true;
   }
 
@@ -1097,6 +1378,9 @@ static void UpdateStill() {
 
 static void UpdateListening() {
   preventKeypress = false;
+  if (!isListening) {
+    ToggleRX(true);
+  }
   if (currentState == STILL) {
     listenT = 0;
   }
@@ -1126,6 +1410,8 @@ static void UpdateListening() {
   newScanStart = true;
 }
 
+static void UpdateTransmitting() {}
+
 static void Tick() {
   if (!preventKeypress) {
     HandleUserInput();
@@ -1134,7 +1420,9 @@ static void Tick() {
     InitScan();
     newScanStart = false;
   }
-  if (isListening && currentState != FREQ_INPUT) {
+  if (isTransmitting) {
+    UpdateTransmitting();
+  } else if (isListening && currentState != FREQ_INPUT) {
     UpdateListening();
   } else {
     if (currentState == SPECTRUM) {
@@ -1156,12 +1444,11 @@ static void Tick() {
 
 void APP_RunSpectrum() {
   // TX here coz it always? set to active VFO
-  currentFreq = initialFreq =
-      gEeprom.VfoInfo[gEeprom.TX_CHANNEL].pRX->Frequency;
+  initialFreq = gEeprom.VfoInfo[gEeprom.TX_CHANNEL].pRX->Frequency;
+  currentFreq = initialFreq;
 
   BackupRegisters();
 
-  isListening = true; // to turn off RX later
   redrawStatus = true;
   redrawScreen = false; // we will wait until scan done
   newScanStart = true;
