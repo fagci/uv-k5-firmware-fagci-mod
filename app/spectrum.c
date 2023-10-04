@@ -766,7 +766,7 @@ static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
 
 static uint8_t Rssi2Y(uint16_t rssi) {
   return DrawingEndY -
-         ConvertDomain(rssi, mov.min, mov.max + 55, 0, DrawingEndY);
+         ConvertDomain(rssi, mov.min - 2, mov.max + 55, 0, DrawingEndY);
 }
 
 static void DrawSpectrum() {
