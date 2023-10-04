@@ -1368,6 +1368,19 @@ static void Tick() {
   }
 }
 
+static void AutomaticPresetChoose(uint32_t f) {
+  for (int i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
+    FreqPreset p = freqPresets[i];
+    if (f >= p.fStart && f <= freqPresets[i].fEnd) {
+      currentFreq = p.fStart;
+      settings.scanStepIndex = p.stepSizeIndex;
+      settings.listenBw = p.listenBW;
+      settings.modulationType = p.modulationType;
+      settings.stepsCount = p.stepsCountIndex;
+    }
+  }
+}
+
 void APP_RunSpectrum() {
   // TX here coz it always? set to active VFO
   VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
@@ -1378,6 +1391,8 @@ void APP_RunSpectrum() {
                           ? BANDWIDTH_WIDE
                           : BANDWIDTH_NARROW;
   settings.modulationType = vfo.IsAM ? MOD_AM : MOD_FM;
+
+  AutomaticPresetChoose(currentFreq);
 
   BackupRegisters();
 
