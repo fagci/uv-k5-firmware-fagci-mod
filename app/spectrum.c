@@ -396,7 +396,7 @@ static void ResetRSSI() {
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
     ResetRSSI();
-    SYSTICK_DelayUs(1900);
+    SYSTICK_DelayUs(3200);
   }
   return BK4819_GetRSSI();
 }
@@ -765,8 +765,9 @@ static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
 }
 
 static uint8_t Rssi2Y(uint16_t rssi) {
-  return DrawingEndY -
-         ConvertDomain(rssi, mov.min - 2, mov.max + 55, 0, DrawingEndY);
+  return DrawingEndY - ConvertDomain(rssi, mov.min - 2,
+                                     mov.max + 20 + (mov.max - mov.min) / 2, 0,
+                                     DrawingEndY);
 }
 
 static void DrawSpectrum() {
@@ -1160,7 +1161,7 @@ static void RenderStill() {
 
   if (isTransmitting) {
     uint8_t afDB = BK4819_ReadRegister(0x6F) & 0b1111111;
-    uint8_t afPX = ConvertDomain(afDB, 0, 120, 0, 121);
+    uint8_t afPX = ConvertDomain(afDB, 26, 194, 0, 121);
     for (int i = 0; i < afPX; ++i) {
       gFrameBuffer[3][i + METER_PAD_LEFT] |= 0b00000011;
     }
