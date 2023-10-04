@@ -42,7 +42,7 @@
 static const uint8_t DrawingEndY = 40;
 
 static const uint8_t U8RssiMap[] = {
-    121, 115, 109, 103, 97, 91, 85, 79, 73, 63,
+    121, 115, 109, 103, 97, 91, 85, 79, 73, 63, 53, 43, 33, 23, 13
 };
 
 static const uint16_t scanStepValues[] = {

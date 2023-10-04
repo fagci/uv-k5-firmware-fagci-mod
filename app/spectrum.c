@@ -62,6 +62,7 @@ uint32_t fMeasure = 0;
 uint32_t fTx = 0;
 uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {0};
+bool blacklist[128] = {false};
 
 typedef struct MovingAverage {
   uint16_t mean[128];
@@ -89,7 +90,10 @@ RegisterSpec registerSpecs[] = {
     {"LNA", 0x13, 5, 0b111, 1},
     {"PGA", 0x13, 0, 0b111, 1},
     {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
-    // {"MIX", 0x13, 3, 0b11, 1}, // TODO: hidden
+
+    {"DEV", 0x40, 0, 4095, 1},
+    {"CMP", 0x31, 3, 1, 1},
+    {"MIC", 0x7D, 0, 0x1F, 1},
 };
 
 uint16_t statuslineUpdateTimer = 0;
@@ -333,7 +337,13 @@ static void MoveHistory() {
   }
   MovingCp(mov.buf[0], rssiHistory);
 
+  uint8_t skipped = 0;
+
   for (int x = 0; x < XN; ++x) {
+    if (blacklist[x]) {
+      skipped++;
+      continue;
+    }
     uint32_t sum = 0;
     for (int i = 0; i < MOV_N; ++i) {
       sum += mov.buf[i][x];
@@ -351,8 +361,11 @@ static void MoveHistory() {
       mov.min = pointV;
     }
   }
+  if (skipped == XN) {
+    return;
+  }
 
-  mov.mid = midSum / XN;
+  mov.mid = midSum / (XN - skipped);
 }
 
 static void TuneToPeak() {
@@ -520,8 +533,8 @@ static void InitScan() {
 
 static void ResetBlacklist() {
   for (int i = 0; i < 128; ++i) {
-    if (rssiHistory[i] == RSSI_MAX_VALUE)
-      rssiHistory[i] = 0;
+    if (blacklist[i])
+      blacklist[i] = false;
   }
 }
 
@@ -731,7 +744,7 @@ static void UpdateFreqInput(KEY_Code_t key) {
 }
 
 static void Blacklist() {
-  rssiHistory[peak.i] = RSSI_MAX_VALUE;
+  blacklist[peak.i] = true;
   ResetPeak();
   ToggleRX(false);
   newScanStart = true;
@@ -752,15 +765,18 @@ static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
 }
 
 static uint8_t Rssi2Y(uint16_t rssi) {
-  return DrawingEndY - ConvertDomain(rssi, mov.min, mov.max + 55, 0, DrawingEndY);
+  return DrawingEndY -
+         ConvertDomain(rssi, mov.min, mov.max + 55, 0, DrawingEndY);
 }
 
 static void DrawSpectrum() {
   for (uint8_t x = 0; x < 128; ++x) {
-    uint16_t rssi = rssiHistory[x >> settings.stepsCount];
-    if (rssi != RSSI_MAX_VALUE) {
-      DrawHLine(Rssi2Y(rssi), DrawingEndY, x, true);
+    uint8_t i = x >> settings.stepsCount;
+    if (blacklist[i]) {
+      continue;
     }
+    uint16_t rssi = rssiHistory[i];
+    DrawHLine(Rssi2Y(rssi), DrawingEndY, x, true);
   }
 }
 
@@ -1133,7 +1149,11 @@ static void RenderStill() {
 
   int dbm = Rssi2DBm(scanInfo.rssi);
   uint8_t s = DBm2S(dbm);
-  sprintf(String, "S: %u", s);
+  if (s < 10) {
+    sprintf(String, "S%u", s);
+  } else {
+    sprintf(String, "S9+%u0", s - 9);
+  }
   GUI_DisplaySmallest(String, 4, 9, false, true);
   sprintf(String, "%d dBm", dbm);
   GUI_DisplaySmallest(String, 32, 9, false, true);
@@ -1154,9 +1174,9 @@ static void RenderStill() {
   const uint8_t PAD_LEFT = 4;
   const uint8_t CELL_WIDTH = 30;
   uint8_t offset = PAD_LEFT;
-  uint8_t row = 4;
+  uint8_t row = 3;
 
-  for (int i = 0, idx = 1; idx <= 4; ++i, ++idx) {
+  for (int i = 0, idx = 1; idx <= 7; ++i, ++idx) {
     if (idx == 5) {
       row += 2;
       i = 0;
@@ -1229,11 +1249,12 @@ bool HandleUserInput() {
 }
 
 static void Scan() {
-  if (rssiHistory[scanInfo.i] != RSSI_MAX_VALUE) {
-    SetF(scanInfo.f);
-    Measure();
-    UpdateScanInfo();
+  if (blacklist[scanInfo.i]) {
+    return;
   }
+  SetF(scanInfo.f);
+  Measure();
+  UpdateScanInfo();
 }
 
 static void NextScanStep() {
