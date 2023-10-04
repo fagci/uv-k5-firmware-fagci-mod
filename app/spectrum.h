@@ -51,6 +51,12 @@ static const uint16_t scanStepValues[] = {
     250, 500, 625, 833, 1000, 1250, 2500, 10000,
 };
 
+static const uint8_t gStepSettingToIndex[] = {
+    [STEP_2_5kHz] = 4,  [STEP_5_0kHz] = 5,  [STEP_6_25kHz] = 6,
+    [STEP_10_0kHz] = 8, [STEP_12_5kHz] = 9, [STEP_25_0kHz] = 10,
+    [STEP_8_33kHz] = 7,
+};
+
 static const uint16_t scanStepBWRegValues[] = {
     //     RX  RXw TX  BW
     // 0b0 000 000 001 01 1000

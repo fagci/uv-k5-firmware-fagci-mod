@@ -74,10 +74,11 @@ typedef struct MovingAverage {
 static MovingAverage mov = {{128}, {}, 255, 128, 0, 0};
 static const uint8_t MOV_N = ARRAY_SIZE(mov.buf);
 
+const uint8_t FREQ_INPUT_LENGTH = 10;
 uint8_t freqInputIndex = 0;
 uint8_t freqInputDotIndex = 0;
 KEY_Code_t freqInputArr[10];
-char freqInputString[11] = "----------\0"; // XXXX.XXXXX\0
+char freqInputString[] = "----------"; // XXXX.XXXXX
 
 uint8_t menuState = 0;
 uint8_t hiddenMenuState = 0;
@@ -322,10 +323,9 @@ static void ResetMoving() {
 static void MoveHistory() {
   const uint8_t XN = GetStepsCount();
 
-  uint16_t pointV;
   uint32_t midSum = 0;
 
-  mov.min = 255;
+  mov.min = RSSI_MAX_VALUE;
   mov.max = 0;
 
   if (lastStepsCount != XN) {
@@ -349,7 +349,7 @@ static void MoveHistory() {
       sum += mov.buf[i][x];
     }
 
-    pointV = mov.mean[x] = sum / MOV_N;
+    uint16_t pointV = mov.mean[x] = sum / MOV_N;
 
     midSum += pointV;
 
@@ -1366,8 +1366,13 @@ static void Tick() {
 
 void APP_RunSpectrum() {
   // TX here coz it always? set to active VFO
-  initialFreq = gEeprom.VfoInfo[gEeprom.TX_CHANNEL].pRX->Frequency;
+  VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+  initialFreq = vfo.pRX->Frequency;
   currentFreq = initialFreq;
+  settings.scanStepIndex = gStepSettingToIndex[vfo.STEP_SETTING];
+  settings.listenBw = vfo.CHANNEL_BANDWIDTH == BANDWIDTH_WIDE
+                          ? BANDWIDTH_WIDE
+                          : BANDWIDTH_NARROW;
 
   BackupRegisters();
 
@@ -1377,7 +1382,7 @@ void APP_RunSpectrum() {
 
   ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off
   SetModulation(settings.modulationType = MOD_FM);
-  BK4819_SetFilterBandwidth(settings.listenBw = BK4819_FILTER_BW_WIDE);
+  BK4819_SetFilterBandwidth(settings.listenBw);
 
   RelaunchScan();
 
