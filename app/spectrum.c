@@ -81,7 +81,6 @@ KEY_Code_t freqInputArr[10];
 char freqInputString[] = "----------"; // XXXX.XXXXX
 
 uint8_t menuState = 0;
-uint8_t hiddenMenuState = 0;
 
 uint16_t listenT = 0;
 
@@ -276,8 +275,8 @@ static void ToggleAFDAC(bool on) {
 static void SetF(uint32_t f) {
   fMeasure = f;
 
-  BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
   BK4819_SetFrequency(fMeasure);
+  BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   BK4819_WriteRegister(BK4819_REG_30, 0);
   BK4819_WriteRegister(BK4819_REG_30, reg);
@@ -385,6 +384,10 @@ uint8_t GetBWRegValueForScan() {
   return scanStepBWRegValues[settings.scanStepIndex];
 }
 
+uint8_t GetBWRegValueForListen() {
+  return listenBWRegValues[settings.listenBw];
+}
+
 static void ResetRSSI() {
   uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
   Reg &= ~1;
@@ -431,9 +434,9 @@ static void ToggleTX(bool);
 static void ToggleRX(bool);
 
 static void ToggleRX(bool on) {
-  if (isListening == on) {
+  /* if (isListening == on) {
     return;
-  }
+  } */
   isListening = on;
   if (on) {
     ToggleTX(false);
@@ -448,7 +451,7 @@ static void ToggleRX(bool on) {
 
   if (on) {
     listenT = 1000;
-    BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
@@ -563,7 +566,7 @@ static void UpdateScanInfo() {
 
 static void AutoTriggerLevel() {
   if (settings.rssiTriggerLevel == RSSI_MAX_VALUE) {
-    settings.rssiTriggerLevel = clamp(scanInfo.rssiMax + 8, 0, RSSI_MAX_VALUE);
+    settings.rssiTriggerLevel = clamp(mov.max + 8, 0, RSSI_MAX_VALUE);
   }
 }
 
@@ -590,6 +593,7 @@ static void UpdateRssiTriggerLevel(bool inc) {
   else
     settings.rssiTriggerLevel -= 2;
   redrawScreen = true;
+  SYSTEM_DelayMs(10);
 }
 
 static void UpdateScanStep(bool inc) {
@@ -766,7 +770,7 @@ static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
 
 static uint8_t Rssi2Y(uint16_t rssi) {
   return DrawingEndY - ConvertDomain(rssi, mov.min - 2,
-                                     mov.max + 20 + (mov.max - mov.min) / 2, 0,
+                                     mov.max + 30 + (mov.max - mov.min) / 3, 0,
                                      DrawingEndY);
 }
 
@@ -1227,12 +1231,12 @@ bool HandleUserInput() {
     return true;
   }
 
-  if (kbd.current == kbd.prev && kbd.counter <= 16) {
+  if (kbd.current == kbd.prev && kbd.counter <= 32) {
     kbd.counter++;
-    SYSTEM_DelayMs(20);
+    SYSTEM_DelayMs(10);
   }
 
-  if (kbd.counter == 3 || kbd.counter > 16) {
+  if (kbd.counter == 4 || kbd.counter > 32) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(kbd.current);
@@ -1315,7 +1319,7 @@ static void UpdateListening() {
   if (currentState == SPECTRUM) {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     Measure();
-    BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
     Measure();
   }
@@ -1383,7 +1387,6 @@ void APP_RunSpectrum() {
 
   ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off
   SetModulation(settings.modulationType);
-  BK4819_SetFilterBandwidth(settings.listenBw);
 
   RelaunchScan();
 
