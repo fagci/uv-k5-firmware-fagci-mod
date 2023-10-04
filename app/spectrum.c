@@ -1373,6 +1373,7 @@ void APP_RunSpectrum() {
   settings.listenBw = vfo.CHANNEL_BANDWIDTH == BANDWIDTH_WIDE
                           ? BANDWIDTH_WIDE
                           : BANDWIDTH_NARROW;
+  settings.modulationType = vfo.IsAM ? MOD_AM : MOD_FM;
 
   BackupRegisters();
 
@@ -1381,7 +1382,7 @@ void APP_RunSpectrum() {
   newScanStart = true;
 
   ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off
-  SetModulation(settings.modulationType = MOD_FM);
+  SetModulation(settings.modulationType);
   BK4819_SetFilterBandwidth(settings.listenBw);
 
   RelaunchScan();
