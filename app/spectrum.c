@@ -300,7 +300,7 @@ static void ResetPeak() {
   peak.rssi = 0;
 }
 
-bool IsCenterMode() { return settings.scanStepIndex < S_STEP_2_5kHz; }
+bool IsCenterMode() { return settings.scanStepIndex < S_STEP_1_0kHz; }
 uint8_t GetStepsCount() { return 128 >> settings.stepsCount; }
 uint16_t GetScanStep() { return scanStepValues[settings.scanStepIndex]; }
 uint32_t GetBW() { return GetStepsCount() * GetScanStep(); }
@@ -594,6 +594,40 @@ static void UpdateRssiTriggerLevel(bool inc) {
     settings.rssiTriggerLevel -= 2;
   redrawScreen = true;
   SYSTEM_DelayMs(10);
+}
+
+static void SelectPreset(FreqPreset p) {
+  currentFreq = p.fStart;
+  settings.scanStepIndex = p.stepSizeIndex;
+  settings.listenBw = p.listenBW;
+  settings.modulationType = p.modulationType;
+  settings.stepsCount = p.stepsCountIndex;
+  RelaunchScan();
+  ResetBlacklist();
+  redrawScreen = true;
+}
+
+static void SelectNearestPreset(bool inc) {
+  FreqPreset p;
+  const uint8_t SZ = ARRAY_SIZE(freqPresets);
+  if (inc) {
+    for (int i = 0; i < SZ; ++i) {
+      p = freqPresets[i];
+      if (currentFreq < p.fStart) {
+        SelectPreset(p);
+        return;
+      }
+    }
+  } else {
+    for (int i = SZ - 1; i >= 0; --i) {
+      p = freqPresets[i];
+      if (currentFreq > p.fEnd) {
+        SelectPreset(p);
+        return;
+      }
+    }
+  }
+  SelectPreset(p);
 }
 
 static void UpdateScanStep(bool inc) {
@@ -929,8 +963,10 @@ static void DrawArrow(uint8_t x) {
 static void OnKeyDown(uint8_t key) {
   switch (key) {
   case KEY_3:
+    SelectNearestPreset(true);
     break;
   case KEY_9:
+    SelectNearestPreset(false);
     break;
   case KEY_1:
     UpdateScanStep(true);
@@ -1372,11 +1408,7 @@ static void AutomaticPresetChoose(uint32_t f) {
   for (int i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
     FreqPreset p = freqPresets[i];
     if (f >= p.fStart && f <= freqPresets[i].fEnd) {
-      currentFreq = p.fStart;
-      settings.scanStepIndex = p.stepSizeIndex;
-      settings.listenBw = p.listenBW;
-      settings.modulationType = p.modulationType;
-      settings.stepsCount = p.stepsCountIndex;
+      SelectPreset(p);
     }
   }
 }

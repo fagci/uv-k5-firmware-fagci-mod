@@ -170,24 +170,24 @@ typedef struct PeakInfo {
 } PeakInfo;
 
 typedef struct FreqPreset {
-  const char name[16];
-  const uint32_t fStart;
-  const uint32_t fEnd;
-  const StepsCount stepsCountIndex;
-  const uint8_t stepSizeIndex;
-  const ModulationType modulationType;
-  const BK4819_FilterBandwidth_t listenBW;
+  char name[16];
+  uint32_t fStart;
+  uint32_t fEnd;
+  StepsCount stepsCountIndex;
+  uint8_t stepSizeIndex;
+  ModulationType modulationType;
+  BK4819_FilterBandwidth_t listenBW;
 } FreqPreset;
 
 static const FreqPreset freqPresets[] = {
-    {"CB", 2697500, 2785500, STEPS_128, S_STEP_5_0kHz, MOD_FM,
-     BK4819_FILTER_BW_NARROW},
     {"17m", 1806800, 1831800, STEPS_128, S_STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
     {"15m", 2100000, 2145000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
     {"12m", 2489000, 2514000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
+    {"CB", 2697500, 2785500, STEPS_128, S_STEP_5_0kHz, MOD_FM,
+     BK4819_FILTER_BW_NARROW},
     {"10m", 2800000, 2970000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
     {"2m", 14400000, 14600000, STEPS_128, S_STEP_25_0kHz, MOD_FM,
