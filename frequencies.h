@@ -34,8 +34,8 @@ typedef enum FREQUENCY_Band_t FREQUENCY_Band_t;
 
 struct FrequencyBandInfo {
   uint32_t lower;
-  uint32_t upper;
   uint32_t middle;
+  uint32_t upper;
 };
 extern const struct FrequencyBandInfo FrequencyBandTable[7];
 #if defined(ENABLE_NOAA)

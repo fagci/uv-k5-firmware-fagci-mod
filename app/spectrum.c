@@ -511,12 +511,13 @@ static void UpdateRssiTriggerLevel(bool inc) {
   SYSTEM_DelayMs(10);
 }
 
-static void SelectPreset(FreqPreset p) {
+static void ApplyPreset(FreqPreset p) {
   currentFreq = p.fStart;
   settings.scanStepIndex = p.stepSizeIndex;
   settings.listenBw = p.listenBW;
   settings.modulationType = p.modulationType;
   settings.stepsCount = p.stepsCountIndex;
+  SetModulation(settings.modulationType);
   RelaunchScan();
   ResetBlacklist();
   redrawScreen = true;
@@ -529,7 +530,7 @@ static void SelectNearestPreset(bool inc) {
     for (int i = 0; i < SZ; ++i) {
       p = freqPresets[i];
       if (currentFreq < p.fStart) {
-        SelectPreset(p);
+        ApplyPreset(p);
         return;
       }
     }
@@ -537,12 +538,12 @@ static void SelectNearestPreset(bool inc) {
     for (int i = SZ - 1; i >= 0; --i) {
       p = freqPresets[i];
       if (currentFreq > p.fEnd) {
-        SelectPreset(p);
+        ApplyPreset(p);
         return;
       }
     }
   }
-  SelectPreset(p);
+  ApplyPreset(p);
 }
 
 static void UpdateScanStep(bool inc) {
@@ -1310,7 +1311,7 @@ static void AutomaticPresetChoose(uint32_t f) {
   for (int i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
     FreqPreset p = freqPresets[i];
     if (f >= p.fStart && f <= freqPresets[i].fEnd) {
-      SelectPreset(p);
+      ApplyPreset(p);
     }
   }
 }
