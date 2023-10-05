@@ -54,7 +54,7 @@ static const uint8_t gStepSettingToIndex[] = {
     [STEP_8_33kHz] = 7,
 };
 
-static const uint16_t scanStepBWRegValues[] = {
+static const uint16_t scanStepBWRegValues[12] = {
     //     RX  RXw TX  BW
     // 0b0 000 000 001 01 1000
     // 1

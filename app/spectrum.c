@@ -296,7 +296,8 @@ static void DeInitSpectrum() {
 }
 
 uint8_t GetBWRegValueForScan() {
-  return scanStepBWRegValues[settings.scanStepIndex];
+  return scanStepBWRegValues[settings.scanStepIndex == S_STEP_100_0kHz ? 11
+                                                                       : 0];
 }
 
 uint8_t GetBWRegValueForListen() {
@@ -459,6 +460,7 @@ static void ResetBlacklist() {
 static void RelaunchScan() {
   InitScan();
   ResetPeak();
+  lastStepsCount = 0;
   ToggleRX(false);
 #ifdef SPECTRUM_AUTOMATIC_SQUELCH
   settings.rssiTriggerLevel = RSSI_MAX_VALUE;
@@ -481,7 +483,7 @@ static void UpdateScanInfo() {
 
 static void AutoTriggerLevel() {
   if (settings.rssiTriggerLevel == RSSI_MAX_VALUE) {
-    settings.rssiTriggerLevel = Clamp(mov.max + 8, 0, RSSI_MAX_VALUE);
+    settings.rssiTriggerLevel = Clamp(scanInfo.rssiMax + 4, 0, RSSI_MAX_VALUE);
   }
 }
 
