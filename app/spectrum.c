@@ -96,7 +96,7 @@ RegisterSpec registerSpecs[] = {
     {"MIC", 0x7D, 0, 0x1F, 1},
 };
 
-uint16_t statuslineUpdateTimer = 0;
+uint16_t batteryUpdateTimer = 0;
 bool isMovingInitialized = false;
 uint8_t lastStepsCount = 0;
 
@@ -728,30 +728,18 @@ static void UpdateBatteryInfo() {
     BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
   }
 
-  uint16_t Voltage;
+  uint16_t voltage = Mid(gBatteryVoltages, ARRAY_SIZE(gBatteryVoltages));
   gBatteryDisplayLevel = 0;
 
-  Voltage = (gBatteryVoltages[0] + gBatteryVoltages[1] + gBatteryVoltages[2] +
-             gBatteryVoltages[3]) /
-            4;
-
-  if (gBatteryCalibration[5] < Voltage) {
-    gBatteryDisplayLevel = 6;
-  } else if (gBatteryCalibration[4] < Voltage) {
-    gBatteryDisplayLevel = 5;
-  } else if (gBatteryCalibration[3] < Voltage) {
-    gBatteryDisplayLevel = 4;
-  } else if (gBatteryCalibration[2] < Voltage) {
-    gBatteryDisplayLevel = 3;
-  } else if (gBatteryCalibration[1] < Voltage) {
-    gBatteryDisplayLevel = 2;
-  } else if (gBatteryCalibration[0] < Voltage) {
-    gBatteryDisplayLevel = 1;
+  for (int i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
+    if (gBatteryCalibration[i] < voltage) {
+      gBatteryDisplayLevel = i + 1;
+      break;
+    }
   }
 }
 
 static void DrawStatus() {
-  UpdateBatteryInfo();
 
   gStatusLine[127] = 0b01111110;
   for (int i = 126; i >= 116; i--) {
@@ -1296,10 +1284,14 @@ static void Tick() {
       UpdateStill();
     }
   }
-  if (redrawStatus || ++statuslineUpdateTimer > 4096) {
+  if (++batteryUpdateTimer > 4096) {
+    batteryUpdateTimer = 0;
+    UpdateBatteryInfo();
+    redrawStatus = true;
+  }
+  if (redrawStatus) {
     RenderStatus();
     redrawStatus = false;
-    statuslineUpdateTimer = 0;
   }
   if (redrawScreen) {
     Render();

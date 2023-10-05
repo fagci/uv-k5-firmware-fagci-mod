@@ -15,6 +15,7 @@
  */
 
 #include "battery.h"
+#include "../helper/measurements.h"
 #include "driver/backlight.h"
 #include "misc.h"
 #include "ui/battery.h"
@@ -37,59 +38,45 @@ volatile uint16_t gBatterySave;
 
 uint16_t gBatteryCheckCounter;
 
-void BATTERY_GetReadings(bool bDisplayBatteryLevel)
-{
-	uint16_t Voltage;
-	uint8_t PreviousBatteryLevel;
+void BATTERY_GetReadings(bool bDisplayBatteryLevel) {
+  uint8_t PreviousBatteryLevel = gBatteryDisplayLevel;
+  uint16_t Voltage = Mid(gBatteryVoltages, ARRAY_SIZE(gBatteryVoltages));
 
-	PreviousBatteryLevel = gBatteryDisplayLevel;
+  gBatteryDisplayLevel = 0;
+  for (int i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
+    if (gBatteryCalibration[i] < Voltage) {
+      gBatteryDisplayLevel = i + 1;
+      break;
+    }
+  }
 
-	Voltage = (gBatteryVoltages[0] + gBatteryVoltages[1] + gBatteryVoltages[2] + gBatteryVoltages[3]) / 4;
+  gBatteryVoltageAverage = (Voltage * 760) / gBatteryCalibration[3];
 
-	if (gBatteryCalibration[5] < Voltage) {
-		gBatteryDisplayLevel = 6;
-	} else if (gBatteryCalibration[4] < Voltage) {
-		gBatteryDisplayLevel = 5;
-	} else if (gBatteryCalibration[3] < Voltage) {
-		gBatteryDisplayLevel = 4;
-	} else if (gBatteryCalibration[2] < Voltage) {
-		gBatteryDisplayLevel = 3;
-	} else if (gBatteryCalibration[1] < Voltage) {
-		gBatteryDisplayLevel = 2;
-	} else if (gBatteryCalibration[0] < Voltage) {
-		gBatteryDisplayLevel = 1;
-	} else {
-		gBatteryDisplayLevel = 0;
-	}
+  if ((gScreenToDisplay == DISPLAY_MENU) && gMenuCursor == MENU_VOL) {
+    gUpdateDisplay = true;
+  }
+  if (gBatteryCurrent < 501) {
+    if (gChargingWithTypeC) {
+      gUpdateStatus = true;
+    }
+    gChargingWithTypeC = false;
+  } else {
+    if (!gChargingWithTypeC) {
+      gUpdateStatus = true;
+      BACKLIGHT_TurnOn();
+    }
+    gChargingWithTypeC = true;
+  }
 
-	gBatteryVoltageAverage = (Voltage * 760) / gBatteryCalibration[3];
-
-	if ((gScreenToDisplay == DISPLAY_MENU) && gMenuCursor == MENU_VOL) {
-		gUpdateDisplay = true;
-	}
-	if (gBatteryCurrent < 501) {
-		if (gChargingWithTypeC) {
-			gUpdateStatus = true;
-		}
-		gChargingWithTypeC = 0;
-	} else {
-		if (!gChargingWithTypeC) {
-			gUpdateStatus = true;
-			BACKLIGHT_TurnOn();
-		}
-		gChargingWithTypeC = 1;
-	}
-
-	if (PreviousBatteryLevel != gBatteryDisplayLevel) {
-		if (gBatteryDisplayLevel < 2) {
-			gLowBattery = true;
-		} else {
-			gLowBattery = false;
-			if (bDisplayBatteryLevel) {
-				UI_DisplayBattery(gBatteryDisplayLevel);
-			}
-		}
-		gLowBatteryCountdown = 0;
-	}
+  if (PreviousBatteryLevel != gBatteryDisplayLevel) {
+    if (gBatteryDisplayLevel < 2) {
+      gLowBattery = true;
+    } else {
+      gLowBattery = false;
+      if (bDisplayBatteryLevel) {
+        UI_DisplayBattery(gBatteryDisplayLevel);
+      }
+    }
+    gLowBatteryCountdown = 0;
+  }
 }
-

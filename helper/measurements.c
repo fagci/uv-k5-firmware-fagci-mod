@@ -44,3 +44,11 @@ int Rssi2DBm(uint16_t rssi) { return (rssi >> 1) - 160; }
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
   return ConvertDomain(rssi - 320, -260, -120, pxMin, pxMax);
 }
+
+int Mid(uint16_t *array, uint8_t n) {
+  int32_t sum = 0;
+  for (int i = 0; i < n; ++i) {
+    sum += array[i];
+  }
+  return sum / n;
+}

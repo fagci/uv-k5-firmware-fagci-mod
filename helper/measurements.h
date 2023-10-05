@@ -13,6 +13,7 @@ int ConvertDomain(int aValue, int aMin, int aMax, int bMin, int bMax);
 uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax);
 uint8_t DBm2S(int dbm);
 int Rssi2DBm(uint16_t rssi);
+int Mid(uint16_t *array, uint8_t n);
 
 #endif /* end of include guard: MEASUREMENTS_H */
 
