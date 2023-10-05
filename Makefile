@@ -86,6 +86,7 @@ OBJS += frequencies.o
 OBJS += functions.o
 OBJS += helper/battery.o
 OBJS += helper/boot.o
+OBJS += helper/measurements.o
 OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o

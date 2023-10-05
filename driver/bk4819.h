@@ -139,5 +139,8 @@ void BK4819_GetVoxAmp(uint16_t *pResult);
 void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency);
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code);
 
+void BK4819_ToggleAFBit(bool on);
+void BK4819_ToggleAFDAC(bool on);
+
 #endif
 

@@ -972,3 +972,18 @@ void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code)
 	BK4819_ExitTxMute();
 }
 
+void BK4819_ToggleAFBit(bool on) {
+  uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
+  reg &= ~(1 << 8);
+  if (on)
+    reg |= on << 8;
+  BK4819_WriteRegister(BK4819_REG_47, reg);
+}
+
+void BK4819_ToggleAFDAC(bool on) {
+  uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
+  Reg &= ~(1 << 9);
+  if (on)
+    Reg |= (1 << 9);
+  BK4819_WriteRegister(BK4819_REG_30, Reg);
+}

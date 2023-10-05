@@ -35,8 +35,6 @@ bool preventKeypress = true;
 bool isListening = false;
 bool isTransmitting = false;
 
-bool isPttPressed = false;
-
 State currentState = SPECTRUM, previousState = SPECTRUM;
 
 PeakInfo peak;
@@ -48,15 +46,17 @@ const char *modulationTypeOptions[] = {" FM", " AM", "USB"};
 const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
 const uint8_t modTypeReg47Values[] = {1, 7, 5};
 
-SpectrumSettings settings = {STEPS_64,
-                             S_STEP_25_0kHz,
-                             80000,
-                             3200,
-                             150,
-                             true,
-                             BK4819_FILTER_BW_WIDE,
-                             BK4819_FILTER_BW_WIDE,
-                             false};
+SpectrumSettings settings = {
+    .stepsCount = STEPS_64,
+    .scanStepIndex = S_STEP_25_0kHz,
+    .frequencyChangeStep = 80000,
+    .scanDelay = 3200,
+    .rssiTriggerLevel = 150,
+    .backlightState = true,
+    .bw = BK4819_FILTER_BW_WIDE,
+    .listenBw = BK4819_FILTER_BW_WIDE,
+    .modulationType = false,
+};
 
 uint32_t fMeasure = 0;
 uint32_t fTx = 0;
@@ -100,19 +100,6 @@ uint16_t statuslineUpdateTimer = 0;
 bool isMovingInitialized = false;
 uint8_t lastStepsCount = 0;
 
-static uint8_t DBm2S(int dbm) {
-  uint8_t i = 0;
-  dbm *= -1;
-  for (i = 0; i < ARRAY_SIZE(U8RssiMap); i++) {
-    if (dbm >= U8RssiMap[i]) {
-      return i;
-    }
-  }
-  return i;
-}
-
-static int Rssi2DBm(uint16_t rssi) { return (rssi >> 1) - 160; }
-
 uint8_t CountBits(uint16_t n) {
   uint8_t count = 0;
   while (n) {
@@ -149,56 +136,6 @@ static void UpdateRegMenuValue(RegisterSpec s, bool add) {
   redrawScreen = true;
 }
 
-// GUI functions
-
-static void PutPixel(uint8_t x, uint8_t y, bool fill) {
-  if (fill) {
-    gFrameBuffer[y >> 3][x] |= 1 << (y & 7);
-  } else {
-    gFrameBuffer[y >> 3][x] &= ~(1 << (y & 7));
-  }
-}
-
-static void PutPixelStatus(uint8_t x, uint8_t y, bool fill) {
-  if (fill) {
-    gStatusLine[x] |= 1 << y;
-  } else {
-    gStatusLine[x] &= ~(1 << y);
-  }
-}
-
-static void DrawHLine(int sy, int ey, int nx, bool fill) {
-  for (int i = sy; i <= ey; i++) {
-    if (i < 56 && nx < 128) {
-      PutPixel(nx, i, fill);
-    }
-  }
-}
-
-static void GUI_DisplaySmallest(const char *pString, uint8_t x, uint8_t y,
-                                bool statusbar, bool fill) {
-  uint8_t c;
-  uint8_t pixels;
-  const uint8_t *p = (const uint8_t *)pString;
-
-  while ((c = *p++) && c != '\0') {
-    c -= 0x20;
-    for (int i = 0; i < 3; ++i) {
-      pixels = gFont3x5[c][i];
-      for (int j = 0; j < 6; ++j) {
-        if (pixels & 1) {
-          if (statusbar)
-            PutPixelStatus(x + i, y + j, fill);
-          else
-            PutPixel(x + i, y + j, fill);
-        }
-        pixels >>= 1;
-      }
-    }
-    x += 4;
-  }
-}
-
 // Utility functions
 
 KEY_Code_t GetKey() {
@@ -209,12 +146,6 @@ KEY_Code_t GetKey() {
   return btn;
 }
 
-static int clamp(int v, int min, int max) {
-  return v <= min ? min : (v >= max ? max : v);
-}
-
-static uint8_t my_abs(signed v) { return v > 0 ? v : -v; }
-
 void SetState(State state) {
   previousState = currentState;
   currentState = state;
@@ -223,14 +154,6 @@ void SetState(State state) {
 }
 
 // Radio functions
-
-static void ToggleAFBit(bool on) {
-  uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
-  reg &= ~(1 << 8);
-  if (on)
-    reg |= on << 8;
-  BK4819_WriteRegister(BK4819_REG_47, reg);
-}
 
 static void BackupRegisters() {
   R30 = BK4819_ReadRegister(0x30);
@@ -262,14 +185,6 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(BK4819_REG_37, 0x160F);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
   }
-}
-
-static void ToggleAFDAC(bool on) {
-  uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
-  Reg &= ~(1 << 9);
-  if (on)
-    Reg |= (1 << 9);
-  BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
 static void SetF(uint32_t f) {
@@ -416,7 +331,7 @@ uint32_t GetOffsetedF(uint32_t f) {
     break;
   }
 
-  return clamp(f, FrequencyBandTable[0].lower,
+  return Clamp(f, FrequencyBandTable[0].lower,
                FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper);
 }
 
@@ -446,8 +361,8 @@ static void ToggleRX(bool on) {
   BK4819_RX_TurnOn();
 
   ToggleAudio(on);
-  ToggleAFDAC(on);
-  ToggleAFBit(on);
+  BK4819_ToggleAFDAC(on);
+  BK4819_ToggleAFBit(on);
 
   if (on) {
     listenT = 1000;
@@ -566,7 +481,7 @@ static void UpdateScanInfo() {
 
 static void AutoTriggerLevel() {
   if (settings.rssiTriggerLevel == RSSI_MAX_VALUE) {
-    settings.rssiTriggerLevel = clamp(mov.max + 8, 0, RSSI_MAX_VALUE);
+    settings.rssiTriggerLevel = Clamp(mov.max + 8, 0, RSSI_MAX_VALUE);
   }
 }
 
@@ -790,18 +705,6 @@ static void Blacklist() {
 
 // Draw things
 
-static int ConvertDomain(int aValue, int aMin, int aMax, int bMin, int bMax) {
-  const int aRange = aMax - aMin;
-  const int bRange = bMax - bMin;
-  aValue = clamp(aValue, aMin, aMax);
-  return ((aValue - aMin) * bRange + aRange / 2) / aRange + bMin;
-}
-
-// applied x2 to prevent initial rounding
-static uint8_t Rssi2PX(uint16_t rssi, uint8_t pxMin, uint8_t pxMax) {
-  return ConvertDomain(rssi - 320, -260, -120, pxMin, pxMax);
-}
-
 static uint8_t Rssi2Y(uint16_t rssi) {
   return DrawingEndY - ConvertDomain(rssi, mov.min - 2,
                                      mov.max + 30 + (mov.max - mov.min) / 3, 0,
@@ -867,7 +770,7 @@ static void DrawStatus() {
 static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
-  if (currentState == STILL && isPttPressed) {
+  if (currentState == STILL && kbd.current == KEY_PTT) {
     if (gBatteryDisplayLevel == 6) {
       sprintf(String, "VOLTAGE HIGH");
     } else if (!IsTXAllowed()) {
@@ -880,34 +783,34 @@ static void DrawF(uint32_t f) {
   UI_PrintStringSmall(String, 8, 127, 0);
 
   sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  GUI_DisplaySmallest(String, 116, 1, false, true);
+  UI_PrintStringSmallest(String, 116, 1, false, true);
   sprintf(String, "%s", bwOptions[settings.listenBw]);
-  GUI_DisplaySmallest(String, 108, 7, false, true);
+  UI_PrintStringSmallest(String, 108, 7, false, true);
 }
 
 static void DrawNums() {
   if (currentState == SPECTRUM) {
     sprintf(String, "%ux", GetStepsCount());
-    GUI_DisplaySmallest(String, 0, 1, false, true);
+    UI_PrintStringSmallest(String, 0, 1, false, true);
     sprintf(String, "%u.%02uk", GetScanStep() / 100, GetScanStep() % 100);
-    GUI_DisplaySmallest(String, 0, 7, false, true);
+    UI_PrintStringSmallest(String, 0, 7, false, true);
   }
 
   if (IsCenterMode()) {
     sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
             currentFreq % 100000, settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
-    GUI_DisplaySmallest(String, 36, 49, false, true);
+    UI_PrintStringSmallest(String, 36, 49, false, true);
   } else {
     sprintf(String, "%u.%05u", GetFStart() / 100000, GetFStart() % 100000);
-    GUI_DisplaySmallest(String, 0, 49, false, true);
+    UI_PrintStringSmallest(String, 0, 49, false, true);
 
     sprintf(String, "\xB1%u.%02uk", settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
-    GUI_DisplaySmallest(String, 48, 49, false, true);
+    UI_PrintStringSmallest(String, 48, 49, false, true);
 
     sprintf(String, "%u.%05u", GetFEnd() / 100000, GetFEnd() % 100000);
-    GUI_DisplaySmallest(String, 93, 49, false, true);
+    UI_PrintStringSmallest(String, 93, 49, false, true);
   }
 }
 
@@ -954,8 +857,9 @@ static void DrawTicks() {
 static void DrawArrow(uint8_t x) {
   for (signed i = -2; i <= 2; ++i) {
     signed v = x + i;
+    uint8_t a = i > 0 ? i : -i;
     if (!(v & 128)) {
-      gFrameBuffer[5][v] |= (0b01111000 << my_abs(i)) & 0b01111000;
+      gFrameBuffer[5][v] |= (0b01111000 << a) & 0b01111000;
     }
   }
 }
@@ -1112,7 +1016,6 @@ void OnKeyDownStill(KEY_Code_t key) {
   case KEY_PTT:
     // start transmit
     UpdateBatteryInfo();
-    isPttPressed = true;
     if (gBatteryDisplayLevel != 6 && IsTXAllowed()) {
       ToggleTX(true);
     }
@@ -1141,7 +1044,6 @@ void OnKeyDownStill(KEY_Code_t key) {
 }
 
 static void OnKeysReleased() {
-  isPttPressed = false;
   if (isTransmitting) {
     ToggleTX(false);
   }
@@ -1195,9 +1097,9 @@ static void RenderStill() {
   } else {
     sprintf(String, "S9+%u0", s - 9);
   }
-  GUI_DisplaySmallest(String, 4, 9, false, true);
+  UI_PrintStringSmallest(String, 4, 9, false, true);
   sprintf(String, "%d dBm", dbm);
-  GUI_DisplaySmallest(String, 32, 9, false, true);
+  UI_PrintStringSmallest(String, 32, 9, false, true);
 
   if (isTransmitting) {
     uint8_t afDB = BK4819_ReadRegister(0x6F) & 0b1111111;
@@ -1231,11 +1133,11 @@ static void RenderStill() {
     }
     RegisterSpec s = registerSpecs[idx];
     sprintf(String, "%s", s.name);
-    GUI_DisplaySmallest(String, offset + 2, row * 8 + 2, false,
-                        menuState != idx);
+    UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
+                           menuState != idx);
     sprintf(String, "%u", GetRegMenuValue(s));
-    GUI_DisplaySmallest(String, offset + 2, (row + 1) * 8 + 1, false,
-                        menuState != idx);
+    UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
+                           menuState != idx);
   }
 }
 

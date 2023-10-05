@@ -31,6 +31,7 @@
 #include "../font.h"
 #include "../frequencies.h"
 #include "../helper/battery.h"
+#include "../helper/measurements.h"
 #include "../misc.h"
 #include "../radio.h"
 #include "../settings.h"
@@ -40,10 +41,6 @@
 #include <string.h>
 
 static const uint8_t DrawingEndY = 40;
-
-static const uint8_t U8RssiMap[] = {
-    141, 135, 129, 123, 117, 111, 105, 99, 93, 83, 73, 63,
-};
 
 static const uint16_t scanStepValues[] = {
     1,   10,  50,  100,
