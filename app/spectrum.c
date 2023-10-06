@@ -21,7 +21,6 @@
 
 const uint16_t RSSI_MAX_VALUE = 65535;
 
-static uint16_t R13, R30, R37, R3D, R43, R47, R48, R7E;
 static uint32_t initialFreq;
 static char String[32];
 
@@ -64,12 +63,24 @@ uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
 
-typedef struct MovingAverage {
-  uint16_t mean[128];
-  uint16_t buf[4][128];
-  uint16_t min, mid, max;
-  uint16_t t;
-} MovingAverage;
+static const RegisterSpec afOutRegSpec = {"AF OUT", 0x47, 8, 0xF, 1};
+static const RegisterSpec afDacGainRegSpec = {"AF DAC G", 0x48, 0, 0xF, 1};
+static const RegisterSpec registerSpecs[] = {
+    {},
+    {"LNAs", 0x13, 8, 0b11, 1},
+    {"LNA", 0x13, 5, 0b111, 1},
+    {"PGA", 0x13, 0, 0b111, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+
+    {"DEV", 0x40, 0, 4095, 1},
+    {"CMP", 0x31, 3, 1, 1},
+    {"MIC", 0x7D, 0, 0x1F, 1},
+};
+
+static uint16_t registersBackup[128];
+static const uint8_t registersToBackup[] = {
+    0x13, 0x30, 0x31, 0x37, 0x3D, 0x40, 0x43, 0x47, 0x48, 0x7D, 0x7E,
+};
 
 static MovingAverage mov = {{128}, {}, 255, 128, 0, 0};
 static const uint8_t MOV_N = ARRAY_SIZE(mov.buf);
@@ -83,18 +94,6 @@ char freqInputString[] = "----------"; // XXXX.XXXXX
 uint8_t menuState = 0;
 
 uint16_t listenT = 0;
-
-RegisterSpec registerSpecs[] = {
-    {},
-    {"LNAs", 0x13, 8, 0b11, 1},
-    {"LNA", 0x13, 5, 0b111, 1},
-    {"PGA", 0x13, 0, 0b111, 1},
-    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
-
-    {"DEV", 0x40, 0, 4095, 1},
-    {"CMP", 0x31, 3, 1, 1},
-    {"MIC", 0x7D, 0, 0x1F, 1},
-};
 
 uint16_t batteryUpdateTimer = 0;
 bool isMovingInitialized = false;
@@ -113,18 +112,18 @@ static uint16_t GetRegMask(RegisterSpec s) {
   return (1 << CountBits(s.maxValue)) - 1;
 }
 
-static uint16_t GetRegMenuValue(RegisterSpec s) {
+static uint16_t GetRegValue(RegisterSpec s) {
   return (BK4819_ReadRegister(s.num) >> s.offset) & s.maxValue;
 }
 
-static void SetRegMenuValue(RegisterSpec s, uint16_t v) {
+static void SetRegValue(RegisterSpec s, uint16_t v) {
   uint16_t reg = BK4819_ReadRegister(s.num);
   reg &= ~(GetRegMask(s) << s.offset);
   BK4819_WriteRegister(s.num, reg | (v << s.offset));
 }
 
 static void UpdateRegMenuValue(RegisterSpec s, bool add) {
-  uint16_t v = GetRegMenuValue(s);
+  uint16_t v = GetRegValue(s);
 
   if (add && v <= s.maxValue - s.inc) {
     v += s.inc;
@@ -132,7 +131,7 @@ static void UpdateRegMenuValue(RegisterSpec s, bool add) {
     v -= s.inc;
   }
 
-  SetRegMenuValue(s, v);
+  SetRegValue(s, v);
   redrawScreen = true;
 }
 
@@ -156,36 +155,35 @@ void SetState(State state) {
 // Radio functions
 
 static void BackupRegisters() {
-  R13 = BK4819_ReadRegister(0x13);
-  R30 = BK4819_ReadRegister(0x30);
-  R37 = BK4819_ReadRegister(0x37);
-  R3D = BK4819_ReadRegister(0x3D);
-  R43 = BK4819_ReadRegister(0x43);
-  R47 = BK4819_ReadRegister(0x47);
-  R48 = BK4819_ReadRegister(0x48);
-  R7E = BK4819_ReadRegister(0x7E);
+  for (int i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
+    uint8_t regNum = registersToBackup[i];
+    registersBackup[regNum] = BK4819_ReadRegister(regNum);
+  }
 }
 
 static void RestoreRegisters() {
-  BK4819_WriteRegister(0x13, R13);
-  BK4819_WriteRegister(0x30, R30);
-  BK4819_WriteRegister(0x37, R37);
-  BK4819_WriteRegister(0x3D, R3D);
-  BK4819_WriteRegister(0x43, R43);
-  BK4819_WriteRegister(0x47, R47);
-  BK4819_WriteRegister(0x48, R48);
-  BK4819_WriteRegister(0x7E, R7E);
+  for (int i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
+    uint8_t regNum = registersToBackup[i];
+    BK4819_WriteRegister(regNum, registersBackup[regNum]);
+  }
 }
 
 static void SetModulation(ModulationType type) {
-  RestoreRegisters();
-  uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);
-  reg &= ~(0b111 << 8);
-  BK4819_WriteRegister(BK4819_REG_47, reg | (modTypeReg47Values[type] << 8));
+  // restore only registers, which we affect here fully
+  BK4819_WriteRegister(0x37, registersBackup[0x37]);
+  BK4819_WriteRegister(0x3D, registersBackup[0x3D]);
+  BK4819_WriteRegister(0x48, registersBackup[0x48]);
+
+  SetRegValue(afOutRegSpec, modTypeReg47Values[type]);
+
   if (type == MOD_USB) {
+    BK4819_WriteRegister(0x37, 0b0001011000001111);
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
-    BK4819_WriteRegister(BK4819_REG_37, 0x160F);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
+  }
+
+  if (type == MOD_AM) {
+    SetRegValue(afDacGainRegSpec, 0xE);
   }
 }
 
@@ -911,6 +909,7 @@ static void OnKeyDown(uint8_t key) {
   case KEY_PTT:
     SetState(STILL);
     TuneToPeak();
+    settings.rssiTriggerLevel = 120;
     break;
   case KEY_MENU:
     break;
@@ -1069,18 +1068,16 @@ static void RenderStill() {
 
   for (int i = 0; i < 121; i++) {
     if (i % 10 == 0) {
-      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b01110000;
-    } else if (i % 5 == 0) {
-      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b00110000;
+      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b11000000;
     } else {
-      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b00010000;
+      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b01000000;
     }
   }
 
   uint8_t x = Rssi2PX(scanInfo.rssi, 0, 121);
   for (int i = 0; i < x; ++i) {
     if (i % 5 && i / 5 < x / 5) {
-      gFrameBuffer[2][i + METER_PAD_LEFT] |= 0b00000111;
+      gFrameBuffer[2][i + METER_PAD_LEFT] |= 0b00011100;
     }
   }
 
@@ -1091,9 +1088,9 @@ static void RenderStill() {
   } else {
     sprintf(String, "S9+%u0", s - 9);
   }
-  UI_PrintStringSmallest(String, 4, 9, false, true);
+  UI_PrintStringSmallest(String, 4, 10, false, true);
   sprintf(String, "%d dBm", dbm);
-  UI_PrintStringSmallest(String, 32, 9, false, true);
+  UI_PrintStringSmallest(String, 32, 10, false, true);
 
   if (isTransmitting) {
     uint8_t afDB = BK4819_ReadRegister(0x6F) & 0b1111111;
@@ -1105,7 +1102,9 @@ static void RenderStill() {
 
   if (!monitorMode) {
     uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
-    gFrameBuffer[2][METER_PAD_LEFT + x] = 0b11111111;
+    gFrameBuffer[2][METER_PAD_LEFT + x - 1] |= 0b01000001;
+    gFrameBuffer[2][METER_PAD_LEFT + x] = 0b01111111;
+    gFrameBuffer[2][METER_PAD_LEFT + x + 1] |= 0b01000001;
   }
 
   const uint8_t PAD_LEFT = 4;
@@ -1129,7 +1128,7 @@ static void RenderStill() {
     sprintf(String, "%s", s.name);
     UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
                            menuState != idx);
-    sprintf(String, "%u", GetRegMenuValue(s));
+    sprintf(String, "%u", GetRegValue(s));
     UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                            menuState != idx);
   }
@@ -1163,12 +1162,12 @@ bool HandleUserInput() {
     return true;
   }
 
-  if (kbd.current == kbd.prev && kbd.counter <= 32) {
+  if (kbd.current == kbd.prev && kbd.counter <= 20) {
     kbd.counter++;
     SYSTEM_DelayMs(10);
   }
 
-  if (kbd.counter == 4 || kbd.counter > 32) {
+  if (kbd.counter == 4 || kbd.counter > 20) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(kbd.current);

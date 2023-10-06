@@ -152,7 +152,7 @@ typedef struct ScanInfo {
 } ScanInfo;
 
 typedef struct RegisterSpec {
-  char *name;
+  const char *name;
   uint8_t num;
   uint8_t offset;
   uint16_t maxValue;
@@ -165,6 +165,13 @@ typedef struct PeakInfo {
   uint8_t i;
   uint32_t f;
 } PeakInfo;
+
+typedef struct MovingAverage {
+  uint16_t mean[128];
+  uint16_t buf[4][128];
+  uint16_t min, mid, max;
+  uint16_t t;
+} MovingAverage;
 
 typedef struct FreqPreset {
   char name[16];
