@@ -289,12 +289,6 @@ static void TuneToPeak() {
   SetF(scanInfo.f);
 }
 
-static void DeInitSpectrum() {
-  SetF(initialFreq);
-  RestoreRegisters();
-  isInitialized = false;
-}
-
 uint8_t GetBWRegValueForScan() {
   return scanStepBWRegValues[settings.scanStepIndex == S_STEP_100_0kHz ? 11
                                                                        : 0];
@@ -853,6 +847,13 @@ static void DrawArrow(uint8_t x) {
       gFrameBuffer[5][v] |= (0b01111000 << a) & 0b01111000;
     }
   }
+}
+
+static void DeInitSpectrum() {
+  SetF(initialFreq);
+  ToggleRX(false);
+  RestoreRegisters();
+  isInitialized = false;
 }
 
 static void OnKeyDown(uint8_t key) {
