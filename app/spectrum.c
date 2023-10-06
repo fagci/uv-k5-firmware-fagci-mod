@@ -21,7 +21,7 @@
 
 const uint16_t RSSI_MAX_VALUE = 65535;
 
-static uint16_t R30, R37, R3D, R43, R47, R48, R7E;
+static uint16_t R13, R30, R37, R3D, R43, R47, R48, R7E;
 static uint32_t initialFreq;
 static char String[32];
 
@@ -156,6 +156,7 @@ void SetState(State state) {
 // Radio functions
 
 static void BackupRegisters() {
+  R13 = BK4819_ReadRegister(0x13);
   R30 = BK4819_ReadRegister(0x30);
   R37 = BK4819_ReadRegister(0x37);
   R3D = BK4819_ReadRegister(0x3D);
@@ -166,6 +167,7 @@ static void BackupRegisters() {
 }
 
 static void RestoreRegisters() {
+  BK4819_WriteRegister(0x13, R13);
   BK4819_WriteRegister(0x30, R30);
   BK4819_WriteRegister(0x37, R37);
   BK4819_WriteRegister(0x3D, R3D);
@@ -1312,6 +1314,7 @@ static void AutomaticPresetChoose(uint32_t f) {
 }
 
 void APP_RunSpectrum() {
+  BackupRegisters();
   // TX here coz it always? set to active VFO
   VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
   initialFreq = vfo.pRX->Frequency;
@@ -1323,8 +1326,6 @@ void APP_RunSpectrum() {
   settings.modulationType = vfo.IsAM ? MOD_AM : MOD_FM;
 
   AutomaticPresetChoose(currentFreq);
-
-  BackupRegisters();
 
   redrawStatus = true;
   redrawScreen = false; // we will wait until scan done
