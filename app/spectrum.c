@@ -70,7 +70,7 @@ static const RegisterSpec registerSpecs[] = {
     {"LNAs", 0x13, 8, 0b11, 1},
     {"LNA", 0x13, 5, 0b111, 1},
     {"PGA", 0x13, 0, 0b111, 1},
-    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+    {"MIX", 0x13, 3, 0b11, 1},
 
     {"DEV", 0x40, 0, 4095, 1},
     {"CMP", 0x31, 3, 1, 1},
