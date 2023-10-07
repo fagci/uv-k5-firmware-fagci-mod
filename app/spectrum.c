@@ -155,14 +155,14 @@ void SetState(State state) {
 // Radio functions
 
 static void BackupRegisters() {
-  for (int i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
+  for (uint8_t i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
     uint8_t regNum = registersToBackup[i];
     registersBackup[regNum] = BK4819_ReadRegister(regNum);
   }
 }
 
 static void RestoreRegisters() {
-  for (int i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
+  for (uint8_t i = 0; i < ARRAY_SIZE(registersToBackup); ++i) {
     uint8_t regNum = registersToBackup[i];
     BK4819_WriteRegister(regNum, registersBackup[regNum]);
   }
@@ -229,7 +229,7 @@ static void MovingCp(uint16_t *dst, uint16_t *src) {
 }
 
 static void ResetMoving() {
-  for (int i = 0; i < MOV_N; ++i) {
+  for (uint8_t i = 0; i < MOV_N; ++i) {
     MovingCp(mov.buf[i], rssiHistory);
   }
 }
@@ -246,20 +246,20 @@ static void MoveHistory() {
     ResetMoving();
     lastStepsCount = XN;
   }
-  for (int i = MOV_N - 1; i > 0; --i) {
+  for (uint8_t i = MOV_N - 1; i > 0; --i) {
     MovingCp(mov.buf[i], mov.buf[i - 1]);
   }
   MovingCp(mov.buf[0], rssiHistory);
 
   uint8_t skipped = 0;
 
-  for (int x = 0; x < XN; ++x) {
+  for (uint8_t x = 0; x < XN; ++x) {
     if (blacklist[x]) {
       skipped++;
       continue;
     }
     uint32_t sum = 0;
-    for (int i = 0; i < MOV_N; ++i) {
+    for (uint8_t i = 0; i < MOV_N; ++i) {
       sum += mov.buf[i][x];
     }
 
@@ -445,7 +445,7 @@ static void InitScan() {
 }
 
 static void ResetBlacklist() {
-  for (int i = 0; i < 128; ++i) {
+  for (uint8_t i = 0; i < 128; ++i) {
     if (blacklist[i])
       blacklist[i] = false;
   }
@@ -461,6 +461,7 @@ static void RelaunchScan() {
 #endif
   preventKeypress = true;
   scanInfo.rssiMin = RSSI_MAX_VALUE;
+  redrawStatus = true;
 }
 
 static void UpdateScanInfo() {
@@ -517,13 +518,14 @@ static void ApplyPreset(FreqPreset p) {
   RelaunchScan();
   ResetBlacklist();
   redrawScreen = true;
+  settings.frequencyChangeStep = GetBW();
 }
 
 static void SelectNearestPreset(bool inc) {
   FreqPreset p;
   const uint8_t SZ = ARRAY_SIZE(freqPresets);
   if (inc) {
-    for (int i = 0; i < SZ; ++i) {
+    for (uint8_t i = 0; i < SZ; ++i) {
       p = freqPresets[i];
       if (currentFreq < p.fStart) {
         ApplyPreset(p);
@@ -531,7 +533,7 @@ static void SelectNearestPreset(bool inc) {
       }
     }
   } else {
-    for (int i = SZ - 1; i >= 0; --i) {
+    for (uint8_t i = SZ - 1; i >= 0; --i) {
       p = freqPresets[i];
       if (currentFreq > p.fEnd) {
         ApplyPreset(p);
@@ -634,7 +636,7 @@ static void ToggleStepsCount() {
 
 static void ResetFreqInput() {
   tempFreq = 0;
-  for (int i = 0; i < 10; ++i) {
+  for (uint8_t i = 0; i < 10; ++i) {
     freqInputString[i] = '-';
   }
 }
@@ -668,7 +670,7 @@ static void UpdateFreqInput(KEY_Code_t key) {
       freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
 
   KEY_Code_t digitKey;
-  for (int i = 0; i < 10; ++i) {
+  for (uint8_t i = 0; i < 10; ++i) {
     if (i < freqInputIndex) {
       digitKey = freqInputArr[i];
       freqInputString[i] = digitKey <= KEY_9 ? '0' + digitKey : '.';
@@ -678,14 +680,14 @@ static void UpdateFreqInput(KEY_Code_t key) {
   }
 
   uint32_t base = 100000; // 1MHz in BK units
-  for (int i = dotIndex - 1; i >= 0; --i) {
+  for (uint8_t i = dotIndex - 1; i >= 0; --i) {
     tempFreq += freqInputArr[i] * base;
     base *= 10;
   }
 
   base = 10000; // 0.1MHz in BK units
   if (dotIndex < freqInputIndex) {
-    for (int i = dotIndex + 1; i < freqInputIndex; ++i) {
+    for (uint8_t i = dotIndex + 1; i < freqInputIndex; ++i) {
       tempFreq += freqInputArr[i] * base;
       base /= 10;
     }
@@ -720,14 +722,14 @@ static void DrawSpectrum() {
 }
 
 static void UpdateBatteryInfo() {
-  for (int i = 0; i < 4; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
   }
 
   uint16_t voltage = Mid(gBatteryVoltages, ARRAY_SIZE(gBatteryVoltages));
   gBatteryDisplayLevel = 0;
 
-  for (int i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
+  for (uint8_t i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
     if (gBatteryCalibration[i] < voltage) {
       gBatteryDisplayLevel = i + 1;
       break;
@@ -737,13 +739,22 @@ static void UpdateBatteryInfo() {
 
 static void DrawStatus() {
 
+  FreqPreset p;
+  for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
+    if (currentFreq >= freqPresets[i].fStart &&
+        currentFreq < freqPresets[i].fEnd) {
+      p = freqPresets[i];
+    }
+  }
+  UI_PrintStringSmallest(p.name, 0, 1, true, true);
+
   gStatusLine[127] = 0b01111110;
-  for (int i = 126; i >= 116; i--) {
+  for (uint8_t i = 126; i >= 116; i--) {
     gStatusLine[i] = 0b01000010;
   }
   uint8_t v = gBatteryDisplayLevel;
   v <<= 1;
-  for (int i = 125; i >= 116; i--) {
+  for (uint8_t i = 125; i >= 116; i--) {
     if (126 - i <= v) {
       gStatusLine[i + 2] = 0b01111110;
     }
@@ -1065,19 +1076,20 @@ static void RenderStill() {
   DrawF(fMeasure);
 
   const uint8_t METER_PAD_LEFT = 3;
+  uint8_t *ln = gFrameBuffer[2];
 
-  for (int i = 0; i < 121; i++) {
+  for (uint8_t i = METER_PAD_LEFT; i < 121 + METER_PAD_LEFT; i++) {
     if (i % 10 == 0) {
-      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b11000000;
+      ln[i] = 0b11000000;
     } else {
-      gFrameBuffer[2][i + METER_PAD_LEFT] = 0b01000000;
+      ln[i] = 0b01000000;
     }
   }
 
   uint8_t x = Rssi2PX(scanInfo.rssi, 0, 121);
-  for (int i = 0; i < x; ++i) {
+  for (uint8_t i = 0; i < x; ++i) {
     if (i % 5 && i / 5 < x / 5) {
-      gFrameBuffer[2][i + METER_PAD_LEFT] |= 0b00011100;
+      ln[i + METER_PAD_LEFT] |= 0b00011100;
     }
   }
 
@@ -1095,16 +1107,16 @@ static void RenderStill() {
   if (isTransmitting) {
     uint8_t afDB = BK4819_ReadRegister(0x6F) & 0b1111111;
     uint8_t afPX = ConvertDomain(afDB, 26, 194, 0, 121);
-    for (int i = 0; i < afPX; ++i) {
+    for (uint8_t i = 0; i < afPX; ++i) {
       gFrameBuffer[3][i + METER_PAD_LEFT] |= 0b00000011;
     }
   }
 
   if (!monitorMode) {
     uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
-    gFrameBuffer[2][METER_PAD_LEFT + x - 1] |= 0b01000001;
-    gFrameBuffer[2][METER_PAD_LEFT + x] = 0b01111111;
-    gFrameBuffer[2][METER_PAD_LEFT + x + 1] |= 0b01000001;
+    ln[METER_PAD_LEFT + x - 1] |= 0b01000001;
+    ln[METER_PAD_LEFT + x] = 0b01111111;
+    ln[METER_PAD_LEFT + x + 1] |= 0b01000001;
   }
 
   const uint8_t PAD_LEFT = 4;
@@ -1112,14 +1124,14 @@ static void RenderStill() {
   uint8_t offset = PAD_LEFT;
   uint8_t row = 3;
 
-  for (int i = 0, idx = 1; idx <= 7; ++i, ++idx) {
+  for (uint8_t i = 0, idx = 1; idx <= 7; ++i, ++idx) {
     if (idx == 5) {
       row += 2;
       i = 0;
     }
     offset = PAD_LEFT + i * CELL_WIDTH;
     if (menuState == idx) {
-      for (int j = 0; j < CELL_WIDTH; ++j) {
+      for (uint8_t j = 0; j < CELL_WIDTH; ++j) {
         gFrameBuffer[row][j + offset] = 0xFF;
         gFrameBuffer[row + 1][j + offset] = 0xFF;
       }
@@ -1304,7 +1316,7 @@ static void Tick() {
 }
 
 static void AutomaticPresetChoose(uint32_t f) {
-  for (int i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
+  for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
     FreqPreset p = freqPresets[i];
     if (f >= p.fStart && f <= freqPresets[i].fEnd) {
       ApplyPreset(p);
@@ -1335,7 +1347,7 @@ void APP_RunSpectrum() {
 
   RelaunchScan();
 
-  for (int i = 0; i < 128; ++i) {
+  for (uint8_t i = 0; i < 128; ++i) {
     rssiHistory[i] = 0;
   }
 
