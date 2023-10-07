@@ -1,7 +1,5 @@
 on:
-  push:
-    tags:
-      - '*'
+  release:
 
 jobs:
   build:
@@ -28,14 +26,8 @@ jobs:
     - name: size
       run:  arm-none-eabi-size firmware
 
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
+    - name: 'Add files to release'
+      uses: svenstaro/upload-release-action@v2
       with:
-        name: firmware
-        path: firmware*.bin
-
-    - name: 'Create Release'
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "firmware*.bin"
-
+        file: firmware.packed.bin
+        asset_name: uv-k5-firmware-fagci-mod.bin
