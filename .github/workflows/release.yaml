@@ -26,6 +26,9 @@ jobs:
     - name: size
       run:  arm-none-eabi-size firmware
 
+    - name: rename
+      run: mv firmware.packed.bin uv-k5-firmware-fagci-mod-${{ github.event.release.tag_name }}.bin
+
     - name: 'Add unpacked FW to release'
       uses: svenstaro/upload-release-action@v2
       with:
@@ -35,15 +38,14 @@ jobs:
     - name: 'Add packed FW to release'
       uses: svenstaro/upload-release-action@v2
       with:
-        file: firmware.packed.bin
-        asset_name: uv-k5-firmware-fagci-mod.bin
+        file: uv-k5-firmware-fagci-mod-${{ github.event.release.tag_name }}.bin
 
     - name: send telegram message on push
       uses: appleboy/telegram-action@master
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
-        document: firmware.packed.bin
+        document: uv-k5-firmware-fagci-mod-${{ github.event.release.tag_name }}.bin
         message: |
           ${{ github.event.release.name }}
 
