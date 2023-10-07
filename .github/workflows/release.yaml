@@ -37,3 +37,14 @@ jobs:
       with:
         file: firmware.packed.bin
         asset_name: uv-k5-firmware-fagci-mod.bin
+
+    - name: send telegram message on push
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        document: firmware.packed.bin
+        message: |
+          ${{ github.event.release.name }}
+
+          ${{ github.event.release.body }}
