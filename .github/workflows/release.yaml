@@ -26,7 +26,13 @@ jobs:
     - name: size
       run:  arm-none-eabi-size firmware
 
-    - name: 'Add files to release'
+    - name: 'Add unpacked FW to release'
+      uses: svenstaro/upload-release-action@v2
+      with:
+        file: firmware.bin
+        asset_name: firmware.raw.bin
+
+    - name: 'Add packed FW to release'
       uses: svenstaro/upload-release-action@v2
       with:
         file: firmware.packed.bin
