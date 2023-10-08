@@ -533,7 +533,7 @@ static void SelectNearestPreset(bool inc) {
       }
     }
   } else {
-    for (uint8_t i = SZ - 1; i >= 0; --i) {
+    for (int i = SZ - 1; i >= 0; --i) {
       p = freqPresets[i];
       if (currentFreq > p.fEnd) {
         ApplyPreset(p);
@@ -680,7 +680,7 @@ static void UpdateFreqInput(KEY_Code_t key) {
   }
 
   uint32_t base = 100000; // 1MHz in BK units
-  for (uint8_t i = dotIndex - 1; i >= 0; --i) {
+  for (int i = dotIndex - 1; i >= 0; --i) {
     tempFreq += freqInputArr[i] * base;
     base *= 10;
   }
@@ -729,7 +729,7 @@ static void UpdateBatteryInfo() {
   uint16_t voltage = Mid(gBatteryVoltages, ARRAY_SIZE(gBatteryVoltages));
   gBatteryDisplayLevel = 0;
 
-  for (uint8_t i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
+  for (int i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
     if (gBatteryCalibration[i] < voltage) {
       gBatteryDisplayLevel = i + 1;
       break;
@@ -739,14 +739,18 @@ static void UpdateBatteryInfo() {
 
 static void DrawStatus() {
 
-  FreqPreset p;
-  for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-    if (currentFreq >= freqPresets[i].fStart &&
-        currentFreq < freqPresets[i].fEnd) {
-      p = freqPresets[i];
+  if (currentState == SPECTRUM) {
+    const FreqPreset *p = NULL;
+    for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
+      if (currentFreq >= freqPresets[i].fStart &&
+          currentFreq < freqPresets[i].fEnd) {
+        p = &freqPresets[i];
+      }
+    }
+    if (p != NULL) {
+      UI_PrintStringSmallest(p->name, 0, 1, true, true);
     }
   }
-  UI_PrintStringSmallest(p.name, 0, 1, true, true);
 
   gStatusLine[127] = 0b01111110;
   for (uint8_t i = 126; i >= 116; i--) {

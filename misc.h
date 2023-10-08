@@ -80,7 +80,6 @@ enum CssScanMode_t {
 typedef enum CssScanMode_t CssScanMode_t;
 
 extern bool gSetting_350TX;
-extern bool gSetting_KILLED;
 extern bool gSetting_200TX;
 extern bool gSetting_500TX;
 extern uint8_t gSetting_ALL_TX;

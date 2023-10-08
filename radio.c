@@ -573,14 +573,15 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   } else {
     BK4819_DisableVox();
   }
-  if (gRxVfo->IsAM || (!gRxVfo->DTMF_DECODING_ENABLE && !gSetting_KILLED)) {
+  if (gRxVfo->IsAM || !gRxVfo->DTMF_DECODING_ENABLE) {
     BK4819_DisableDTMF();
   } else {
     BK4819_EnableDTMF();
     InterruptMask |= BK4819_REG_3F_DTMF_5TONE_FOUND;
   }
   BK4819_WriteRegister(BK4819_REG_3F, InterruptMask);
-  BK4819_WriteRegister(0x40, (BK4819_ReadRegister(0x40) & ~(0b11111111111)) | 0b10110101010);
+  BK4819_WriteRegister(0x40, (BK4819_ReadRegister(0x40) & ~(0b11111111111)) |
+                                 0b10110101010);
 
   FUNCTION_Init();
 

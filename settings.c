@@ -173,7 +173,7 @@ void SETTINGS_SaveSettings(void)
 
 	State[0] = gSetting_F_LOCK;
 	State[1] = gSetting_350TX;
-	State[2] = gSetting_KILLED;
+	State[2] = false;
 	State[3] = gSetting_200TX;
 	State[4] = gSetting_500TX;
 	State[5] = gSetting_ALL_TX;

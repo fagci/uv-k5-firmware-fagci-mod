@@ -69,9 +69,6 @@ void UI_DisplayStatus(void)
 	if (gEeprom.VOICE_PROMPT != VOICE_PROMPT_OFF) {
 		memcpy(gStatusLine + 34, BITMAP_VoicePrompt, sizeof(BITMAP_VoicePrompt));
 	}
-	if (gSetting_KILLED) {
-		memset(gStatusLine + 21, 0xFF, 10);
-	}
 #if defined(ENABLE_FMRADIO)
 	else if (gFmRadioMode) {
 		memcpy(gStatusLine + 21, BITMAP_FM, sizeof(BITMAP_FM));
