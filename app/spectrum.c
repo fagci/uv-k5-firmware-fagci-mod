@@ -585,7 +585,7 @@ static void UpdateCurrentFreqStill(bool inc) {
 
 static void UpdateFreqChangeStep(bool inc) {
   uint16_t diff = GetScanStep() * 4;
-  if (inc && settings.frequencyChangeStep < 200000) {
+  if (inc && settings.frequencyChangeStep < 1280000) {
     settings.frequencyChangeStep += diff;
   } else if (!inc && settings.frequencyChangeStep > 10000) {
     settings.frequencyChangeStep -= diff;
@@ -805,9 +805,8 @@ static void DrawNums() {
     sprintf(String, "%u.%05u", GetFStart() / 100000, GetFStart() % 100000);
     UI_PrintStringSmallest(String, 0, 49, false, true);
 
-    sprintf(String, "\xB1%u.%02uk", settings.frequencyChangeStep / 100,
-            settings.frequencyChangeStep % 100);
-    UI_PrintStringSmallest(String, 48, 49, false, true);
+    sprintf(String, "\xB1%uk", settings.frequencyChangeStep / 100);
+    UI_PrintStringSmallest(String, 52, 49, false, true);
 
     sprintf(String, "%u.%05u", GetFEnd() / 100000, GetFEnd() % 100000);
     UI_PrintStringSmallest(String, 93, 49, false, true);
@@ -1320,10 +1319,11 @@ static void Tick() {
 }
 
 static void AutomaticPresetChoose(uint32_t f) {
+  const FreqPreset *p;
   for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-    FreqPreset p = freqPresets[i];
-    if (f >= p.fStart && f <= freqPresets[i].fEnd) {
-      ApplyPreset(p);
+    p = &freqPresets[i];
+    if (f >= p->fStart && f <= p->fEnd) {
+      ApplyPreset(*p);
     }
   }
 }

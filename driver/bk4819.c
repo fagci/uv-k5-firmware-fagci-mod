@@ -307,7 +307,7 @@ void BK4819_SetupPowerAmplifier(uint16_t Bias, uint32_t Frequency)
 	if (Bias > 255) {
 		Bias = 255;
 	}
-	if (Frequency < 28000000) {
+	if (Frequency < 32000000) {
 		// Gain 1 = 1
 		// Gain 2 = 0
 		Gain = 0x08U;
@@ -383,7 +383,7 @@ void BK4819_RX_TurnOn(void)
 
 void BK4819_PickRXFilterPathBasedOnFrequency(uint32_t Frequency)
 {
-	if (Frequency < 28000000) {
+	if (Frequency < 32000000) {
 		BK4819_ToggleGpioOut(BK4819_GPIO2_PIN30, true);
 		BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31, false);
 	} else if (Frequency == 0xFFFFFFFF) {
