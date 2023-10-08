@@ -700,6 +700,7 @@ static void Blacklist() {
   ResetPeak();
   ToggleRX(false);
   newScanStart = true;
+  redrawScreen = true;
 }
 
 // Draw things
@@ -1182,7 +1183,7 @@ bool HandleUserInput() {
     SYSTEM_DelayMs(10);
   }
 
-  if (kbd.counter == 4 || kbd.counter > 20) {
+  if (kbd.counter == 5 || kbd.counter > 20) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(kbd.current);
