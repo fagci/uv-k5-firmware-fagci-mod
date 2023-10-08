@@ -34,17 +34,25 @@ void UI_DisplayRSSIBar(int16_t rssi) {
   char String[16];
 
   const uint8_t LINE = 3;
-  const uint8_t BAR_WIDTH = 92;
-  const uint8_t BAR_LEFT_MARGIN = 34;
+  const uint8_t BAR_LEFT_MARGIN = 21;
 
-  uint8_t length = Rssi2PX(rssi, 0, BAR_WIDTH);
+  int dBm = Rssi2DBm(rssi);
+  uint8_t s = DBm2S(dBm);
 
-  for (int i = BAR_LEFT_MARGIN; i < BAR_LEFT_MARGIN + length; i += 2) {
-    gFrameBuffer[LINE][i] = 0x3e;
+  for (int i = BAR_LEFT_MARGIN; i < BAR_LEFT_MARGIN + s * 4; i += 4) {
+    gFrameBuffer[LINE][i] = 0b00011100;
+    gFrameBuffer[LINE][i + 1] = 0b00011100;
+    gFrameBuffer[LINE][i + 2] = 0b00011100;
   }
 
-  sprintf(String, "%d", Rssi2DBm(rssi));
-  UI_PrintStringSmall(String, 0, 0, 3);
+  sprintf(String, "%d", dBm);
+  UI_PrintStringSmallest(String, 3, 25, false, true);
+  if (s < 10) {
+    sprintf(String, "S%u", s);
+  } else {
+    sprintf(String, "S9+%u0", s - 9);
+  }
+  UI_PrintStringSmallest(String, 3, 19, false, true);
 }
 #endif
 
@@ -423,13 +431,10 @@ void UI_DisplayMain(void) {
   }
 
 #if defined(ENABLE_RSSIBAR)
-  int16_t rssi;
-
   if (gCurrentFunction == FUNCTION_RECEIVE ||
       gCurrentFunction == FUNCTION_MONITOR ||
       gCurrentFunction == FUNCTION_INCOMING) {
-    rssi = BK4819_GetRSSI();
-    UI_DisplayRSSIBar(rssi);
+    UI_DisplayRSSIBar(BK4819_GetRSSI());
   }
 #endif
 

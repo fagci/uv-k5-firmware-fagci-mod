@@ -188,23 +188,24 @@ static void SetModulation(ModulationType type) {
   }
 }
 
-static void SetF(uint32_t f) {
-  fMeasure = f;
-
-  BK4819_SetFrequency(fMeasure);
-  BK4819_PickRXFilterPathBasedOnFrequency(fMeasure);
+static void ApplyFreqChange() {
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   BK4819_WriteRegister(BK4819_REG_30, 0);
   BK4819_WriteRegister(BK4819_REG_30, reg);
+}
+
+static void SetF(uint32_t f) {
+  fMeasure = f;
+  BK4819_SetFrequency(f);
+  BK4819_PickRXFilterPathBasedOnFrequency(f);
+  ApplyFreqChange();
 }
 
 static void SetTxF(uint32_t f) {
   fTx = f;
   BK4819_SetFrequency(f);
   BK4819_PickRXFilterPathBasedOnFrequency(f);
-  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
-  BK4819_WriteRegister(BK4819_REG_30, 0);
-  BK4819_WriteRegister(BK4819_REG_30, reg);
+  ApplyFreqChange();
 }
 
 // Spectrum related
@@ -363,7 +364,8 @@ static void ToggleRX(bool on) {
   if (on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-    SetRegValue(afcRegSpec, settings.modulationType != MOD_FM); // disable AFC if not FM
+    SetRegValue(afcRegSpec,
+                settings.modulationType != MOD_FM); // disable AFC if not FM
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     SetRegValue(afcRegSpec, 1); // disable AFC
