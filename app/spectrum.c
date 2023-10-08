@@ -63,6 +63,7 @@ uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
 
+static const RegisterSpec afcRegSpec = {"AFC", 0x73, 4, 0x1, 1};
 static const RegisterSpec afOutRegSpec = {"AF OUT", 0x47, 8, 0xF, 1};
 static const RegisterSpec afDacGainRegSpec = {"AF DAC G", 0x48, 0, 0xF, 1};
 static const RegisterSpec registerSpecs[] = {
@@ -362,8 +363,10 @@ static void ToggleRX(bool on) {
   if (on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+    SetRegValue(afcRegSpec, settings.modulationType != MOD_FM); // disable AFC if not FM
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+    SetRegValue(afcRegSpec, 1); // disable AFC
   }
 }
 
