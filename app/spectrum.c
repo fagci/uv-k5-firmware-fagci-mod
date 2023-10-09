@@ -171,9 +171,7 @@ static void SetModulation(ModulationType type) {
     BK4819_WriteRegister(0x37, 0b0001011000001111);
     BK4819_WriteRegister(0x3D, 0b0010101101000101);
     BK4819_WriteRegister(0x48, 0b0000001110101000);
-  }
-
-  if (type == MOD_AM) {
+  } else if (type == MOD_AM) {
     SetRegValue(afDacGainRegSpec, 0xE);
   }
 }

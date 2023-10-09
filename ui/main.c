@@ -39,6 +39,7 @@ void UI_DisplayRSSIBar(int16_t rssi) {
   int dBm = Rssi2DBm(rssi);
   uint8_t s = DBm2S(dBm);
   uint8_t *line = gFrameBuffer[LINE];
+
   memset(line, 0, 128);
 
   for (int i = BAR_LEFT_MARGIN, sv = 1; i < BAR_LEFT_MARGIN + s * 4;
