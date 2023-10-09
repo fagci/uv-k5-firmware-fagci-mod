@@ -127,10 +127,10 @@ void RADIO_InitInfo(VFO_Info_t *pInfo, uint8_t ChannelSave, uint8_t Band,
   pInfo->pTX = &pInfo->ConfigTX;
   pInfo->FREQUENCY_OF_DEVIATION = 1000000;
 
-  if (ChannelSave == (FREQ_CHANNEL_FIRST + BAND2_108MHz)) {
+  /* if (ChannelSave == (FREQ_CHANNEL_FIRST + BAND2_108MHz)) {
     pInfo->AM_CHANNEL_MODE = true;
     pInfo->IsAM = true;
-  }
+  } */
 
   RADIO_ConfigureSquelchAndOutputPower(pInfo);
 }
@@ -313,6 +313,9 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
   }
 
   Frequency = pRadio->ConfigRX.Frequency;
+
+  Band = FREQUENCY_GetBand(Frequency);
+
   if (Frequency < FrequencyBandTable[Band].lower) {
     pRadio->ConfigRX.Frequency = FrequencyBandTable[Band].lower;
   } else if (Frequency > FrequencyBandTable[Band].upper) {

@@ -269,8 +269,8 @@ void UI_DisplayMain(void) {
         UI_DisplayFrequency(gInputBox, 31, i * 4, true, false);
       } else {
         uint32_t frequency = gEeprom.VfoInfo[i].pRX->Frequency;
-        bool noChannelName = gEeprom.VfoInfo[i].Name[0] <= 32 ||
-                             gEeprom.VfoInfo[i].Name[0] >= 127;
+        bool noChannelName = gEeprom.VfoInfo[i].Name[0] == 0 ||
+                             gEeprom.VfoInfo[i].Name[0] == 255;
 
         if (gCurrentFunction == FUNCTION_TRANSMIT) {
           if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
@@ -285,7 +285,6 @@ void UI_DisplayMain(void) {
 
         if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i]) ||
             gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
-          // UI_DisplayFrequency(String, 31, i * 4, false, false);
           sprintf(String, "%u.%05u", frequency / 100000, frequency % 100000);
           UI_PrintString(String, 31, 112, i * 4, 8, true);
           if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
