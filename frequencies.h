@@ -49,6 +49,7 @@ uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid,
                                        int32_t Middle, int32_t UpperLimit,
                                        int32_t Frequency);
 uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower);
-int FREQUENCY_Check(VFO_Info_t *pInfo);
+bool IsTXAllowed(uint32_t Frequency);
+bool FREQUENCY_Check(VFO_Info_t *pInfo);
 
 #endif

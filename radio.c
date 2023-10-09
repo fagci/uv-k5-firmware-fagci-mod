@@ -721,7 +721,7 @@ void RADIO_PrepareTX(void) {
 #endif
     VfoState_t State;
 
-    if (!FREQUENCY_Check(gCurrentVfo)) {
+    if (FREQUENCY_Check(gCurrentVfo)) {
       if (gCurrentVfo->BUSY_CHANNEL_LOCK &&
           gCurrentFunction == FUNCTION_RECEIVE) {
         State = VFO_STATE_BUSY;

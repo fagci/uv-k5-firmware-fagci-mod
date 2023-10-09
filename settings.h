@@ -34,8 +34,7 @@ enum {
 	F_LOCK_FCC = 1U,
 	F_LOCK_CE  = 2U,
 	F_LOCK_GB  = 3U,
-	F_LOCK_430 = 4U,
-	F_LOCK_438 = 5U,
+	F_LOCK_LPD_PMR = 4U,
 };
 
 enum {

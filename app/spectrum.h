@@ -155,7 +155,7 @@ typedef struct RegisterSpec {
   const char *name;
   uint8_t num;
   uint8_t offset;
-  uint16_t maxValue;
+  uint16_t mask;
   uint16_t inc;
 } RegisterSpec;
 

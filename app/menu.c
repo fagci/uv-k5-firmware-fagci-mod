@@ -135,7 +135,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax)
 		break;
 	case MENU_F_LOCK:
 		*pMin = 0;
-		*pMax = 5;
+		*pMax = 4;
 		break;
 	case MENU_MDF: 
 		*pMin = 0;

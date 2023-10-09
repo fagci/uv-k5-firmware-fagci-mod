@@ -17,6 +17,9 @@
 #ifndef UI_MAIN_H
 #define UI_MAIN_H
 
+#include <stdint.h>
+
+void UI_DisplayRSSIBar(int16_t rssi);
 void UI_DisplayMain(void);
 
 #endif
