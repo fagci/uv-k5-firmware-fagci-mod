@@ -1,5 +1,7 @@
 on:
   release:
+    types:
+      - published
 
 jobs:
   build:
@@ -42,8 +44,21 @@ jobs:
 
     - name: send telegram message on push
       uses: appleboy/telegram-action@master
+      if: 'github.event.prerelease'
       with:
         to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        document: uv-k5-firmware-fagci-mod-${{ github.event.release.tag_name }}.bin
+        message: |
+          ${{ github.event.release.name }}
+
+          ${{ github.event.release.body }}
+          
+    - name: send telegram message on push
+      uses: appleboy/telegram-action@master
+      if: '!github.event.prerelease'
+      with:
+        to: ${{ secrets.TELEGRAM_TO_RELEASE }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
         document: uv-k5-firmware-fagci-mod-${{ github.event.release.tag_name }}.bin
         message: |
