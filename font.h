@@ -22,7 +22,7 @@
 extern const uint8_t gFontBig[95][16];
 extern const uint8_t gFontSmallDigits[11][7];
 extern const uint8_t gFont3x5[160][3];
-extern const uint8_t gFontSmall[95][7];
+extern const uint8_t gFontSmall[95][6];
 
 #endif
 

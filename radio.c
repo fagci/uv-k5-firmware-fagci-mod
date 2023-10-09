@@ -401,8 +401,8 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo) {
   EEPROM_ReadBuffer(0x1ED0 + (Band * 0x10) + (pInfo->OUTPUT_POWER * 3), Txp, 3);
   pInfo->TXP_CalculatedSetting = FREQUENCY_CalculateOutputPower(
       Txp[0], Txp[1], Txp[2], FrequencyBandTable[Band].lower,
-      FrequencyBandTable[Band].middle, FrequencyBandTable[Band].upper,
-      pInfo->pTX->Frequency);
+      (FrequencyBandTable[Band].upper - FrequencyBandTable[Band].lower) / 2,
+      FrequencyBandTable[Band].upper, pInfo->pTX->Frequency);
 }
 
 void RADIO_ApplyOffset(VFO_Info_t *pInfo) {
