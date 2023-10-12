@@ -66,6 +66,14 @@ bool blacklist[128] = {false};
 static const RegisterSpec afcRegSpec = {"AFC", 0x73, 4, 0x1, 1};
 static const RegisterSpec afOutRegSpec = {"AF OUT", 0x47, 8, 0xF, 1};
 static const RegisterSpec afDacGainRegSpec = {"AF DAC G", 0x48, 0, 0xF, 1};
+
+/* static const RegisterSpec weak = {"weak", 0x0C, 7, 1, 0};
+static const RegisterSpec noise = {"noise", 0x65, 0, 0xFF, 0};
+static const RegisterSpec relRssi = {"rel RSSI", 0x65, 8, 0xFF, 0};
+static const RegisterSpec snr = {"SNR", 0x61, 8, 0xFF, 0};
+static const RegisterSpec agcRssi = {"AGC RSSI", 0x62, 0, 0xFF, 0};
+static const RegisterSpec lnaPeakRssi = {"LNA peak RSSI", 0x62, 8, 0xFF, 0}; */
+
 static const RegisterSpec registerSpecs[] = {
     {},
     {"LNAs", 0x13, 8, 0b11, 1},
@@ -1485,6 +1493,9 @@ static void AutomaticPresetChoose(uint32_t f) {
 
 void APP_RunSpectrum() {
   BackupRegisters();
+
+  BK4819_SetAGC(1);
+
   // TX here coz it always? set to active VFO
   VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
   initialFreq = vfo.pRX->Frequency;
