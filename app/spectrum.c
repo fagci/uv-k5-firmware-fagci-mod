@@ -50,7 +50,6 @@ SpectrumSettings settings = {
     .stepsCount = STEPS_64,
     .scanStepIndex = S_STEP_25_0kHz,
     .frequencyChangeStep = 80000,
-    .scanDelay = 3200,
     .rssiTriggerLevel = 150,
     .backlightState = true,
     .bw = BK4819_FILTER_BW_WIDE,
@@ -74,7 +73,8 @@ static const RegisterSpec registerSpecs[] = {
     {"PGA", 0x13, 0, 0b111, 1},
     {"MIX", 0x13, 3, 0b11, 1},
 
-    {"DEV", 0x40, 0, 0b111111111111, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 100},
+    {"DEV", 0x40, 0, 0b111111111111, 10},
     {"CMP", 0x31, 3, 1, 1},
     {"MIC", 0x7D, 0, 0b11111, 1},
 };
@@ -183,6 +183,9 @@ static void ApplyFreqChange() {
 }
 
 static void SetF(uint32_t f) {
+  if (fMeasure == f) {
+    return;
+  }
   fMeasure = f;
   BK4819_SetFrequency(f);
   BK4819_PickRXFilterPathBasedOnFrequency(f);
@@ -332,9 +335,9 @@ static void ToggleTX(bool);
 static void ToggleRX(bool);
 
 static void ToggleRX(bool on) {
-  /* if (isListening == on) {
+  if (isListening == on) {
     return;
-  } */
+  }
   isListening = on;
   if (on) {
     ToggleTX(false);
@@ -925,6 +928,7 @@ static void OnKeyDown(uint8_t key) {
   case KEY_EXIT:
     if (menuState) {
       menuState = 0;
+      redrawScreen = true;
       break;
     }
     DeInitSpectrum();
@@ -1039,6 +1043,7 @@ void OnKeyDownStill(KEY_Code_t key) {
   case KEY_EXIT:
     if (menuState) {
       menuState = 0;
+      redrawScreen = true;
       break;
     }
     SetState(SPECTRUM);
@@ -1236,14 +1241,18 @@ static void UpdateScan() {
 
   newScanStart = true;
 }
-
+uint16_t screenRedrawT = 0;
 static void UpdateStill() {
   Measure();
-  redrawScreen = true;
   preventKeypress = false;
 
   peak.rssi = scanInfo.rssi;
   AutoTriggerLevel();
+
+  if (++screenRedrawT >= 1000) {
+    redrawScreen = true;
+    screenRedrawT = 0;
+  }
 
   ToggleRX(IsPeakOverLevel() || monitorMode);
 }
@@ -1262,6 +1271,8 @@ static void UpdateListening() {
     return;
   }
 
+  redrawScreen = true;
+
   if (currentState == SPECTRUM) {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     Measure();
@@ -1271,10 +1282,9 @@ static void UpdateListening() {
   }
 
   peak.rssi = scanInfo.rssi;
-  redrawScreen = true;
 
   if (IsPeakOverLevel() || monitorMode) {
-    listenT = 1000;
+    listenT = currentState == SPECTRUM ? 1000 : 10;
     return;
   }
 
@@ -1343,7 +1353,7 @@ void APP_RunSpectrum() {
   AutomaticPresetChoose(currentFreq);
 
   redrawStatus = true;
-  redrawScreen = false; // we will wait until scan done
+  redrawScreen = true;
   newScanStart = true;
 
   ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off

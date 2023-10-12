@@ -1,7 +1,8 @@
 TARGET = firmware
 
 ENABLE_AIRCOPY := 0
-ENABLE_ALARM := 1
+ENABLE_ALARM := 0
+ENABLE_AM_FIX := 1
 ENABLE_FMRADIO := 1
 ENABLE_NOAA := 0
 ENABLE_OVERLAY := 0
@@ -59,6 +60,9 @@ endif
 
 # Main
 OBJS += app/action.o
+ifeq ($(ENABLE_AM_FIX),1)
+OBJS += am_fix.o
+endif
 ifeq ($(ENABLE_AIRCOPY),1)
 OBJS += app/aircopy.o
 endif
@@ -135,6 +139,9 @@ CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
 ifeq ($(ENABLE_AIRCOPY),1)
 CFLAGS += -DENABLE_AIRCOPY
+endif
+ifeq ($(ENABLE_AM_FIX),1)
+	CFLAGS  += -DENABLE_AM_FIX
 endif
 ifeq ($(ENABLE_ALARM),1)
 CFLAGS += -DENABLE_ALARM

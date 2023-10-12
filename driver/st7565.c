@@ -71,7 +71,7 @@ void ST7565_BlitFullScreen(void)
 		SPI_WaitForUndocumentedTxFifoStatusBit();
 	}
 
-	SYSTEM_DelayMs(20);
+	// SYSTEM_DelayMs(20);
 	SPI_ToggleMasterMode(&SPI0->CR, true);
 }
 

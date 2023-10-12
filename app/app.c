@@ -19,6 +19,9 @@
 #if defined(ENABLE_AIRCOPY)
 #include "app/aircopy.h"
 #endif
+#if defined(ENABLE_AM_FIX)
+#include "am_fix.h"
+#endif
 #include "app/app.h"
 #include "app/dtmf.h"
 #if defined(ENABLE_FMRADIO)
@@ -55,13 +58,20 @@
 #if defined(ENABLE_OVERLAY)
 #include "sram-overlay.h"
 #endif
-#include "ui/battery.h"
-#include "ui/inputbox.h"
 #include "../ui/main.h"
+#include "ui/battery.h"
+#include "ui/helper.h"
+#include "ui/inputbox.h"
 #include "ui/menu.h"
 #include "ui/rssi.h"
 #include "ui/status.h"
 #include "ui/ui.h"
+
+// original QS front end register settings
+const uint8_t origLnaShort = 3; //   0dB
+const uint8_t origLna = 2;      // -14dB
+const uint8_t origMixer = 3;    //   0dB
+const uint8_t origPga = 6;      //  -3dB
 
 static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 
@@ -142,7 +152,7 @@ static void APP_HandleIncoming(void) {
     return;
   }
 
-  APP_StartListening(FUNCTION_RECEIVE);
+  APP_StartListening(FUNCTION_RECEIVE, false);
 }
 
 static void APP_HandleReceive(void) {
@@ -300,16 +310,24 @@ static void APP_HandleFunction(void) {
   }
 }
 
-void APP_StartListening(FUNCTION_Type_t Function) {
-#if defined(ENABLE_FMRADIO)
-  if (gFmRadioMode) {
+void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
+  const unsigned int chan = gEeprom.RX_CHANNEL;
+  //	const unsigned int chan = gRxVfo->channelSave;
+
+#ifdef ENABLE_FMRADIO
+  if (gFmRadioMode)
     BK1080_Init(0, false);
-  }
 #endif
-  gVFO_RSSI_Level[gEeprom.RX_CHANNEL == 0] = 0;
+
+  // clear the other vfo's rssi level (to hide the antenna symbol)
+  gVFO_RSSI_Level[(chan + 1) & 1u] = 0;
+
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
+
   gEnableSpeaker = true;
+
   BACKLIGHT_TurnOn();
+
   if (gScanState != SCAN_OFF) {
     switch (gEeprom.SCAN_RESUME_MODE) {
     case SCAN_RESUME_TO:
@@ -319,57 +337,92 @@ void APP_StartListening(FUNCTION_Type_t Function) {
         gScanPauseMode = true;
       }
       break;
+
     case SCAN_RESUME_CO:
     case SCAN_RESUME_SE:
       ScanPauseDelayIn10msec = 0;
       gScheduleScanListen = false;
       break;
     }
+
     bScanKeepFrequency = true;
   }
-#if defined(ENABLE_NOAA)
-  if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) && gIsNoaaMode) {
-    gRxVfo->CHANNEL_SAVE = gNoaaChannel + NOAA_CHANNEL_FIRST;
-    gRxVfo->pRX->Frequency = NoaaFrequencyTable[gNoaaChannel];
-    gRxVfo->pTX->Frequency = NoaaFrequencyTable[gNoaaChannel];
-    gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = gRxVfo->CHANNEL_SAVE;
-    gNOAA_Countdown = 500;
-    gScheduleNOAA = false;
+
+#ifdef ENABLE_NOAA
+  if (IS_NOAA_CHANNEL(gRxVfo->channelSave) && gIsNoaaMode) {
+    gRxVfo->channelSave = gNoaaChannel + NOAA_CHANNEL_FIRST;
+    gRxVfo->pRX->frequency = NoaaFrequencyTable[gNoaaChannel];
+    gRxVfo->pTX->frequency = NoaaFrequencyTable[gNoaaChannel];
+    gEeprom.screenChannel[chan] = gRxVfo->channelSave;
+    gNoaaCountDown_10ms = 500; // 5 sec
+    gScheduleNoaa = false;
   }
 #endif
-  if (gCssScanMode != CSS_SCAN_MODE_OFF) {
+
+  if (gCssScanMode != CSS_SCAN_MODE_OFF)
     gCssScanMode = CSS_SCAN_MODE_FOUND;
-  }
+
   if (gScanState == SCAN_OFF && gCssScanMode == CSS_SCAN_MODE_OFF &&
       gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-    gRxVfoIsActive = true;
+
     gDualWatchCountdown = 360;
     gScheduleDualWatch = false;
+
+    gRxVfoIsActive = true;
+
+    gUpdateStatus = true;
   }
-  if (gRxVfo->IsAM) {
-    BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
-    gNeverUsed = 0;
-  } else {
-    BK4819_WriteRegister(BK4819_REG_48, 0xB000 | (gEeprom.VOLUME_GAIN << 4) |
-                                            (gEeprom.DAC_GAIN << 0));
-  }
-  if (gVoiceWriteIndex == 0) {
-    if (gRxVfo->IsAM) {
-      BK4819_SetAF(BK4819_AF_AM);
-    } else {
-      BK4819_SetAF(BK4819_AF_OPEN);
+
+  { // RF RX front end gain
+
+    // original setting
+    uint16_t lnaShort = origLnaShort;
+    uint16_t lna = origLna;
+    uint16_t mixer = origMixer;
+    uint16_t pga = origPga;
+
+#ifdef ENABLE_AM_FIX
+    if (gRxVfo->IsAM) { // AM RX mode
+      if (resetAmFix) {
+        AM_fix_reset(chan); // TODO: only reset it when moving channel/frequency
+      }
+      AM_fix_10ms(chan);
+
+    } else { // FM RX mode
+      BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
+                                              (mixer << 3) | (pga << 0));
     }
-  }
-  FUNCTION_Select(Function);
-  if (Function == FUNCTION_MONITOR
-#if defined(ENABLE_FMRADIO)
-      || gFmRadioMode
+#else
+    BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
+                                            (mixer << 3) | (pga << 0));
 #endif
-  ) {
-    GUI_SelectNextDisplay(DISPLAY_MAIN);
-    return;
   }
-  gUpdateDisplay = true;
+
+  // AF gain - original QS values
+  BK4819_WriteRegister(
+      BK4819_REG_48,
+      (11u << 12) |    // ??? .. 0 to 15, doesn't seem to make any difference
+          (0u << 10) | // AF Rx Gain-1
+          (gEeprom.VOLUME_GAIN << 4) | // AF Rx Gain-2
+          (gEeprom.DAC_GAIN << 0));    // AF DAC Gain (after Gain-1 and Gain-2)
+
+  if (gVoiceWriteIndex == 0)
+    BK4819_SetAF(gRxVfo->IsAM ? BK4819_AF_AM : BK4819_AF_OPEN);
+
+  FUNCTION_Select(Function);
+
+#ifdef ENABLE_FMRADIO
+  if (Function == FUNCTION_MONITOR || gFmRadioMode)
+#else
+  if (Function == FUNCTION_MONITOR)
+#endif
+  {                                       // squelch is disabled
+    if (gScreenToDisplay != DISPLAY_MENU) // 1of11 .. don't close the menu
+      GUI_SelectNextDisplay(DISPLAY_MAIN);
+  } else
+    gUpdateDisplay = true;
+
+  gUpdateStatus = true;
 }
 
 void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
@@ -679,14 +732,14 @@ void APP_Update(void) {
       gScheduleScanListen && !gPttIsPressed && gVoiceWriteIndex == 0) {
     if (IS_FREQ_CHANNEL(gNextMrChannel)) {
       if (gCurrentFunction == FUNCTION_INCOMING) {
-        APP_StartListening(FUNCTION_RECEIVE);
+        APP_StartListening(FUNCTION_RECEIVE, true);
       } else {
         FREQ_NextChannel();
       }
     } else {
       if (gCurrentCodeType == CODE_TYPE_OFF &&
           gCurrentFunction == FUNCTION_INCOMING) {
-        APP_StartListening(FUNCTION_RECEIVE);
+        APP_StartListening(FUNCTION_RECEIVE, true);
       } else {
         MR_NextChannel();
       }
@@ -896,13 +949,18 @@ void APP_TimeSlice10ms(void) {
     return;
   }
 
+#ifdef ENABLE_AM_FIX
+  if (gRxVfo->IsAM)
+    AM_fix_10ms(gEeprom.RX_CHANNEL);
+#endif
+
   if (gCurrentFunction != FUNCTION_POWER_SAVE || !gRxIdleMode) {
     APP_CheckRadioInterrupts();
   }
 
   // once every 150ms
 #if defined(ENABLE_RSSIBAR)
-  if (gFlashLightBlinkCounter % 15 == 0) {
+  if ((gFlashLightBlinkCounter & 15U) == 0) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
         gCurrentFunction == FUNCTION_MONITOR ||
         gCurrentFunction == FUNCTION_INCOMING) {

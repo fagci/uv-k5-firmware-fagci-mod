@@ -69,7 +69,7 @@ static void ACTION_Monitor(void)
 		}
 #endif
 		RADIO_SetupRegisters(true);
-		APP_StartListening(FUNCTION_MONITOR);
+		APP_StartListening(FUNCTION_MONITOR, false);
 		return;
 	}
 	if (gScanState != SCAN_OFF) {

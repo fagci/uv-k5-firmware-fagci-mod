@@ -1,4 +1,4 @@
-/* Copyright 2023 Dual Tachyon
+/* Copyright 2023 OneOfEleven
  * https://github.com/DualTachyon
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,20 @@
  *     limitations under the License.
  */
 
-#ifndef APP_APP_H
-#define APP_APP_H
+#ifndef AM_FIXH
 
+#include <stdint.h>
 #include <stdbool.h>
-#include "functions.h"
-#include "radio.h"
 
-void APP_EndTransmission(void);
-void CHANNEL_Next(bool bFlag, int8_t Direction);
-void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix);
-void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step);
+#ifdef ENABLE_AM_FIX
+	extern int16_t rssi_gain_diff[2];
 
-void APP_Update(void);
-void APP_TimeSlice10ms(void);
-void APP_TimeSlice500ms(void);
+	void AM_fix_init(void);
+	void AM_fix_reset(const int vfo);
+	void AM_fix_10ms(const int vfo);
+		
+#endif
 
 #endif
 
+// vim: ft=c
