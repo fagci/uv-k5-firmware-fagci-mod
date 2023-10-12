@@ -56,6 +56,7 @@ void UI_DisplayRSSIBar(int16_t rssi) {
     sprintf(String, "S9+%u0", s - 9);
   }
   UI_PrintStringSmallest(String, 3, 25, false, true);
+  ST7565_BlitFullScreen();
 }
 #endif
 

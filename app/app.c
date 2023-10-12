@@ -945,6 +945,17 @@ void APP_TimeSlice10ms(void) {
   }
 #endif
 
+  // once every 150ms
+#if defined(ENABLE_RSSIBAR)
+  if ((gFlashLightBlinkCounter & 15U) == 0) {
+    if (gCurrentFunction == FUNCTION_RECEIVE ||
+        gCurrentFunction == FUNCTION_MONITOR ||
+        gCurrentFunction == FUNCTION_INCOMING) {
+      UI_DisplayRSSIBar(BK4819_GetRSSI());
+    }
+  }
+#endif
+
   if (gReducedService) {
     return;
   }
@@ -957,17 +968,6 @@ void APP_TimeSlice10ms(void) {
   if (gCurrentFunction != FUNCTION_POWER_SAVE || !gRxIdleMode) {
     APP_CheckRadioInterrupts();
   }
-
-  // once every 150ms
-#if defined(ENABLE_RSSIBAR)
-  if ((gFlashLightBlinkCounter & 15U) == 0) {
-    if (gCurrentFunction == FUNCTION_RECEIVE ||
-        gCurrentFunction == FUNCTION_MONITOR ||
-        gCurrentFunction == FUNCTION_INCOMING) {
-      UI_DisplayRSSIBar(BK4819_GetRSSI());
-    }
-  }
-#endif
 
   if (gCurrentFunction != FUNCTION_TRANSMIT) {
     if (gUpdateStatus) {

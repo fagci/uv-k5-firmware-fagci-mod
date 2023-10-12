@@ -91,11 +91,7 @@ uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower) {
 }
 
 bool IsTXAllowed(uint32_t Frequency) {
-  // + Hard lock TX on some bands
-
-  if ((Frequency >= 6500000 && Frequency <= 10800000) ||
-      (Frequency >= 11800000 && Frequency <= 13700000) ||
-      gSetting_ALL_TX == 2) {
+  if (gSetting_ALL_TX == 2) {
     return false;
   }
 

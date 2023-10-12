@@ -763,13 +763,24 @@ static void DrawStatus() {
 }
 
 static void DrawF(uint32_t f) {
+  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
+  UI_PrintStringSmallest(String, 116, 1, false, true);
+  sprintf(String, "%s", bwOptions[settings.listenBw]);
+  UI_PrintStringSmallest(String, 108, 7, false, true);
+
+  if (currentState == SPECTRUM && !f) {
+    return;
+  }
+
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
   if (currentState == STILL && kbd.current == KEY_PTT) {
     switch (txAllowState) {
     case VFO_STATE_NORMAL:
-      f = GetOffsetedF(f);
-      sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
+      if (isTransmitting) {
+        f = GetOffsetedF(f);
+        sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
+      }
       break;
     case VFO_STATE_VOL_HIGH:
       sprintf(String, "VOLTAGE HIGH");
@@ -779,11 +790,6 @@ static void DrawF(uint32_t f) {
     }
   }
   UI_PrintStringSmall(String, 8, 127, 0);
-
-  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  UI_PrintStringSmallest(String, 116, 1, false, true);
-  sprintf(String, "%s", bwOptions[settings.listenBw]);
-  UI_PrintStringSmallest(String, 108, 7, false, true);
 }
 
 static void DrawNums() {
@@ -1244,27 +1250,25 @@ static void UpdateScan() {
 uint16_t screenRedrawT = 0;
 static void UpdateStill() {
   Measure();
-  preventKeypress = false;
 
   peak.rssi = scanInfo.rssi;
   AutoTriggerLevel();
 
   if (++screenRedrawT >= 1000) {
-    redrawScreen = true;
     screenRedrawT = 0;
+    redrawScreen = true;
   }
 
   ToggleRX(IsPeakOverLevel() || monitorMode);
 }
 
 static void UpdateListening() {
-  preventKeypress = false;
   if (!isListening) {
     ToggleRX(true);
   }
-  if (currentState == STILL) {
+  /* if (currentState == STILL) {
     listenT = 0;
-  }
+  } */
   if (listenT) {
     listenT--;
     SYSTEM_DelayMs(1);
@@ -1295,9 +1299,6 @@ static void UpdateListening() {
 static void UpdateTransmitting() {}
 
 static void Tick() {
-  if (!preventKeypress) {
-    HandleUserInput();
-  }
   if (newScanStart) {
     InitScan();
     newScanStart = false;
@@ -1325,6 +1326,9 @@ static void Tick() {
   if (redrawScreen) {
     Render();
     redrawScreen = false;
+  }
+  if (!preventKeypress) {
+    HandleUserInput();
   }
 }
 
