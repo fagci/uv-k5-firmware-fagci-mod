@@ -79,6 +79,103 @@ static const RegisterSpec registerSpecs[] = {
     {"MIC", 0x7D, 0, 0b11111, 1},
 };
 
+#ifdef ENABLE_ALL_REGISTERS
+static const RegisterSpec hiddenRegisterSpecs[] = {
+    {},
+
+    {"MIC PGA", 0x18, 11, 0b11111, 1},
+    {"Tone1 EN", 0x70, 15, 1, 1},
+    {"Tone1 G", 0x70, 8, 0b1111111, 1},
+    {"Tone1 F", 0x71, 0, 0xFFFF, 100},
+    {"Tone2 EN", 0x70, 7, 1, 1},
+    {"Tone2 G", 0x70, 0, 0b1111111, 1},
+    {"Tone2 F", 0x72, 0, 0xFFFF, 100},
+
+    {"Enable Compander", 0x31, 3, 1, 1},
+    {"Band-Gap Enable", 0x37, 0, 1, 1},
+    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+    {"Band Selection Thr", 0x3E, 0, 0xFFFF, 1},
+    {"RF filt BW ", 0x43, 12, 0b111, 1},
+    {"RF filt BW weak", 0x43, 9, 0b111, 1},
+    {"BW Mode Selection", 0x43, 4, 0b11, 1},
+    {"AF Output Inverse", 0x47, 13, 1, 1},
+    {"AF Output Select", 0x47, 8, 0b1111, 1},
+    {"AF ALC Disable", 0x4B, 5, 1, 1},
+    {"AFC Range Select", 0x73, 11, 0b111, 1},
+    afcRegSpec,
+    {"AGC Fix Mode", 0x7E, 15, 1, 1},
+    {"AGC Fix Index", 0x7E, 12, 0b111, 1},
+
+    {"LNAs 10", 0x10, 8, 0b11, 1},
+    {"LNA 10", 0x10, 5, 0b111, 1},
+    {"MIX 10", 0x10, 3, 0b11, 1},
+    {"PGA 10", 0x10, 0, 0b111, 1},
+    {"LNAs 11", 0x11, 8, 0b11, 1},
+    {"LNA 11", 0x11, 5, 0b111, 1},
+    {"MIX 11", 0x11, 3, 0b11, 1},
+    {"PGA 11", 0x11, 0, 0b111, 1},
+    {"LNAs 12", 0x12, 8, 0b11, 1},
+    {"LNA 12", 0x12, 5, 0b111, 1},
+    {"MIX 12", 0x12, 3, 0b11, 1},
+    {"PGA 12", 0x12, 0, 0b111, 1},
+    {"LNAs 13", 0x13, 8, 0b11, 1},
+    {"LNA 13", 0x13, 5, 0b111, 1},
+    {"MIX 13", 0x13, 3, 0b11, 1},
+    {"PGA 13", 0x13, 0, 0b111, 1},
+    {"LNAs 14", 0x14, 8, 0b11, 1},
+    {"LNA 14", 0x14, 5, 0b111, 1},
+    {"MIX 14", 0x14, 3, 0b11, 1},
+    {"PGA 14", 0x14, 0, 0b111, 1},
+
+    {"Crystal vReg Bit", 0x1A, 12, 0b1111, 1},
+    {"Crystal iBit", 0x1A, 8, 0b1111, 1},
+    {"PLL CP bit", 0x1F, 0, 0b1111, 1},
+    {"PLL/VCO Enable", 0x30, 4, 0xF, 1},
+    {"XTAL Enable", 0x37, 1, 1, 1},
+    {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
+    {"XTAL F High-8bits", 0x3C, 8, 0xFF, 1},
+    {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
+
+    {"Exp AF Rx Ratio", 0x28, 14, 0b11, 1},
+    {"Exp AF Rx 0 dB", 0x28, 7, 0x7F, 1},
+    {"Exp AF Rx noise", 0x28, 0, 0x7F, 1},
+    {"OFF AFRxHPF300 flt", 0x2B, 10, 1, 1},
+    {"OFF AF RxLPF3K flt", 0x2B, 9, 1, 1},
+    {"OFF AF Rx de-emp", 0x2B, 8, 1, 1},
+    {"Gain after FM Demod", 0x43, 2, 1, 1},
+    {"AF Rx Gain1", 0x48, 10, 0x11, 1},
+    {"AF Rx Gain2", 0x48, 4, 0b111111, 1},
+    {"AF DAC G after G1 G2", 0x48, 0, 0b1111, 1},
+    {"300Hz AF Resp K Rx", 0x54, 0, 0xFFFF, 1},
+    {"300Hz AF Resp K Rx", 0x55, 0, 0xFFFF, 1},
+    {"3kHz AF Resp K Rx", 0x75, 0, 0xFFFF, 1},
+    {"DC Filt BW Rx IF In", 0x7E, 0, 0b111, 1},
+
+    {"MIC AGC Disable", 0x19, 15, 1, 1},
+    {"Compress AF Tx Ratio", 0x29, 14, 0b11, 1},
+    {"Compress AF Tx 0 dB", 0x29, 7, 0x7F, 1},
+    {"Compress AF Tx noise", 0x29, 0, 0x7F, 1},
+    {"OFF AFTxHPF300filter", 0x2B, 2, 1, 1},
+    {"OFF AFTxLPF1filter", 0x2B, 1, 1, 1},
+    {"OFF AFTxpre-emp flt", 0x2B, 0, 1, 1},
+    {"PA Gain Enable", 0x30, 3, 1, 1},
+    {"PA Biasoutput 0~3", 0x36, 8, 0xFF, 1},
+    {"PA Gain1 Tuning", 0x36, 3, 0b111, 1},
+    {"PA Gain2 Tuning", 0x36, 0, 0b111, 1},
+    {"RF TxDeviation ON", 0x40, 12, 1, 1},
+    {"RF Tx Deviation", 0x40, 0, 0xFFF, 1},
+    {"AFTxLPF2 filter BW", 0x43, 6, 0b111, 1},
+    {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 1},
+    {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 1},
+    {"AFTx Filt Bypass All", 0x47, 0, 1, 1},
+    {"3kHz AF Resp K Tx", 0x74, 0, 0xFFFF, 1},
+    {"MIC Sensit Tuning", 0x7D, 0, 0b11111, 1},
+    {"MIC DC Filt BW Tx", 0x7E, 3, 0b111, 1},
+    {"MIC DC Filt DIS", 0x7E, 7, 1, 1},
+};
+uint8_t hiddenMenuState = 0;
+#endif
+
 static uint16_t registersBackup[128];
 static const uint8_t registersToBackup[] = {
     0x13, 0x30, 0x31, 0x37, 0x3D, 0x40, 0x43, 0x47, 0x48, 0x7D, 0x7E,
@@ -986,15 +1083,37 @@ static void OnKeyDownFreqInput(uint8_t key) {
 
 void OnKeyDownStill(KEY_Code_t key) {
   switch (key) {
-  case KEY_3:
+#ifdef ENABLE_ALL_REGISTERS
+  case KEY_2:
+    menuState = 0;
+    if (hiddenMenuState <= 1) {
+      hiddenMenuState = ARRAY_SIZE(hiddenRegisterSpecs) - 1;
+    } else {
+      hiddenMenuState--;
+    }
+    SYSTEM_DelayMs(90);
     break;
-  case KEY_9:
+  case KEY_8:
+    menuState = 0;
+    if (hiddenMenuState == ARRAY_SIZE(hiddenRegisterSpecs) - 1) {
+      hiddenMenuState = 1;
+    } else {
+      hiddenMenuState++;
+    }
+    SYSTEM_DelayMs(90);
     break;
+#endif
   case KEY_UP:
     if (menuState) {
       UpdateRegMenuValue(registerSpecs[menuState], true);
       break;
     }
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], true);
+      break;
+    }
+#endif
     UpdateCurrentFreqStill(true);
     break;
   case KEY_DOWN:
@@ -1002,6 +1121,12 @@ void OnKeyDownStill(KEY_Code_t key) {
       UpdateRegMenuValue(registerSpecs[menuState], false);
       break;
     }
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], false);
+      break;
+    }
+#endif
     UpdateCurrentFreqStill(false);
     break;
   case KEY_STAR:
@@ -1133,31 +1258,47 @@ static void RenderStill() {
     ln[METER_PAD_LEFT + x + 1] |= 0b01000001;
   }
 
-  const uint8_t PAD_LEFT = 4;
-  const uint8_t CELL_WIDTH = 30;
-  uint8_t offset = PAD_LEFT;
-  uint8_t row = 3;
+#ifdef ENABLE_ALL_REGISTERS
+  if (hiddenMenuState) {
+    uint8_t hiddenMenuLen = ARRAY_SIZE(hiddenRegisterSpecs);
+    uint8_t offset = Clamp(hiddenMenuState - 2, 1, hiddenMenuLen - 5);
+    for (int i = 0; i < 5; ++i) {
+      RegisterSpec s = hiddenRegisterSpecs[i + offset];
+      bool isCurrent = hiddenMenuState == i + offset;
+      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", s.num, s.name,
+              GetRegValue(s));
+      UI_PrintStringSmallest(String, 0, i * 6 + 26, false, true);
+    }
+  } else {
+#endif
+    const uint8_t PAD_LEFT = 4;
+    const uint8_t CELL_WIDTH = 30;
+    uint8_t offset = PAD_LEFT;
+    uint8_t row = 3;
 
-  for (uint8_t i = 0, idx = 1; idx <= 7; ++i, ++idx) {
-    if (idx == 5) {
-      row += 2;
-      i = 0;
-    }
-    offset = PAD_LEFT + i * CELL_WIDTH;
-    if (menuState == idx) {
-      for (uint8_t j = 0; j < CELL_WIDTH; ++j) {
-        gFrameBuffer[row][j + offset] = 0xFF;
-        gFrameBuffer[row + 1][j + offset] = 0xFF;
+    for (int i = 0, idx = 1; idx < ARRAY_SIZE(registerSpecs); ++i, ++idx) {
+      if (idx == 5) {
+        row += 2;
+        i = 0;
       }
+      offset = PAD_LEFT + i * CELL_WIDTH;
+      if (menuState == idx) {
+        for (int j = 0; j < CELL_WIDTH; ++j) {
+          gFrameBuffer[row][j + offset] = 0xFF;
+          gFrameBuffer[row + 1][j + offset] = 0xFF;
+        }
+      }
+      RegisterSpec s = registerSpecs[idx];
+      sprintf(String, "%s", s.name);
+      UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
+                             menuState != idx);
+      sprintf(String, "%u", GetRegValue(s));
+      UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
+                             menuState != idx);
     }
-    RegisterSpec s = registerSpecs[idx];
-    sprintf(String, "%s", s.name);
-    UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
-                           menuState != idx);
-    sprintf(String, "%u", GetRegValue(s));
-    UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
-                           menuState != idx);
+#ifdef ENABLE_ALL_REGISTERS
   }
+#endif
 }
 
 static void Render() {

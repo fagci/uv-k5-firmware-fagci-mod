@@ -27,6 +27,7 @@
 #include "../settings.h"
 #include "../ui/helper.h"
 #include "../ui/inputbox.h"
+#include "../ui/ui.h"
 #include <string.h>
 
 #if defined(ENABLE_RSSIBAR)
@@ -434,10 +435,12 @@ void UI_DisplayMain(void) {
   }
 
 #if defined(ENABLE_RSSIBAR)
-  if (gCurrentFunction == FUNCTION_RECEIVE ||
-      gCurrentFunction == FUNCTION_MONITOR ||
-      gCurrentFunction == FUNCTION_INCOMING) {
-    UI_DisplayRSSIBar(BK4819_GetRSSI());
+  if (gScreenToDisplay == DISPLAY_MAIN) {
+    if (gCurrentFunction == FUNCTION_RECEIVE ||
+        gCurrentFunction == FUNCTION_MONITOR ||
+        gCurrentFunction == FUNCTION_INCOMING) {
+      UI_DisplayRSSIBar(BK4819_GetRSSI());
+    }
   }
 #endif
 

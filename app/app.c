@@ -947,7 +947,8 @@ void APP_TimeSlice10ms(void) {
 
   // once every 150ms
 #if defined(ENABLE_RSSIBAR)
-  if ((gFlashLightBlinkCounter & 15U) == 0) {
+  if (gScreenToDisplay == DISPLAY_MAIN &&
+      (gFlashLightBlinkCounter & 15U) == 0) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
         gCurrentFunction == FUNCTION_MONITOR ||
         gCurrentFunction == FUNCTION_INCOMING) {
