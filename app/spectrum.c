@@ -1063,6 +1063,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
   case KEY_9:
   case KEY_STAR:
     UpdateFreqInput(key);
+    SYSTEM_DelayMs(90);
     break;
   case KEY_EXIT:
     if (freqInputIndex == 0) {
@@ -1070,6 +1071,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
       break;
     }
     UpdateFreqInput(key);
+    SYSTEM_DelayMs(90);
     break;
   case KEY_MENU:
     if (tempFreq < F_MIN || tempFreq > F_MAX) {
@@ -1099,7 +1101,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     } else {
       hiddenMenuState--;
     }
-    SYSTEM_DelayMs(90);
+    SYSTEM_DelayMs(250);
     break;
   case KEY_8:
     menuState = 0;
@@ -1108,7 +1110,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     } else {
       hiddenMenuState++;
     }
-    SYSTEM_DelayMs(90);
+    SYSTEM_DelayMs(250);
     break;
 #endif
   case KEY_UP:
@@ -1177,6 +1179,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     } else {
       menuState++;
     }
+    SYSTEM_DelayMs(100);
     redrawScreen = true;
     break;
   case KEY_EXIT:
@@ -1337,12 +1340,12 @@ bool HandleUserInput() {
     return true;
   }
 
-  if (kbd.current == kbd.prev && kbd.counter <= 20) {
+  if (kbd.current == kbd.prev && kbd.counter <= 40) {
     kbd.counter++;
     SYSTEM_DelayMs(10);
   }
 
-  if (kbd.counter == 5 || kbd.counter > 20) {
+  if (kbd.counter == 5 || kbd.counter > 40) {
     switch (currentState) {
     case SPECTRUM:
       OnKeyDown(kbd.current);
@@ -1494,7 +1497,7 @@ static void AutomaticPresetChoose(uint32_t f) {
 void APP_RunSpectrum() {
   BackupRegisters();
 
-  BK4819_SetAGC(1);
+  BK4819_SetAGC(1); // normalize initial gain
 
   // TX here coz it always? set to active VFO
   VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
