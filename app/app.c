@@ -462,7 +462,11 @@ static void FREQ_NextChannel(void) {
   RADIO_ConfigureSquelchAndOutputPower(gRxVfo);
   RADIO_SetupRegisters(true);
   gUpdateDisplay = true;
+#ifdef ENABLE_FASTER_CHANNEL_SCAN
+  ScanPauseDelayIn10msec = 8; // 90ms
+#else
   ScanPauseDelayIn10msec = 10;
+#endif
   bScanKeepFrequency = false;
 }
 
