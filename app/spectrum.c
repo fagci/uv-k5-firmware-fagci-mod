@@ -481,7 +481,8 @@ static void ResetRSSI() {
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
-    if(0)ResetRSSI();
+    if (0)
+      ResetRSSI();
     SYSTEM_DelayMs(10);
   }
   return BK4819_GetRSSI();
@@ -1265,6 +1266,13 @@ void OnKeyDownStill(KEY_Code_t key) {
       redrawScreen = true;
       break;
     }
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      hiddenMenuState = 0;
+      redrawScreen = true;
+      break;
+    }
+#endif
     SetState(SPECTRUM);
     monitorMode = false;
     RelaunchScan();
