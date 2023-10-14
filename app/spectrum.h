@@ -17,6 +17,7 @@
 #ifndef SPECTRUM_H
 #define SPECTRUM_H
 
+#include "../am_fix.h"
 #include "../bitmaps.h"
 #include "../board.h"
 #include "../bsp/dp32g030/gpio.h"

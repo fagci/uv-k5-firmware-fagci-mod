@@ -667,7 +667,10 @@ static void Measure() {
     blacklist[scanInfo.i] = true;
     return;
   }
-  rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi();
+
+  uint16_t rssi = GetRssi();
+  bool sql = GetRegValue((RegisterSpec){"snr_out", 0x0C, 1, 0xFF}) & 1;
+  rssiHistory[scanInfo.i] = scanInfo.rssi = sql ? rssi : 0;
 }
 
 // Update things by keypress
@@ -1141,7 +1144,6 @@ static void OnKeyDownFreqInput(uint8_t key) {
   case KEY_9:
   case KEY_STAR:
     UpdateFreqInput(key);
-    SYSTEM_DelayMs(90);
     break;
   case KEY_EXIT:
     if (freqInputIndex == 0) {
@@ -1149,7 +1151,6 @@ static void OnKeyDownFreqInput(uint8_t key) {
       break;
     }
     UpdateFreqInput(key);
-    SYSTEM_DelayMs(90);
     break;
   case KEY_MENU:
     if (tempFreq < F_MIN || tempFreq > F_MAX) {
@@ -1167,6 +1168,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
   default:
     break;
   }
+  SYSTEM_DelayMs(90);
 }
 
 void OnKeyDownStill(KEY_Code_t key) {
@@ -1500,6 +1502,9 @@ static void UpdateListening() {
   /* if (currentState == STILL) {
     listenT = 0;
   } */
+  /* if (listenT % 10 == 0) {
+    AM_fix_10ms(0);
+  } */
   if (listenT) {
     listenT--;
     SYSTEM_DelayMs(1);
@@ -1517,6 +1522,7 @@ static void UpdateListening() {
   }
 
   peak.rssi = scanInfo.rssi;
+  // AM_fix_reset(0);
 
   if (IsPeakOverLevel() || monitorMode) {
     listenT = currentState == SPECTRUM ? 1000 : 10;
@@ -1577,6 +1583,8 @@ void APP_RunSpectrum() {
   BackupRegisters();
 
   BK4819_SetAGC(1); // normalize initial gain
+
+  // AM_fix_init();
 
   // TX here coz it always? set to active VFO
   VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
