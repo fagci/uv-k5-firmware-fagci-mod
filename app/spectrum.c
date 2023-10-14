@@ -481,8 +481,8 @@ static void ResetRSSI() {
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
-    ResetRSSI();
-    SYSTICK_DelayUs(3200);
+    if(0)ResetRSSI();
+    SYSTEM_DelayMs(10);
   }
   return BK4819_GetRSSI();
 }
@@ -667,10 +667,7 @@ static void Measure() {
     blacklist[scanInfo.i] = true;
     return;
   }
-
-  uint16_t rssi = GetRssi();
-  bool sql = GetRegValue((RegisterSpec){"snr_out", 0x0C, 1, 0xFF}) & 1;
-  rssiHistory[scanInfo.i] = scanInfo.rssi = sql ? rssi : 0;
+  rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi();
 }
 
 // Update things by keypress
