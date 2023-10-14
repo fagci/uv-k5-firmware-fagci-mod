@@ -63,16 +63,9 @@ uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
 
-static const RegisterSpec afcRegSpec = {"AFC", 0x73, 4, 0x1, 1};
-static const RegisterSpec afOutRegSpec = {"AF OUT", 0x47, 8, 0xF, 1};
-static const RegisterSpec afDacGainRegSpec = {"AF DAC G", 0x48, 0, 0xF, 1};
-
-/* static const RegisterSpec weak = {"weak", 0x0C, 7, 1, 0};
-static const RegisterSpec noise = {"noise", 0x65, 0, 0xFF, 0};
-static const RegisterSpec relRssi = {"rel RSSI", 0x65, 8, 0xFF, 0};
-static const RegisterSpec snr = {"SNR", 0x61, 8, 0xFF, 0};
-static const RegisterSpec agcRssi = {"AGC RSSI", 0x62, 0, 0xFF, 0};
-static const RegisterSpec lnaPeakRssi = {"LNA peak RSSI", 0x62, 8, 0xFF, 0}; */
+static const RegisterSpec afcDisableRegSpec = {"AFC Disable", 0x73, 4, 1, 1};
+static const RegisterSpec afOutRegSpec = {"AF Output Select", 0x47, 8, 0xF, 1};
+static const RegisterSpec afDacGainRegSpec = {"AF DAC Gain", 0x48, 0, 0xF, 1};
 
 static const RegisterSpec registerSpecs[] = {
     {},
@@ -82,59 +75,106 @@ static const RegisterSpec registerSpecs[] = {
     {"MIX", 0x13, 3, 0b11, 1},
 
     {"IF", 0x3D, 0, 0xFFFF, 100},
-    {"DEV", 0x40, 0, 0b111111111111, 10},
+    {"DEV", 0x40, 0, 0xFFF, 10},
     {"CMP", 0x31, 3, 1, 1},
-    {"MIC", 0x7D, 0, 0b11111, 1},
+    {"MIC", 0x7D, 0, 0xF, 1},
 };
 
 #ifdef ENABLE_ALL_REGISTERS
 static const RegisterSpec hiddenRegisterSpecs[] = {
     {},
 
-    {"MIC PGA", 0x18, 11, 0b11111, 1},
-    {"Tone1 EN", 0x70, 15, 1, 1},
-    {"Tone1 G", 0x70, 8, 0b1111111, 1},
-    {"Tone1 F", 0x71, 0, 0xFFFF, 100},
-    {"Tone2 EN", 0x70, 7, 1, 1},
-    {"Tone2 G", 0x70, 0, 0b1111111, 1},
-    {"Tone2 F", 0x72, 0, 0xFFFF, 100},
+    {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
+    {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
+    {"BW Mode Selection", 0x43, 4, 0b11, 1},
+    {"rssi_rel", 0x65, 8, 0xFF, 1},
+    {"agc_rssi", 0x62, 8, 0xFF, 1},
+    {"lna_peak_rssi", 0x62, 0, 0xFF, 1},
+    {"rssi_sq", 0x67, 0, 0xFF, 1},
+    {"weak_rssi 1\0", 0x0C, 7, 1, 1},
+    {"ext_lna_gain set", 0x2C, 0, 0xF, 1},
+    {"snr_out", 0x61, 8, 0xFF, 1},
+    {"noise sq", 0x65, 0, 0xFF, 1},
+    {"glitch", 0x63, 0, 0xFF, 1},
+
+    {"ext_lna_gain set", 0x2C, 0, 0xFFFF, 100},
+
+    {"soft_mute_en 1", 0x20, 12, 1, 1},
+    {"SNR Threshold SoftMut", 0x20, 0, 0b111111, 1},
+    {"soft_mute_atten", 0x20, 6, 0b11, 1},
+    {"soft_mute_rate", 0x20, 8, 0b11, 1},
+
+    {"IF step100x", 0x3D, 0, 0xFFFF, 100},
+    {"IF step1x", 0x3D, 0, 0xFFFF, 1},
+    {"Band Selection Thr", 0x3E, 0, 0xFFFF, 100},
+
+    {"chip_id", 0x00, 0, 0xFFFF, 1},
+    {"rev_id", 0x01, 0, 0xFFFF, 1},
+
+    {"aerror_en 0am 1fm", 0x30, 9, 1, 1},
+    {"bypass 1tx 0rx", 0x47, 0, 1, 1},
+    {"bypass tx gain 1", 0x47, 1, 1, 1},
+    {"bps afdac 3tx 9rx ", 0x47, 8, 0b1111, 1},
+    {"bps tx dcc=0 ", 0x7E, 3, 0b111, 1},
+
+    {"audio_tx_mute1", 0x50, 15, 1, 1},
+    {"audio_tx_limit_bypass1", 0x50, 10, 1, 1},
+    {"audio_tx_limit320", 0x50, 0, 0x3FF, 1},
+    {"audio_tx_limit reserved7", 0x50, 11, 0b1111, 1},
+
+    {"audio_tx_path_sel", 0x2D, 2, 0b11, 1},
+
+    {"AFTx Filt Bypass All", 0x47, 0, 1, 1},
+    {"3kHz AF Resp K Tx", 0x74, 0, 0xFFFF, 100},
+    {"MIC Sensit Tuning", 0x7D, 0, 0b11111, 1},
+    {"DCFiltBWTxMICIn15-480hz", 0x7E, 3, 0b111, 1},
+    afOutRegSpec,
+    {"04 768", 0x04, 0, 0x0300, 1},
+    {"43 32264", 0x43, 0, 0x7E08, 1},
+    afDacGainRegSpec,
+    {"4b 58434", 0x4b, 0, 0xE442, 1},
+    {"73 22170", 0x73, 0, 0x569A, 1},
+    {"7E 13342", 0x7E, 0, 0x341E, 1},
+    {"47 26432 24896", 0x47, 0, 0x6740, 1},
+    {"03 49662 49137", 0x30, 0, 0xC1FE, 1},
 
     {"Enable Compander", 0x31, 3, 1, 1},
     {"Band-Gap Enable", 0x37, 0, 1, 1},
-    {"IF", 0x3D, 0, 0xFFFF, 0x2aaa},
+    {"IF step100x", 0x3D, 0, 0xFFFF, 100},
+    {"IF step1x", 0x3D, 0, 0xFFFF, 1},
     {"Band Selection Thr", 0x3E, 0, 0xFFFF, 1},
     {"RF filt BW ", 0x43, 12, 0b111, 1},
     {"RF filt BW weak", 0x43, 9, 0b111, 1},
     {"BW Mode Selection", 0x43, 4, 0b11, 1},
     {"AF Output Inverse", 0x47, 13, 1, 1},
-    {"AF Output Select", 0x47, 8, 0b1111, 1},
+
     {"AF ALC Disable", 0x4B, 5, 1, 1},
     {"AFC Range Select", 0x73, 11, 0b111, 1},
-    afcRegSpec,
+    afcDisableRegSpec,
     {"AGC Fix Mode", 0x7E, 15, 1, 1},
     {"AGC Fix Index", 0x7E, 12, 0b111, 1},
 
-    {"LNAs 10", 0x10, 8, 0b11, 1},
-    {"LNA 10", 0x10, 5, 0b111, 1},
-    {"MIX 10", 0x10, 3, 0b11, 1},
-    {"PGA 10", 0x10, 0, 0b111, 1},
-    {"LNAs 11", 0x11, 8, 0b11, 1},
-    {"LNA 11", 0x11, 5, 0b111, 1},
-    {"MIX 11", 0x11, 3, 0b11, 1},
-    {"PGA 11", 0x11, 0, 0b111, 1},
-    {"LNAs 12", 0x12, 8, 0b11, 1},
-    {"LNA 12", 0x12, 5, 0b111, 1},
-    {"MIX 12", 0x12, 3, 0b11, 1},
-    {"PGA 12", 0x12, 0, 0b111, 1},
-    {"LNAs 13", 0x13, 8, 0b11, 1},
-    {"LNA 13", 0x13, 5, 0b111, 1},
-    {"MIX 13", 0x13, 3, 0b11, 1},
-    {"PGA 13", 0x13, 0, 0b111, 1},
-    {"LNAs 14", 0x14, 8, 0b11, 1},
-    {"LNA 14", 0x14, 5, 0b111, 1},
-    {"MIX 14", 0x14, 3, 0b11, 1},
-    {"PGA 14", 0x14, 0, 0b111, 1},
-
+    /*   {"LNAs 10", 0x10, 8, 0b11, 1},
+       {"LNA 10", 0x10, 5, 0b111, 1},
+       {"MIX 10", 0x10, 3, 0b11, 1},
+       {"PGA 10", 0x10, 0, 0b111, 1},
+       {"LNAs 11", 0x11, 8, 0b11, 1},
+       {"LNA 11", 0x11, 5, 0b111, 1},
+       {"MIX 11", 0x11, 3, 0b11, 1},
+       {"PGA 11", 0x11, 0, 0b111, 1},
+       {"LNAs 12", 0x12, 8, 0b11, 1},
+       {"LNA 12", 0x12, 5, 0b111, 1},
+       {"MIX 12", 0x12, 3, 0b11, 1},
+       {"PGA 12", 0x12, 0, 0b111, 1},
+       {"LNAs 13", 0x13, 8, 0b11, 1},
+       {"LNA 13", 0x13, 5, 0b111, 1},
+       {"MIX 13", 0x13, 3, 0b11, 1},
+       {"PGA 13", 0x13, 0, 0b111, 1},
+       {"LNAs 14", 0x14, 8, 0b11, 1},
+       {"LNA 14", 0x14, 5, 0b111, 1},
+       {"MIX 14", 0x14, 3, 0b11, 1},
+       {"PGA 14", 0x14, 0, 0b111, 1},
+   */
     {"Crystal vReg Bit", 0x1A, 12, 0b1111, 1},
     {"Crystal iBit", 0x1A, 8, 0b1111, 1},
     {"PLL CP bit", 0x1F, 0, 0b1111, 1},
@@ -143,7 +183,7 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
     {"XTAL F High-8bits", 0x3C, 8, 0xFF, 1},
     {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
-
+    {"XTAL F reserved flt", 0x3C, 0, 0b111111, 1},
     {"Exp AF Rx Ratio", 0x28, 14, 0b11, 1},
     {"Exp AF Rx 0 dB", 0x28, 7, 0x7F, 1},
     {"Exp AF Rx noise", 0x28, 0, 0x7F, 1},
@@ -154,9 +194,9 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"AF Rx Gain1", 0x48, 10, 0x11, 1},
     {"AF Rx Gain2", 0x48, 4, 0b111111, 1},
     {"AF DAC G after G1 G2", 0x48, 0, 0b1111, 1},
-    {"300Hz AF Resp K Rx", 0x54, 0, 0xFFFF, 1},
-    {"300Hz AF Resp K Rx", 0x55, 0, 0xFFFF, 1},
-    {"3kHz AF Resp K Rx", 0x75, 0, 0xFFFF, 1},
+    {"300Hz AF Resp K Rx", 0x54, 0, 0xFFFF, 100},
+    {"300Hz AF Resp K Rx", 0x55, 0, 0xFFFF, 100},
+    {"3kHz AF Resp K Rx", 0x75, 0, 0xFFFF, 100},
     {"DC Filt BW Rx IF In", 0x7E, 0, 0b111, 1},
 
     {"MIC AGC Disable", 0x19, 15, 1, 1},
@@ -171,15 +211,18 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"PA Gain1 Tuning", 0x36, 3, 0b111, 1},
     {"PA Gain2 Tuning", 0x36, 0, 0b111, 1},
     {"RF TxDeviation ON", 0x40, 12, 1, 1},
-    {"RF Tx Deviation", 0x40, 0, 0xFFF, 1},
-    {"AFTxLPF2 filter BW", 0x43, 6, 0b111, 1},
-    {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 1},
-    {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 1},
-    {"AFTx Filt Bypass All", 0x47, 0, 1, 1},
-    {"3kHz AF Resp K Tx", 0x74, 0, 0xFFFF, 1},
-    {"MIC Sensit Tuning", 0x7D, 0, 0b11111, 1},
-    {"MIC DC Filt BW Tx", 0x7E, 3, 0b111, 1},
-    {"MIC DC Filt DIS", 0x7E, 7, 1, 1},
+    {"RF Tx Deviation", 0x40, 0, 0xFFF, 10},
+    {"AFTxLPF2fltBW1.7-4.5khz", 0x43, 6, 0b111, 1},
+    {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 100},
+    {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 100},
+
+    /*	{"REG03 en af for afout3", 0x03, 9, 1, 1},
+            {"tx mute dtmf REG_50", 0x50, 15, 1, 1},
+            {"tx ctcss en REG_51", 0x51, 15, 1, 1},
+            {"tx dsp en REG_30", 0x30, 1, 1, 1},
+            {"disc mode dis reg30", 0x30, 8, 1, 1},
+            */
+
 };
 uint8_t hiddenMenuState = 0;
 #endif
@@ -458,11 +501,11 @@ static void ToggleRX(bool on) {
   if (on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-    SetRegValue(afcRegSpec,
+    SetRegValue(afcDisableRegSpec,
                 settings.modulationType != MOD_FM); // disable AFC if not FM
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-    SetRegValue(afcRegSpec, 1); // disable AFC
+    SetRegValue(afcDisableRegSpec, 1); // disable AFC
   }
 }
 
