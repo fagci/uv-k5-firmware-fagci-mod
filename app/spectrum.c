@@ -322,12 +322,42 @@ static void SetModulation(ModulationType type) {
   } else if (type == MOD_AM) {
     SetRegValue(afDacGainRegSpec, 0xE);
   }
+  SetRegValue(afcDisableRegSpec,
+              settings.modulationType != MOD_FM); // disable AFC if not FM
 }
 
 static void ApplyFreqChange() {
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
-  BK4819_WriteRegister(BK4819_REG_30, 0);
+  BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
   BK4819_WriteRegister(BK4819_REG_30, reg);
+}
+
+static void Set1ARegBasedOnF(uint32_t f) {
+  uint16_t v;
+  if (f >= 74000000) {
+    v = 0x1f80;
+  } else if (f >= 37000000) {
+    v = 0x2f50;
+  } else if (f >= 24700000) {
+    v = 0x9f30;
+  } else if (f >= 18500000) {
+    v = 0x3f48;
+  } else if (f >= 12400000) {
+    v = 0xaf28;
+  } else if (f >= 9300000) {
+    v = 0x4f44;
+  } else if (f >= 6200000) {
+    v = 0xbf24;
+  } else if (f >= 4600000) {
+    v = 0x5f42;
+  } else if (f >= 3100000) {
+    v = 0xcf22;
+  } else if (f >= 2300000) {
+    v = 0x6f41;
+  } else {
+    v = 0xdf21;
+  }
+  BK4819_WriteRegister(0x1A, v);
 }
 
 static void SetF(uint32_t f) {
@@ -335,15 +365,17 @@ static void SetF(uint32_t f) {
     return;
   }
   fMeasure = f;
-  BK4819_SetFrequency(f);
   BK4819_PickRXFilterPathBasedOnFrequency(f);
+  Set1ARegBasedOnF(f);
+  BK4819_SetFrequency(f);
   ApplyFreqChange();
 }
 
 static void SetTxF(uint32_t f) {
   fTx = f;
-  BK4819_SetFrequency(f);
   BK4819_PickRXFilterPathBasedOnFrequency(f);
+  Set1ARegBasedOnF(f);
+  BK4819_SetFrequency(f);
   ApplyFreqChange();
 }
 
@@ -501,11 +533,8 @@ static void ToggleRX(bool on) {
   if (on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-    SetRegValue(afcDisableRegSpec,
-                settings.modulationType != MOD_FM); // disable AFC if not FM
   } else {
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-    SetRegValue(afcDisableRegSpec, 1); // disable AFC
   }
 }
 
@@ -724,6 +753,7 @@ static void UpdateCurrentFreqStill(bool inc) {
     f -= offset;
   }
   SetF(f);
+  SYSTEM_DelayMs(10);
   redrawScreen = true;
 }
 
@@ -893,6 +923,11 @@ static void DrawStatus() {
     if (p != NULL) {
       UI_PrintStringSmallest(p->name, 0, 1, true, true);
     }
+  }
+
+  if (currentState == STILL) {
+    sprintf(String, "AFC %s", GetRegValue(afcDisableRegSpec) ? "OFF" : "ON");
+    UI_PrintStringSmallest(String, 0, 1, true, true);
   }
 
   gStatusLine[127] = 0b01111110;
@@ -1238,6 +1273,7 @@ void OnKeyDownStill(KEY_Code_t key) {
   default:
     break;
   }
+  redrawStatus = true;
 }
 
 static void OnKeysReleased() {
