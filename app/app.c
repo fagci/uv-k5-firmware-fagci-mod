@@ -1302,7 +1302,7 @@ void APP_TimeSlice500ms(void) {
 
   if (gLowBattery) {
     gLowBatteryBlink = ++gLowBatteryCountdown & 1;
-    UI_DisplayBattery(gLowBatteryCountdown);
+    UI_DisplayBattery(gLowBatteryBlink);
     if (gCurrentFunction != FUNCTION_TRANSMIT) {
       if (gLowBatteryCountdown < 30) {
         if (gLowBatteryCountdown == 29 && !gChargingWithTypeC) {

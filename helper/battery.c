@@ -44,7 +44,7 @@ void BATTERY_GetReadings(bool bDisplayBatteryLevel) {
 
   gBatteryDisplayLevel = 0;
   for (int i = ARRAY_SIZE(gBatteryCalibration) - 1; i >= 0; --i) {
-    if (gBatteryCalibration[i] < Voltage) {
+    if (Voltage > gBatteryCalibration[i]) {
       gBatteryDisplayLevel = i + 1;
       break;
     }

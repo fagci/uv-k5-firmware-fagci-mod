@@ -18,6 +18,7 @@
 #define SPECTRUM_H
 
 #include "../am_fix.h"
+#include "../app/uart.h"
 #include "../bitmaps.h"
 #include "../board.h"
 #include "../bsp/dp32g030/gpio.h"
@@ -37,6 +38,7 @@
 #include "../radio.h"
 #include "../settings.h"
 #include "../ui/helper.h"
+#include "ARMCM0.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>

@@ -83,7 +83,14 @@ static const RegisterSpec registerSpecs[] = {
 #ifdef ENABLE_ALL_REGISTERS
 static const RegisterSpec hiddenRegisterSpecs[] = {
     {},
+    {"Freq Scan Indicator", 0x0D, 15, 1, 1},
+    {"F Scan High 16 bits", 0x0D, 0, 0xFFFF, 1},
+    {"F Scan Low 16 bits", 0x0E, 0, 0xFFFF, 1},
 
+    {"AGC fix", 0x7E, 15, 0b1, 1},
+    {"AGC idx", 0x7E, 12, 0b111, 1},
+    {"49", 0x49, 0, 0xFFFF, 100},
+    {"7B", 0x7B, 0, 0xFFFF, 100},
     {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
     {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
     {"BW Mode Selection", 0x43, 4, 0b11, 1},
@@ -92,12 +99,10 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"lna_peak_rssi", 0x62, 0, 0xFF, 1},
     {"rssi_sq", 0x67, 0, 0xFF, 1},
     {"weak_rssi 1\0", 0x0C, 7, 1, 1},
-    {"ext_lna_gain set", 0x2C, 0, 0xF, 1},
+    {"ext_lna_gain set", 0x2C, 0, 0b11111, 1},
     {"snr_out", 0x61, 8, 0xFF, 1},
     {"noise sq", 0x65, 0, 0xFF, 1},
     {"glitch", 0x63, 0, 0xFF, 1},
-
-    {"ext_lna_gain set", 0x2C, 0, 0xFFFF, 100},
 
     {"soft_mute_en 1", 0x20, 12, 1, 1},
     {"SNR Threshold SoftMut", 0x20, 0, 0b111111, 1},
@@ -1179,7 +1184,8 @@ void OnKeyDownStill(KEY_Code_t key) {
     } else {
       hiddenMenuState--;
     }
-    SYSTEM_DelayMs(250);
+    redrawScreen = true;
+    SYSTEM_DelayMs(150);
     break;
   case KEY_8:
     menuState = 0;
@@ -1188,7 +1194,8 @@ void OnKeyDownStill(KEY_Code_t key) {
     } else {
       hiddenMenuState++;
     }
-    SYSTEM_DelayMs(250);
+    redrawScreen = true;
+    SYSTEM_DelayMs(150);
     break;
 #endif
   case KEY_UP:
@@ -1541,6 +1548,13 @@ static void UpdateListening() {
 static void UpdateTransmitting() {}
 
 static void Tick() {
+#if defined(ENABLE_UART)
+  if (UART_IsCommandAvailable()) {
+    __disable_irq();
+    UART_HandleCommand();
+    __enable_irq();
+  }
+#endif
   if (newScanStart) {
     InitScan();
     newScanStart = false;
@@ -1588,6 +1602,21 @@ void APP_RunSpectrum() {
   BackupRegisters();
 
   BK4819_SetAGC(1); // normalize initial gain
+
+  // default agc table
+  //      LNAs LNA MI PGA
+  // 000000 00 001 11 000 :10
+  // 000000 10 010 11 010 :11
+  // 000000 11 011 11 011 :12
+  // 000000 11 110 11 110 :13
+  // 000000 00 000 00 000 :14
+  /* BK4819_WriteRegister(0x10, 0b0000000000011111);
+  BK4819_WriteRegister(0x11, 0b0000000000111111);
+  BK4819_WriteRegister(0x12, 0b0000000001011111);
+  BK4819_WriteRegister(0x13, 0b0000000001111111);
+  BK4819_WriteRegister(0x14, 0b0000000010011111);
+  BK4819_WriteRegister(BK4819_REG_49, 0);
+  BK4819_WriteRegister(BK4819_REG_7B, 0); */
 
   // AM_fix_init();
 
