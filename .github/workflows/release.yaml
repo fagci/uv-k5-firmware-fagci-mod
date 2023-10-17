@@ -44,7 +44,7 @@ jobs:
 
     - name: send telegram message on push
       uses: appleboy/telegram-action@master
-      if: 'github.event.prerelease'
+      if: 'github.event.release.prerelease'
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
           
     - name: send telegram message on push
       uses: appleboy/telegram-action@master
-      if: '!github.event.prerelease'
+      if: '!github.event.release.prerelease'
       with:
         to: ${{ secrets.TELEGRAM_TO_RELEASE }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
