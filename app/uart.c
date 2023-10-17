@@ -39,6 +39,11 @@
 #endif
 #include "version.h"
 
+#ifdef ENABLE_UART_CAT
+#include "../driver/system.h"
+#include "external/printf/printf.h"
+#endif
+
 #define DMA_INDEX(x, y) (((x) + (y)) % sizeof(UART_DMA_Buffer))
 
 typedef struct {
@@ -400,8 +405,6 @@ uint64_t xtou64(const char *str) {
   return res;
 }
 
-#include "../driver/system.h"
-#include "external/printf/printf.h"
 bool UART_IsCommandAvailable(void) {
   uint16_t DmaLength;
   uint16_t CommandLength;

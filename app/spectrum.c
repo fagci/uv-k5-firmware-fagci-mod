@@ -52,9 +52,8 @@ SpectrumSettings settings = {
     .frequencyChangeStep = 80000,
     .rssiTriggerLevel = 150,
     .backlightState = true,
-    .bw = BK4819_FILTER_BW_WIDE,
     .listenBw = BK4819_FILTER_BW_WIDE,
-    .modulationType = false,
+    .modulationType = MOD_FM,
 };
 
 uint32_t fMeasure = 0;
@@ -337,41 +336,12 @@ static void ApplyFreqChange() {
   BK4819_WriteRegister(BK4819_REG_30, reg);
 }
 
-static void Set1ARegBasedOnF(uint32_t f) {
-  uint16_t v;
-  if (f >= 74000000) {
-    v = 0x1f80;
-  } else if (f >= 37000000) {
-    v = 0x2f50;
-  } else if (f >= 24700000) {
-    v = 0x9f30;
-  } else if (f >= 18500000) {
-    v = 0x3f48;
-  } else if (f >= 12400000) {
-    v = 0xaf28;
-  } else if (f >= 9300000) {
-    v = 0x4f44;
-  } else if (f >= 6200000) {
-    v = 0xbf24;
-  } else if (f >= 4600000) {
-    v = 0x5f42;
-  } else if (f >= 3100000) {
-    v = 0xcf22;
-  } else if (f >= 2300000) {
-    v = 0x6f41;
-  } else {
-    v = 0xdf21;
-  }
-  BK4819_WriteRegister(0x1A, v);
-}
-
 static void SetF(uint32_t f) {
   if (fMeasure == f) {
     return;
   }
   fMeasure = f;
   BK4819_PickRXFilterPathBasedOnFrequency(f);
-  Set1ARegBasedOnF(f);
   BK4819_SetFrequency(f);
   ApplyFreqChange();
 }
@@ -379,7 +349,6 @@ static void SetF(uint32_t f) {
 static void SetTxF(uint32_t f) {
   fTx = f;
   BK4819_PickRXFilterPathBasedOnFrequency(f);
-  Set1ARegBasedOnF(f);
   BK4819_SetFrequency(f);
   ApplyFreqChange();
 }
