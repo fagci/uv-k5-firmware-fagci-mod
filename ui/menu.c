@@ -143,7 +143,7 @@ static const char gSubMenu_SC_REV[3][3] = {
     "SE",
 };
 
-static const char gSubMenu_MDF[4][6] = {"FREQ", "CHAN", "NAME", "NAME+F"};
+static const char gSubMenu_MDF[4][7] = {"FREQ", "CHAN", "NAME", "NAME+F"};
 
 #if defined(ENABLE_ALARM)
 static const char gSubMenu_AL_MOD[2][5] = {

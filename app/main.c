@@ -262,6 +262,9 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
     break;
 
+    case KEY_F:
+        break;
+
   default:
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
     gUpdateStatus = true;
@@ -286,7 +289,7 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld) {
         if (gInputBoxIndex == 0) {
           gAnotherVoiceID = VOICE_ID_CANCEL;
         }
-      } else {
+      } else if(!gWasFKeyPressed) {
         SwitchActiveVFO();
       }
     } else {
