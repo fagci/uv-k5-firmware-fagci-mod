@@ -33,6 +33,25 @@
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 
+static void SwitchActiveVFO() {
+  uint8_t Vfo = gEeprom.TX_CHANNEL;
+  if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_A) {
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_CHAN_B;
+  } else if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_B) {
+    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_CHAN_A;
+  } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_A) {
+    gEeprom.DUAL_WATCH = DUAL_WATCH_CHAN_B;
+  } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_B) {
+    gEeprom.DUAL_WATCH = DUAL_WATCH_CHAN_A;
+  } else {
+    gEeprom.TX_CHANNEL = (Vfo == 0);
+  }
+  gRequestSaveSettings = 1;
+  gFlagReconfigureVfos = true;
+  gRequestDisplayScreen = DISPLAY_MAIN;
+  gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+}
+
 static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   uint8_t Vfo;
   uint8_t Band;
@@ -160,21 +179,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     break;
 
   case KEY_2:
-    if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_A) {
-      gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_CHAN_B;
-    } else if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_B) {
-      gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_CHAN_A;
-    } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_A) {
-      gEeprom.DUAL_WATCH = DUAL_WATCH_CHAN_B;
-    } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_B) {
-      gEeprom.DUAL_WATCH = DUAL_WATCH_CHAN_A;
-    } else {
-      gEeprom.TX_CHANNEL = (Vfo == 0);
-    }
-    gRequestSaveSettings = 1;
-    gFlagReconfigureVfos = true;
-    gRequestDisplayScreen = DISPLAY_MAIN;
-    gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+    SwitchActiveVFO();
     break;
 
   case KEY_3:
@@ -275,13 +280,14 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld) {
     }
 #endif
     if (gScanState == SCAN_OFF) {
-      if (gInputBoxIndex == 0) {
-        return;
-      }
-      gInputBoxIndex--;
-      gInputBox[gInputBoxIndex] = 10;
-      if (gInputBoxIndex == 0) {
-        gAnotherVoiceID = VOICE_ID_CANCEL;
+      if (gInputBoxIndex != 0) {
+        gInputBoxIndex--;
+        gInputBox[gInputBoxIndex] = 10;
+        if (gInputBoxIndex == 0) {
+          gAnotherVoiceID = VOICE_ID_CANCEL;
+        }
+      } else {
+        SwitchActiveVFO();
       }
     } else {
       SCANNER_Stop();
