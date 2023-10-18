@@ -72,8 +72,8 @@ static void MAIN_ApplyFreq() {
           FREQUENCY_FloorToStep(Frequency, gTxVfo->StepFrequency,
                                 FrequencyBandTable[gTxVfo->Band].lower);
       gRequestSaveChannel = 1;
-      ResetFreqInput();
-      freqInputIndex = 0;
+      FreqInput();
+
       return;
     }
   }
