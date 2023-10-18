@@ -31,6 +31,9 @@ void UpdateFreqInput(KEY_Code_t key) {
     freqInputDotIndex = freqInputIndex;
   }
   if (key == KEY_EXIT) {
+    if (freqInputArr[freqInputIndex] == KEY_STAR) {
+      freqInputDotIndex = 0;
+    }
     freqInputIndex--;
   } else {
     freqInputArr[freqInputIndex++] = key;
