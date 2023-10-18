@@ -14,6 +14,7 @@
  *     limitations under the License.
  */
 
+#include "finput.h"
 #include <string.h>
 #if !defined(ENABLE_OVERLAY)
 #include "ARMCM0.h"
@@ -986,6 +987,7 @@ static void MENU_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
 static void MENU_Key_STAR(bool bKeyPressed, bool bKeyHeld) {
   if (!bKeyHeld && bKeyPressed) {
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+
     RADIO_SelectVfos();
     if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) && !gRxVfo->ModulationType) {
       if (gMenuCursor == MENU_R_CTCS || gMenuCursor == MENU_R_DCS) {

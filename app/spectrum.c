@@ -57,7 +57,7 @@ SpectrumSettings settings = {
 
 uint32_t fMeasure = 0;
 uint32_t fTx = 0;
-uint32_t currentFreq, tempFreq;
+uint32_t currentFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
 
@@ -233,12 +233,6 @@ static const uint8_t registersToBackup[] = {
 
 static MovingAverage mov = {{128}, {}, 255, 128, 0, 0};
 static const uint8_t MOV_N = ARRAY_SIZE(mov.buf);
-
-const uint8_t FREQ_INPUT_LENGTH = 10;
-uint8_t freqInputIndex = 0;
-uint8_t freqInputDotIndex = 0;
-KEY_Code_t freqInputArr[10];
-char freqInputString[] = "----------"; // XXXX.XXXXX
 
 uint8_t menuState = 0;
 
@@ -738,65 +732,6 @@ static void ToggleStepsCount() {
   redrawScreen = true;
 }
 
-static void ResetFreqInput() {
-  tempFreq = 0;
-  memset(freqInputString, '-', 10);
-}
-
-static void FreqInput() {
-  freqInputIndex = 0;
-  freqInputDotIndex = 0;
-  ResetFreqInput();
-  SetState(FREQ_INPUT);
-}
-
-static void UpdateFreqInput(KEY_Code_t key) {
-  if (key != KEY_EXIT && freqInputIndex >= 10) {
-    return;
-  }
-  if (key == KEY_STAR) {
-    if (freqInputIndex == 0 || freqInputDotIndex) {
-      return;
-    }
-    freqInputDotIndex = freqInputIndex;
-  }
-  if (key == KEY_EXIT) {
-    freqInputIndex--;
-  } else {
-    freqInputArr[freqInputIndex++] = key;
-  }
-
-  ResetFreqInput();
-
-  uint8_t dotIndex =
-      freqInputDotIndex == 0 ? freqInputIndex : freqInputDotIndex;
-
-  KEY_Code_t digitKey;
-  for (uint8_t i = 0; i < 10; ++i) {
-    if (i < freqInputIndex) {
-      digitKey = freqInputArr[i];
-      freqInputString[i] = digitKey <= KEY_9 ? '0' + digitKey : '.';
-    } else {
-      freqInputString[i] = '-';
-    }
-  }
-
-  uint32_t base = 100000; // 1MHz in BK units
-  for (int i = dotIndex - 1; i >= 0; --i) {
-    tempFreq += freqInputArr[i] * base;
-    base *= 10;
-  }
-
-  base = 10000; // 0.1MHz in BK units
-  if (dotIndex < freqInputIndex) {
-    for (uint8_t i = dotIndex + 1; i < freqInputIndex; ++i) {
-      tempFreq += freqInputArr[i] * base;
-      base /= 10;
-    }
-  }
-  redrawScreen = true;
-}
-
 static void Blacklist() {
   blacklist[peak.i] = true;
   ResetPeak();
@@ -1019,6 +954,7 @@ static void OnKeyDown(uint8_t key) {
     break;
   case KEY_5:
     FreqInput();
+    SetState(FREQ_INPUT);
     break;
   case KEY_0:
     ToggleModulation();
@@ -1066,6 +1002,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
   case KEY_9:
   case KEY_STAR:
     UpdateFreqInput(key);
+    redrawScreen = true;
     break;
   case KEY_EXIT:
     if (freqInputIndex == 0) {
@@ -1073,6 +1010,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
       break;
     }
     UpdateFreqInput(key);
+    redrawScreen = true;
     break;
   case KEY_MENU:
     if (tempFreq < F_MIN || tempFreq > F_MAX) {

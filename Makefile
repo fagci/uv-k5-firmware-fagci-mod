@@ -71,6 +71,7 @@ OBJS += app/aircopy.o
 endif
 OBJS += app/app.o
 OBJS += app/dtmf.o
+OBJS += app/finput.o
 ifeq ($(ENABLE_FMRADIO),1)
 OBJS += app/fm.o
 endif

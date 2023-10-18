@@ -16,6 +16,7 @@
 
 #include "../ui/main.h"
 #include "../app/dtmf.h"
+#include "../app/finput.h"
 #include "../bitmaps.h"
 #include "../driver/bk4819.h"
 #include "../driver/st7565.h"
@@ -266,9 +267,9 @@ void UI_DisplayMain(void) {
       }
       UI_PrintString(String, 31, 111, i * 4, Width, true);
     } else {
-      if (gInputBoxIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) &&
+      if (freqInputIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) &&
           gEeprom.TX_CHANNEL == i) {
-        UI_DisplayFrequency(gInputBox, 31, i * 4, true, false);
+        UI_PrintString(freqInputString, 2, 127, i * 4, 8, true);
       } else {
         uint32_t frequency = gEeprom.VfoInfo[i].pRX->Frequency;
         bool noChannelName = gEeprom.VfoInfo[i].Name[0] == 0 ||
@@ -373,7 +374,8 @@ void UI_DisplayMain(void) {
 
     // 0x931E
     const char *modulationTypeOptions[] = {" FM", " AM", "SSB"};
-    sprintf(String, "%s", modulationTypeOptions[gEeprom.VfoInfo[i].ModulationType]);
+    sprintf(String, "%s",
+            modulationTypeOptions[gEeprom.VfoInfo[i].ModulationType]);
     UI_PrintStringSmallest(String, 116, 1 + i * 32, false, true);
 
     if (!gEeprom.VfoInfo[i].ModulationType) {

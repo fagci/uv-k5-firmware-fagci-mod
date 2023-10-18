@@ -16,6 +16,7 @@
 
 #include "app/action.h"
 #include "app/app.h"
+#include "finput.h"
 #include <string.h>
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
@@ -52,11 +53,35 @@ static void SwitchActiveVFO() {
   gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 }
 
-static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
-  uint8_t Vfo;
-  uint8_t Band;
+static void MAIN_ApplyFreq() {
+  uint32_t Frequency = tempFreq;
+  uint8_t Vfo = gEeprom.TX_CHANNEL;
 
-  Vfo = gEeprom.TX_CHANNEL;
+  for (uint8_t i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {
+    if (Frequency <= FrequencyBandTable[i].upper &&
+        (FrequencyBandTable[i].lower <= Frequency)) {
+      if (gTxVfo->Band != i) {
+        gTxVfo->Band = i;
+        gEeprom.ScreenChannel[Vfo] = i + FREQ_CHANNEL_FIRST;
+        gEeprom.FreqChannel[Vfo] = i + FREQ_CHANNEL_FIRST;
+        SETTINGS_SaveVfoIndices();
+        RADIO_ConfigureChannel(Vfo, 2);
+      }
+      // Frequency += 75;
+      gTxVfo->ConfigRX.Frequency =
+          FREQUENCY_FloorToStep(Frequency, gTxVfo->StepFrequency,
+                                FrequencyBandTable[gTxVfo->Band].lower);
+      gRequestSaveChannel = 1;
+      ResetFreqInput();
+      freqInputIndex = 0;
+      return;
+    }
+  }
+}
+
+static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
+  uint8_t Vfo = gEeprom.TX_CHANNEL;
+  uint8_t Band;
 
   if (bKeyHeld) {
     return;
@@ -68,10 +93,10 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
   if (!gWasFKeyPressed) {
-    INPUTBOX_Append(Key);
     gRequestDisplayScreen = DISPLAY_MAIN;
     if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
       uint16_t Channel;
+      INPUTBOX_Append(Key);
 
       if (gInputBoxIndex != 3) {
         gRequestDisplayScreen = DISPLAY_MAIN;
@@ -89,36 +114,10 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
       return;
     }
+
     if (IS_NOT_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
-      uint32_t Frequency;
-
-      if (gInputBoxIndex < 6) {
-        return;
-      }
-      gInputBoxIndex = 0;
-      NUMBER_Get(gInputBox, &Frequency);
-      if (gSetting_ALL_TX || (Frequency < 35000000 || Frequency > 39999990)) {
-        uint8_t i;
-
-        for (i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {
-          if (Frequency <= FrequencyBandTable[i].upper &&
-              (FrequencyBandTable[i].lower <= Frequency)) {
-            if (gTxVfo->Band != i) {
-              gTxVfo->Band = i;
-              gEeprom.ScreenChannel[Vfo] = i + FREQ_CHANNEL_FIRST;
-              gEeprom.FreqChannel[Vfo] = i + FREQ_CHANNEL_FIRST;
-              SETTINGS_SaveVfoIndices();
-              RADIO_ConfigureChannel(Vfo, 2);
-            }
-            Frequency += 75;
-            gTxVfo->ConfigRX.Frequency =
-                FREQUENCY_FloorToStep(Frequency, gTxVfo->StepFrequency,
-                                      FrequencyBandTable[gTxVfo->Band].lower);
-            gRequestSaveChannel = 1;
-            return;
-          }
-        }
-      }
+      UpdateFreqInput(Key);
+      return;
     } else {
 #if defined(ENABLE_NOAA)
       uint8_t Channel;
@@ -277,7 +276,9 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld) {
     }
 #endif
     if (gScanState == SCAN_OFF) {
-      if (gInputBoxIndex != 0) {
+      if (freqInputIndex) {
+        UpdateFreqInput(KEY_EXIT);
+      } else if (gInputBoxIndex != 0) {
         gInputBoxIndex--;
         gInputBox[gInputBoxIndex] = 10;
       }
@@ -292,6 +293,11 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
   if (!bKeyHeld && bKeyPressed) {
     bool bFlag;
 
+    if (freqInputIndex > 0) {
+      MAIN_ApplyFreq();
+      return;
+    }
+
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
     bFlag = gInputBoxIndex == 0;
     gInputBoxIndex = 0;
@@ -305,6 +311,11 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
 }
 
 static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld) {
+  if (freqInputIndex) {
+    UpdateFreqInput(KEY_STAR);
+    gRequestDisplayScreen = DISPLAY_MAIN;
+    return;
+  }
   if (gInputBoxIndex) {
     if (!bKeyHeld && bKeyPressed) {
       gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
@@ -466,9 +477,17 @@ void MAIN_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     MAIN_Key_STAR(bKeyPressed, bKeyHeld);
     break;
   case KEY_F:
+    if (freqInputIndex > 0) {
+      MAIN_ApplyFreq();
+      return;
+    }
     GENERIC_Key_F(bKeyPressed, bKeyHeld);
     break;
   case KEY_PTT:
+    if (freqInputIndex > 0) {
+      MAIN_ApplyFreq();
+      return;
+    }
     GENERIC_Key_PTT(bKeyPressed);
     break;
   default:
