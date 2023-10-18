@@ -74,7 +74,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       uint16_t Channel;
 
       if (gInputBoxIndex != 3) {
-        gAnotherVoiceID = (VOICE_ID_t)Key;
         gRequestDisplayScreen = DISPLAY_MAIN;
         return;
       }
@@ -84,7 +83,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         return;
       }
-      gAnotherVoiceID = (VOICE_ID_t)Key;
       gEeprom.MrChannel[Vfo] = (uint8_t)Channel;
       gEeprom.ScreenChannel[Vfo] = (uint8_t)Channel;
       gRequestSaveVFO = true;
@@ -95,7 +93,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       uint32_t Frequency;
 
       if (gInputBoxIndex < 6) {
-        gAnotherVoiceID = (VOICE_ID_t)Key;
         return;
       }
       gInputBoxIndex = 0;
@@ -106,7 +103,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
         for (i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {
           if (Frequency <= FrequencyBandTable[i].upper &&
               (FrequencyBandTable[i].lower <= Frequency)) {
-            gAnotherVoiceID = (VOICE_ID_t)Key;
             if (gTxVfo->Band != i) {
               gTxVfo->Band = i;
               gEeprom.ScreenChannel[Vfo] = i + FREQ_CHANNEL_FIRST;
@@ -128,7 +124,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       uint8_t Channel;
 
       if (gInputBoxIndex != 2) {
-        gAnotherVoiceID = (VOICE_ID_t)Key;
         gRequestDisplayScreen = DISPLAY_MAIN;
         return;
       }
@@ -136,7 +131,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       Channel = (gInputBox[0] * 10) + gInputBox[1];
       if (Channel >= 1 && Channel <= ARRAY_SIZE(NoaaFrequencyTable)) {
         Channel += NOAA_CHANNEL_FIRST;
-        gAnotherVoiceID = (VOICE_ID_t)Key;
         gEeprom.NoaaChannel[Vfo] = Channel;
         gEeprom.ScreenChannel[Vfo] = Channel;
         gRequestSaveVFO = true;
@@ -151,6 +145,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   }
   gWasFKeyPressed = false;
   gUpdateStatus = true;
+  VFO_Info_t *vfoInfo = &gEeprom.VfoInfo[Vfo];
   switch (Key) {
   case KEY_0:
 #if defined(ENABLE_FMRADIO)
@@ -188,7 +183,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 
       if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
         gEeprom.ScreenChannel[Vfo] = gEeprom.FreqChannel[gEeprom.TX_CHANNEL];
-        gAnotherVoiceID = VOICE_ID_FREQUENCY_MODE;
         gRequestSaveVFO = true;
         gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
         break;
@@ -197,9 +191,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
                                       false, 0);
       if (Channel != 0xFF) {
         gEeprom.ScreenChannel[Vfo] = Channel;
-        AUDIO_SetVoiceID(0, VOICE_ID_CHANNEL_MODE);
-        AUDIO_SetDigitVoice(1, Channel + 1);
-        gAnotherVoiceID = (VOICE_ID_t)0xFE;
         gRequestSaveVFO = true;
         gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
         break;
@@ -224,7 +215,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       gEeprom.ScreenChannel[Vfo] = gEeprom.NoaaChannel[gEeprom.TX_CHANNEL];
     } else {
       gEeprom.ScreenChannel[Vfo] = gEeprom.FreqChannel[gEeprom.TX_CHANNEL];
-      gAnotherVoiceID = VOICE_ID_FREQUENCY_MODE;
     }
     gRequestSaveVFO = true;
     gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
@@ -240,7 +230,14 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     break;
 
   case KEY_7:
-    ACTION_Vox();
+    // ACTION_Vox();
+    if (vfoInfo->AM_CHANNEL_MODE == MOD_USB) {
+      vfoInfo->AM_CHANNEL_MODE = MOD_FM;
+    } else {
+      vfoInfo->AM_CHANNEL_MODE++;
+    }
+    gRequestSaveChannel = 1;
+    gRequestDisplayScreen = gScreenToDisplay;
     break;
 
   case KEY_8:
@@ -252,9 +249,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     if (RADIO_CheckValidChannel(gEeprom.CHAN_1_CALL, false, 0)) {
       gEeprom.MrChannel[Vfo] = gEeprom.CHAN_1_CALL;
       gEeprom.ScreenChannel[Vfo] = gEeprom.CHAN_1_CALL;
-      AUDIO_SetVoiceID(0, VOICE_ID_CHANNEL_MODE);
-      AUDIO_SetDigitVoice(1, gEeprom.CHAN_1_CALL + 1);
-      gAnotherVoiceID = (VOICE_ID_t)0xFE;
       gRequestSaveVFO = true;
       gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
       break;
@@ -262,8 +256,8 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
     break;
 
-    case KEY_F:
-        break;
+  case KEY_F:
+    break;
 
   default:
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
@@ -286,15 +280,9 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld) {
       if (gInputBoxIndex != 0) {
         gInputBoxIndex--;
         gInputBox[gInputBoxIndex] = 10;
-        if (gInputBoxIndex == 0) {
-          gAnotherVoiceID = VOICE_ID_CANCEL;
-        }
-      } else if(!gWasFKeyPressed) {
-        SwitchActiveVFO();
       }
     } else {
       SCANNER_Stop();
-      gAnotherVoiceID = VOICE_ID_SCANNING_STOP;
     }
     gRequestDisplayScreen = DISPLAY_MAIN;
   }
@@ -310,7 +298,6 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
     if (bFlag) {
       gFlagRefreshSetting = true;
       gRequestDisplayScreen = DISPLAY_MENU;
-      gAnotherVoiceID = VOICE_ID_MENU;
     } else {
       gRequestDisplayScreen = DISPLAY_MAIN;
     }
@@ -378,8 +365,6 @@ static void MAIN_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld,
       if (IS_FREQ_CHANNEL(Channel)) {
         return;
       }
-      AUDIO_SetDigitVoice(0, gTxVfo->CHANNEL_SAVE + 1);
-      gAnotherVoiceID = (VOICE_ID_t)0xFE;
       return;
     }
   } else {
@@ -408,10 +393,6 @@ static void MAIN_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld,
       }
       gEeprom.MrChannel[gEeprom.TX_CHANNEL] = Next;
       gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] = Next;
-      if (!bKeyHeld) {
-        AUDIO_SetDigitVoice(0, Next + 1);
-        gAnotherVoiceID = (VOICE_ID_t)0xFE;
-      }
     } else {
 #if defined(ENABLE_NOAA)
       Channel =

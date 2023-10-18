@@ -382,7 +382,7 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
     uint16_t pga = origPga; */
 
 #ifdef ENABLE_AM_FIX
-    if (gRxVfo->IsAM) { // AM RX mode
+    if (gRxVfo->ModulationType == MOD_AM) { // AM RX mode
       if (resetAmFix) {
         AM_fix_reset(chan); // TODO: only reset it when moving channel/frequency
       }
@@ -408,8 +408,7 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
           (gEeprom.VOLUME_GAIN << 4) | // AF Rx Gain-2
           (gEeprom.DAC_GAIN << 0));    // AF DAC Gain (after Gain-1 and Gain-2)
 
-  if (gVoiceWriteIndex == 0)
-    BK4819_SetAF(gRxVfo->IsAM ? BK4819_AF_AM : BK4819_AF_OPEN);
+  BK4819_SetModulation(gRxVfo->ModulationType);
 
   FUNCTION_Select(Function);
 
@@ -446,14 +445,16 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
   }
 
   if (Frequency > FrequencyBandTable[pInfo->Band].upper) {
-    pInfo->ConfigRX.Frequency = FrequencyBandTable[pInfo->Band].lower;
+    Frequency = pInfo->ConfigRX.Frequency = FrequencyBandTable[pInfo->Band].lower;
   } else if (Frequency < FrequencyBandTable[pInfo->Band].lower) {
-    pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(
+    Frequency = pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(
         FrequencyBandTable[pInfo->Band].upper, pInfo->StepFrequency,
         FrequencyBandTable[pInfo->Band].lower);
   } else {
     pInfo->ConfigRX.Frequency = Frequency;
   }
+
+  BK4819_TuneTo(Frequency);
 }
 
 static void FREQ_NextChannel(void) {
@@ -708,11 +709,6 @@ static void APP_HandleVox(void) {
 }
 
 void APP_Update(void) {
-  if (gFlagPlayQueuedVoice) {
-    AUDIO_PlayQueuedVoice();
-    gFlagPlayQueuedVoice = false;
-  }
-
   if (gCurrentFunction == FUNCTION_TRANSMIT && gTxTimeoutReached) {
     gTxTimeoutReached = false;
     gFlagEndTransmission = true;
@@ -735,7 +731,7 @@ void APP_Update(void) {
 #endif
 
   if (gScreenToDisplay != DISPLAY_SCANNER && gScanState != SCAN_OFF &&
-      gScheduleScanListen && !gPttIsPressed && gVoiceWriteIndex == 0) {
+      gScheduleScanListen && !gPttIsPressed) {
     if (IS_FREQ_CHANNEL(gNextMrChannel)) {
       if (gCurrentFunction == FUNCTION_INCOMING) {
         APP_StartListening(FUNCTION_RECEIVE, true);
@@ -755,15 +751,13 @@ void APP_Update(void) {
     gScheduleScanListen = false;
   }
 
-  if (gCssScanMode == CSS_SCAN_MODE_SCANNING && gScheduleScanListen &&
-      gVoiceWriteIndex == 0) {
+  if (gCssScanMode == CSS_SCAN_MODE_SCANNING && gScheduleScanListen) {
     MENU_SelectNextCode();
     gScheduleScanListen = false;
   }
 
 #if defined(ENABLE_NOAA)
-  if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF && gIsNoaaMode && gScheduleNOAA &&
-      gVoiceWriteIndex == 0) {
+  if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF && gIsNoaaMode && gScheduleNOAA) {
     NOAA_NextChannel();
     RADIO_SetupRegisters(false);
     gScheduleNOAA = false;
@@ -773,7 +767,7 @@ void APP_Update(void) {
 
   if (gScreenToDisplay != DISPLAY_SCANNER &&
       gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-    if (gScheduleDualWatch && gVoiceWriteIndex == 0) {
+    if (gScheduleDualWatch) {
       if (gScanState == SCAN_OFF && gCssScanMode == CSS_SCAN_MODE_OFF) {
         if (!gPttIsPressed
 #if defined(ENABLE_FMRADIO)
@@ -832,8 +826,7 @@ void APP_Update(void) {
     gSchedulePowerSave = false;
   }
 
-  if (gBatterySaveCountdownExpired && gCurrentFunction == FUNCTION_POWER_SAVE &&
-      gVoiceWriteIndex == 0) {
+  if (gBatterySaveCountdownExpired && gCurrentFunction == FUNCTION_POWER_SAVE) {
     if (gRxIdleMode) {
       BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable();
       if (gEeprom.VOX_SWITCH) {
@@ -968,7 +961,7 @@ void APP_TimeSlice10ms(void) {
   }
 
 #ifdef ENABLE_AM_FIX
-  if (gRxVfo->IsAM)
+  if (gRxVfo->ModulationType == MOD_AM)
     AM_fix_10ms(gEeprom.RX_CHANNEL);
 #endif
 
@@ -1312,15 +1305,11 @@ void APP_TimeSlice500ms(void) {
         gLowBatteryCountdown = 0;
         if (!gChargingWithTypeC) {
           AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP);
-          AUDIO_SetVoiceID(0, VOICE_ID_LOW_VOLTAGE);
           if (gBatteryDisplayLevel == 0) {
-            AUDIO_PlaySingleVoice(true);
             gReducedService = true;
             FUNCTION_Select(FUNCTION_POWER_SAVE);
             ST7565_Configure_GPIO_B11();
             GPIO_ClearBit(&GPIOB->DATA, GPIOB_PIN_BACKLIGHT);
-          } else {
-            AUDIO_PlaySingleVoice(false);
           }
         }
       }
@@ -1737,8 +1726,6 @@ Skip:
     gFlagRefreshSetting = false;
   }
   if (gFlagStartScan) {
-    AUDIO_SetVoiceID(0, VOICE_ID_SCANNING_BEGIN);
-    AUDIO_PlaySingleVoice(true);
     SCANNER_Start();
     gRequestDisplayScreen = DISPLAY_SCANNER;
     gFlagStartScan = false;
@@ -1746,13 +1733,6 @@ Skip:
   if (gFlagPrepareTX) {
     RADIO_PrepareTX();
     gFlagPrepareTX = false;
-  }
-  if (gAnotherVoiceID != VOICE_ID_INVALID) {
-    if (gAnotherVoiceID < 76) {
-      AUDIO_SetVoiceID(0, gAnotherVoiceID);
-    }
-    AUDIO_PlaySingleVoice(false);
-    gAnotherVoiceID = VOICE_ID_INVALID;
   }
   GUI_SelectNextDisplay(gRequestDisplayScreen);
   gRequestDisplayScreen = DISPLAY_INVALID;

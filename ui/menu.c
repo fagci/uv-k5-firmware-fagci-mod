@@ -15,6 +15,7 @@
  */
 
 #include "ui/menu.h"
+#include "../frequencies.h"
 #include "app/dtmf.h"
 #include "bitmaps.h"
 #include "dcs.h"
@@ -98,10 +99,6 @@ static const char MenuList[][7] = {
     "ALL_TX",
     // 0x38
     "SCREN",
-};
-
-static const uint16_t gSubMenu_Step[] = {
-    250, 500, 625, 1000, 1250, 2500, 833,
 };
 
 static const char gSubMenu_TXP[3][5] = {
@@ -234,8 +231,8 @@ void UI_DisplayMenu(void) {
     break;
 
   case MENU_STEP:
-    sprintf(String, "%d.%02dKHz", gSubMenu_Step[gSubMenuSelection] / 100,
-            gSubMenu_Step[gSubMenuSelection] % 100);
+    sprintf(String, "%d.%02dKHz", StepFrequencyTable[gSubMenuSelection] / 100,
+            StepFrequencyTable[gSubMenuSelection] % 100);
     break;
 
   case MENU_TXP:

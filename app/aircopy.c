@@ -109,14 +109,12 @@ static void AIRCOPY_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 		INPUTBOX_Append(Key);
 		gRequestDisplayScreen = DISPLAY_AIRCOPY;
 		if (gInputBoxIndex < 6) {
-			gAnotherVoiceID = (VOICE_ID_t)Key;
 			return;
 		}
 		gInputBoxIndex = 0;
 		NUMBER_Get(gInputBox, &Frequency);
 		for (i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {
             if (Frequency >= FrequencyBandTable[i].lower && Frequency <= FrequencyBandTable[i].upper) {
-				gAnotherVoiceID = (VOICE_ID_t)Key;
 				gRxVfo->Band = i;
 				Frequency += 75;
 				Frequency = FREQUENCY_FloorToStep(Frequency, gRxVfo->StepFrequency, 0);

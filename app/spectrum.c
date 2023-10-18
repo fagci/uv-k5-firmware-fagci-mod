@@ -42,13 +42,12 @@ ScanInfo scanInfo;
 KeyboardState kbd = {KEY_INVALID, KEY_INVALID, 0};
 
 const char *bwOptions[] = {"  25k", "12.5k", "6.25k"};
-const char *modulationTypeOptions[] = {" FM", " AM", "USB"};
+const char *modulationTypeOptions[] = {" FM", " AM", "SSB"};
 const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
-const uint8_t modTypeReg47Values[] = {1, 7, 5};
 
 SpectrumSettings settings = {
     .stepsCount = STEPS_64,
-    .scanStepIndex = S_STEP_25_0kHz,
+    .scanStepIndex = STEP_25_0kHz,
     .frequencyChangeStep = 80000,
     .rssiTriggerLevel = 150,
     .backlightState = true,
@@ -61,10 +60,6 @@ uint32_t fTx = 0;
 uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
-
-static const RegisterSpec afcDisableRegSpec = {"AFC Disable", 0x73, 4, 1, 1};
-static const RegisterSpec afOutRegSpec = {"AF Output Select", 0x47, 8, 0xF, 1};
-static const RegisterSpec afDacGainRegSpec = {"AF DAC Gain", 0x48, 0, 0xF, 1};
 
 static const RegisterSpec registerSpecs[] = {
     {},
@@ -255,18 +250,8 @@ uint8_t lastStepsCount = 0;
 
 VfoState_t txAllowState;
 
-static uint16_t GetRegValue(RegisterSpec s) {
-  return (BK4819_ReadRegister(s.num) >> s.offset) & s.mask;
-}
-
-static void SetRegValue(RegisterSpec s, uint16_t v) {
-  uint16_t reg = BK4819_ReadRegister(s.num);
-  reg &= ~(s.mask << s.offset);
-  BK4819_WriteRegister(s.num, reg | (v << s.offset));
-}
-
 static void UpdateRegMenuValue(RegisterSpec s, bool add) {
-  uint16_t v = GetRegValue(s);
+  uint16_t v = BK4819_GetRegValue(s);
 
   if (add && v <= s.mask - s.inc) {
     v += s.inc;
@@ -274,7 +259,7 @@ static void UpdateRegMenuValue(RegisterSpec s, bool add) {
     v -= s.inc;
   }
 
-  SetRegValue(s, v);
+  BK4819_SetRegValue(s, v);
   redrawScreen = true;
 }
 
@@ -311,46 +296,17 @@ static void RestoreRegisters() {
   }
 }
 
-static void SetModulation(ModulationType type) {
-  // restore only registers, which we affect here fully
-  BK4819_WriteRegister(0x37, registersBackup[0x37]);
-  BK4819_WriteRegister(0x3D, registersBackup[0x3D]);
-  BK4819_WriteRegister(0x48, registersBackup[0x48]);
-
-  SetRegValue(afOutRegSpec, modTypeReg47Values[type]);
-
-  if (type == MOD_USB) {
-    BK4819_WriteRegister(0x37, 0b0001011000001111);
-    BK4819_WriteRegister(0x3D, 0b0010101101000101);
-    BK4819_WriteRegister(0x48, 0b0000001110101000);
-  } else if (type == MOD_AM) {
-    SetRegValue(afDacGainRegSpec, 0xE);
-  }
-  SetRegValue(afcDisableRegSpec,
-              settings.modulationType != MOD_FM); // disable AFC if not FM
-}
-
-static void ApplyFreqChange() {
-  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
-  BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
-  BK4819_WriteRegister(BK4819_REG_30, reg);
-}
-
 static void SetF(uint32_t f) {
   if (fMeasure == f) {
     return;
   }
   fMeasure = f;
-  BK4819_PickRXFilterPathBasedOnFrequency(f);
-  BK4819_SetFrequency(f);
-  ApplyFreqChange();
+  BK4819_TuneTo(f);
 }
 
 static void SetTxF(uint32_t f) {
   fTx = f;
-  BK4819_PickRXFilterPathBasedOnFrequency(f);
-  BK4819_SetFrequency(f);
-  ApplyFreqChange();
+  BK4819_TuneTo(f);
 }
 
 // Spectrum related
@@ -362,9 +318,9 @@ static void ResetPeak() {
   peak.rssi = 0;
 }
 
-bool IsCenterMode() { return settings.scanStepIndex < S_STEP_1_0kHz; }
+bool IsCenterMode() { return settings.scanStepIndex < STEP_1_0kHz; }
 uint8_t GetStepsCount() { return 128 >> settings.stepsCount; }
-uint16_t GetScanStep() { return scanStepValues[settings.scanStepIndex]; }
+uint16_t GetScanStep() { return StepFrequencyTable[settings.scanStepIndex]; }
 uint32_t GetBW() { return GetStepsCount() * GetScanStep(); }
 uint32_t GetFStart() {
   return IsCenterMode() ? currentFreq - (GetBW() >> 1) : currentFreq;
@@ -437,8 +393,7 @@ static void TuneToPeak() {
 }
 
 uint8_t GetBWRegValueForScan() {
-  return scanStepBWRegValues[settings.scanStepIndex == S_STEP_100_0kHz ? 11
-                                                                       : 0];
+  return scanStepBWRegValues[settings.scanStepIndex == STEP_100_0kHz ? 11 : 0];
 }
 
 uint8_t GetBWRegValueForListen() {
@@ -455,9 +410,9 @@ static void ResetRSSI() {
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
-    if (0)
-      ResetRSSI();
-    SYSTEM_DelayMs(10);
+    // if (0)
+    ResetRSSI();
+    SYSTEM_DelayMs(3);
   }
   return BK4819_GetRSSI();
 }
@@ -662,7 +617,7 @@ static void ApplyPreset(FreqPreset p) {
   settings.listenBw = p.listenBW;
   settings.modulationType = p.modulationType;
   settings.stepsCount = p.stepsCountIndex;
-  SetModulation(settings.modulationType);
+  BK4819_SetModulation(settings.modulationType);
   RelaunchScan();
   ResetBlacklist();
   redrawScreen = true;
@@ -693,7 +648,7 @@ static void SelectNearestPreset(bool inc) {
 }
 
 static void UpdateScanStep(bool inc) {
-  if (inc && settings.scanStepIndex < S_STEP_100_0kHz) {
+  if (inc && settings.scanStepIndex < STEP_100_0kHz) {
     settings.scanStepIndex++;
   } else if (!inc && settings.scanStepIndex > 0) {
     settings.scanStepIndex--;
@@ -749,7 +704,7 @@ static void ToggleModulation() {
   } else {
     settings.modulationType = MOD_FM;
   }
-  SetModulation(settings.modulationType);
+  BK4819_SetModulation(settings.modulationType);
   redrawScreen = true;
 }
 
@@ -898,11 +853,6 @@ static void DrawStatus() {
     if (p != NULL) {
       UI_PrintStringSmallest(p->name, 0, 1, true, true);
     }
-  }
-
-  if (currentState == STILL) {
-    sprintf(String, "AFC %s", GetRegValue(afcDisableRegSpec) ? "OFF" : "ON");
-    UI_PrintStringSmallest(String, 0, 1, true, true);
   }
 
   gStatusLine[127] = 0b01111110;
@@ -1339,7 +1289,7 @@ static void RenderStill() {
       RegisterSpec s = hiddenRegisterSpecs[i + offset];
       bool isCurrent = hiddenMenuState == i + offset;
       sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", s.num, s.name,
-              GetRegValue(s));
+              BK4819_GetRegValue(s));
       UI_PrintStringSmallest(String, 0, i * 6 + 26, false, true);
     }
   } else {
@@ -1365,7 +1315,7 @@ static void RenderStill() {
       sprintf(String, "%s", s.name);
       UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
                              menuState != idx);
-      sprintf(String, "%u", GetRegValue(s));
+      sprintf(String, "%u", BK4819_GetRegValue(s));
       UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                              menuState != idx);
     }
@@ -1572,21 +1522,6 @@ void APP_RunSpectrum() {
 
   BK4819_SetAGC(1); // normalize initial gain
 
-  // default agc table
-  //      LNAs LNA MI PGA
-  // 000000 00 001 11 000 :10
-  // 000000 10 010 11 010 :11
-  // 000000 11 011 11 011 :12
-  // 000000 11 110 11 110 :13
-  // 000000 00 000 00 000 :14
-  /* BK4819_WriteRegister(0x10, 0b0000000000011111);
-  BK4819_WriteRegister(0x11, 0b0000000000111111);
-  BK4819_WriteRegister(0x12, 0b0000000001011111);
-  BK4819_WriteRegister(0x13, 0b0000000001111111);
-  BK4819_WriteRegister(0x14, 0b0000000010011111);
-  BK4819_WriteRegister(BK4819_REG_49, 0);
-  BK4819_WriteRegister(BK4819_REG_7B, 0); */
-
   // AM_fix_init();
 
   // TX here coz it always? set to active VFO
@@ -1597,7 +1532,7 @@ void APP_RunSpectrum() {
   settings.listenBw = vfo.CHANNEL_BANDWIDTH == BANDWIDTH_WIDE
                           ? BANDWIDTH_WIDE
                           : BANDWIDTH_NARROW;
-  settings.modulationType = vfo.IsAM ? MOD_AM : MOD_FM;
+  settings.modulationType = vfo.ModulationType;
 
   AutomaticPresetChoose(currentFreq);
 
@@ -1606,7 +1541,7 @@ void APP_RunSpectrum() {
   newScanStart = true;
 
   ToggleRX(true), ToggleRX(false); // hack to prevent noise when squelch off
-  SetModulation(settings.modulationType);
+  BK4819_SetModulation(settings.modulationType);
 
   RelaunchScan();
 

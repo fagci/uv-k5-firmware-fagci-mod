@@ -19,7 +19,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "driver/bk4819-regs.h"
+#include "../driver/bk4819-regs.h"
+#include "../radio.h"
 
 enum BK4819_AF_Type_t {
 	BK4819_AF_MUTE = 0U,
@@ -141,6 +142,10 @@ void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code);
 
 void BK4819_ToggleAFBit(bool on);
 void BK4819_ToggleAFDAC(bool on);
+uint16_t BK4819_GetRegValue(RegisterSpec s);
+void BK4819_SetRegValue(RegisterSpec s, uint16_t v);
+void BK4819_SetModulation(ModulationType type);
+void BK4819_TuneTo(uint32_t f);
 
 #endif
 

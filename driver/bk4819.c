@@ -15,12 +15,12 @@
  */
 
 #include "bk4819.h"
-#include "bsp/dp32g030/gpio.h"
-#include "bsp/dp32g030/portcon.h"
-#include "driver/gpio.h"
-#include "driver/system.h"
-#include "driver/systick.h"
-#include "driver/uart.h"
+#include "../bsp/dp32g030/gpio.h"
+#include "../bsp/dp32g030/portcon.h"
+#include "../driver/gpio.h"
+#include "../driver/system.h"
+#include "../driver/systick.h"
+#include "../driver/uart.h"
 
 static const uint16_t FSK_RogerTable[7] = {
     0xF1A2, 0x7446, 0x61A4, 0x6544, 0x4E8A, 0xE044, 0xEA84,
@@ -354,6 +354,25 @@ void BK4819_SetAF(BK4819_AF_Type_t AF) {
   // AF Output Inverse Mode = Inverse
   // Undocumented bits 0x2040
   BK4819_WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
+}
+
+uint16_t BK4819_GetRegValue(RegisterSpec s) {
+  return (BK4819_ReadRegister(s.num) >> s.offset) & s.mask;
+}
+
+void BK4819_SetRegValue(RegisterSpec s, uint16_t v) {
+  uint16_t reg = BK4819_ReadRegister(s.num);
+  reg &= ~(s.mask << s.offset);
+  BK4819_WriteRegister(s.num, reg | (v << s.offset));
+}
+
+void BK4819_SetModulation(ModulationType type) {
+  const uint8_t modTypeReg47Values[] = {1, 7, 5};
+
+  BK4819_SetAF(modTypeReg47Values[type]);
+  BK4819_SetRegValue(afDacGainRegSpec, 0xF);
+  BK4819_WriteRegister(0x3D, type == MOD_USB ? 0 : 0x2AAB);
+  BK4819_SetRegValue(afcDisableRegSpec, type != MOD_FM);
 }
 
 void BK4819_RX_TurnOn(void) {
@@ -939,4 +958,12 @@ void BK4819_ToggleAFDAC(bool on) {
   if (on)
     Reg |= (1 << 9);
   BK4819_WriteRegister(BK4819_REG_30, Reg);
+}
+
+void BK4819_TuneTo(uint32_t f) {
+  BK4819_PickRXFilterPathBasedOnFrequency(f);
+  BK4819_SetFrequency(f);
+  uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
+  BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
+  BK4819_WriteRegister(BK4819_REG_30, reg);
 }

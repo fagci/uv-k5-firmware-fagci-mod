@@ -53,13 +53,11 @@ static void SCANNER_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 			INPUTBOX_Append(Key);
 			gRequestDisplayScreen = DISPLAY_SCANNER;
 			if (gInputBoxIndex < 3) {
-				gAnotherVoiceID = (VOICE_ID_t)Key;
 				return;
 			}
 			gInputBoxIndex = 0;
 			Channel = ((gInputBox[0] * 100) + (gInputBox[1] * 10) + gInputBox[2]) - 1;
 			if (IS_MR_CHANNEL(Channel)) {
-				gAnotherVoiceID = (VOICE_ID_t)Key;
 				gShowChPrefix = RADIO_CheckValidChannel(Channel, false, 0);
 				gScanChannel = (uint8_t)Channel;
 				return;
@@ -82,7 +80,6 @@ static void SCANNER_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 			gFlagStopScan = true;
 			gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
 			gFlagResetVfos = true;
-			gAnotherVoiceID = VOICE_ID_CANCEL;
 			break;
 
 		case 1:
@@ -96,7 +93,6 @@ static void SCANNER_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 
 		case 2:
 			gScannerEditState = 0;
-			gAnotherVoiceID = VOICE_ID_CANCEL;
 			gRequestDisplayScreen = DISPLAY_SCANNER;
 			break;
 		}
@@ -168,7 +164,6 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 			gScannerEditState = 2;
 		}
 		gScanCssState = SCAN_CSS_STATE_FOUND;
-		gAnotherVoiceID = VOICE_ID_MEMORY_CHANNEL;
 		gRequestDisplayScreen = DISPLAY_SCANNER;
 		break;
 
@@ -207,7 +202,6 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 		}
 		gTxVfo->CHANNEL_SAVE = Channel;
 		gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] = Channel;
-		gAnotherVoiceID = VOICE_ID_CONFIRM;
 		gRequestDisplayScreen = DISPLAY_SCANNER;
 		gRequestSaveChannel = 2;
 		gScannerEditState = 0;

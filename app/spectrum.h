@@ -45,12 +45,6 @@
 
 static const uint8_t DrawingEndY = 40;
 
-static const uint16_t scanStepValues[] = {
-    1,   10,  50,  100,
-
-    250, 500, 625, 833, 1000, 1250, 2500, 10000,
-};
-
 static const uint8_t gStepSettingToIndex[] = {
     [STEP_2_5kHz] = 4,  [STEP_5_0kHz] = 5,  [STEP_6_25kHz] = 6,
     [STEP_10_0kHz] = 8, [STEP_12_5kHz] = 9, [STEP_25_0kHz] = 10,
@@ -105,27 +99,7 @@ typedef enum StepsCount {
   STEPS_16,
 } StepsCount;
 
-typedef enum ModulationType {
-  MOD_FM,
-  MOD_AM,
-  MOD_USB,
-} ModulationType;
-
-typedef enum ScanStep {
-  S_STEP_0_01kHz,
-  S_STEP_0_1kHz,
-  S_STEP_0_5kHz,
-  S_STEP_1_0kHz,
-
-  S_STEP_2_5kHz,
-  S_STEP_5_0kHz,
-  S_STEP_6_25kHz,
-  S_STEP_8_33kHz,
-  S_STEP_10_0kHz,
-  S_STEP_12_5kHz,
-  S_STEP_25_0kHz,
-  S_STEP_100_0kHz,
-} ScanStep;
+typedef STEP_Setting_t ScanStep;
 
 typedef struct SpectrumSettings {
   StepsCount stepsCount;
@@ -153,14 +127,6 @@ typedef struct ScanInfo {
   bool gotRssi;
 } ScanInfo;
 
-typedef struct RegisterSpec {
-  const char *name;
-  uint8_t num;
-  uint8_t offset;
-  uint16_t mask;
-  uint16_t inc;
-} RegisterSpec;
-
 typedef struct PeakInfo {
   uint16_t t;
   uint16_t rssi;
@@ -186,55 +152,55 @@ typedef struct FreqPreset {
 } FreqPreset;
 
 static const FreqPreset freqPresets[] = {
-    {"16m Broadcast", 1748000, 1790000, STEPS_128, S_STEP_5_0kHz, MOD_AM,
+    {"16m Broadcast", 1748000, 1790000, STEPS_128, STEP_5_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
-    {"17m Ham Band", 1806800, 1816800, STEPS_128, S_STEP_1_0kHz, MOD_USB,
+    {"17m Ham Band", 1806800, 1816800, STEPS_128, STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
-    {"15m Broadcast", 1890000, 1902000, STEPS_128, S_STEP_5_0kHz, MOD_AM,
+    {"15m Broadcast", 1890000, 1902000, STEPS_128, STEP_5_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
-    {"15m Ham Band", 2100000, 2144990, STEPS_128, S_STEP_1_0kHz, MOD_USB,
+    {"15m Ham Band", 2100000, 2144990, STEPS_128, STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
-    {"13m Broadcast", 2145000, 2185000, STEPS_128, S_STEP_5_0kHz, MOD_AM,
+    {"13m Broadcast", 2145000, 2185000, STEPS_128, STEP_5_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
-    {"12m Ham Band", 2489000, 2499000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
+    {"12m Ham Band", 2489000, 2499000, STEPS_128, STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
-    {"11m Broadcast", 2567000, 2610000, STEPS_128, S_STEP_5_0kHz, MOD_AM,
+    {"11m Broadcast", 2567000, 2610000, STEPS_128, STEP_5_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
-    {"CB", 2697500, 2799990, STEPS_128, S_STEP_5_0kHz, MOD_FM,
+    {"CB", 2697500, 2799990, STEPS_128, STEP_5_0kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"10m Ham Band", 2800000, 2970000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
+    {"10m Ham Band", 2800000, 2970000, STEPS_128, STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
-    {"6m Ham Band", 5000000, 5400000, STEPS_128, S_STEP_1_0kHz, MOD_USB,
+    {"6m Ham Band", 5000000, 5400000, STEPS_128, STEP_1_0kHz, MOD_USB,
      BK4819_FILTER_BW_NARROWER},
-    {"Air Band Voice", 11800000, 13500000, STEPS_128, S_STEP_100_0kHz, MOD_AM,
+    {"Air Band Voice", 11800000, 13500000, STEPS_128, STEP_100_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
-    {"2m Ham Band", 14400000, 14800000, STEPS_128, S_STEP_25_0kHz, MOD_FM,
+    {"2m Ham Band", 14400000, 14800000, STEPS_128, STEP_25_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"Railway", 15175000, 15599990, STEPS_128, S_STEP_25_0kHz, MOD_FM,
+    {"Railway", 15175000, 15599990, STEPS_128, STEP_25_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"Sea", 15600000, 16327500, STEPS_128, S_STEP_25_0kHz, MOD_FM,
+    {"Sea", 15600000, 16327500, STEPS_128, STEP_25_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"Satcom", 24300000, 27000000, STEPS_128, S_STEP_5_0kHz, MOD_FM,
+    {"Satcom", 24300000, 27000000, STEPS_128, STEP_5_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"River1", 30001250, 30051250, STEPS_64, S_STEP_12_5kHz, MOD_FM,
+    {"River1", 30001250, 30051250, STEPS_64, STEP_12_5kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"River2", 33601250, 33651250, STEPS_64, S_STEP_12_5kHz, MOD_FM,
+    {"River2", 33601250, 33651250, STEPS_64, STEP_12_5kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"LPD", 43307500, 43477500, STEPS_128, S_STEP_25_0kHz, MOD_FM,
+    {"LPD", 43307500, 43477500, STEPS_128, STEP_25_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"PMR", 44600625, 44620000, STEPS_32, S_STEP_6_25kHz, MOD_FM,
+    {"PMR", 44600625, 44620000, STEPS_32, STEP_6_25kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"FRS/GMRS 462", 46256250, 46272500, STEPS_16, S_STEP_12_5kHz, MOD_FM,
+    {"FRS/GMRS 462", 46256250, 46272500, STEPS_16, STEP_12_5kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"FRS/GMRS 467", 46756250, 46771250, STEPS_16, S_STEP_12_5kHz, MOD_FM,
+    {"FRS/GMRS 467", 46756250, 46771250, STEPS_16, STEP_12_5kHz, MOD_FM,
      BK4819_FILTER_BW_NARROW},
-    {"LoRa WAN", 86400000, 86900000, STEPS_128, S_STEP_100_0kHz, MOD_FM,
+    {"LoRa WAN", 86400000, 86900000, STEPS_128, STEP_100_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"GSM900 UP", 89000000, 91500000, STEPS_128, S_STEP_100_0kHz, MOD_FM,
+    {"GSM900 UP", 89000000, 91500000, STEPS_128, STEP_100_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"GSM900 DOWN", 93500000, 96000000, STEPS_128, S_STEP_100_0kHz, MOD_FM,
+    {"GSM900 DOWN", 93500000, 96000000, STEPS_128, STEP_100_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
-    {"23cm Ham Band", 124000000, 130000000, STEPS_128, S_STEP_25_0kHz, MOD_FM,
+    {"23cm Ham Band", 124000000, 130000000, STEPS_128, STEP_25_0kHz, MOD_FM,
      BK4819_FILTER_BW_WIDE},
 };
 

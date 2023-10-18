@@ -42,7 +42,7 @@ void FUNCTION_Init(void)
 	if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
 		gCurrentCodeType = gSelectedCodeType;
 		if (gCssScanMode == CSS_SCAN_MODE_OFF) {
-			if (gRxVfo->IsAM) {
+			if (gRxVfo->ModulationType) {
 				gCurrentCodeType = CODE_TYPE_OFF;
 			} else {
 				gCurrentCodeType = gRxVfo->pRX->CodeType;

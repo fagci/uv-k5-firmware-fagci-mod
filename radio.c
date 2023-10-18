@@ -127,11 +127,6 @@ void RADIO_InitInfo(VFO_Info_t *pInfo, uint8_t ChannelSave, uint8_t Band,
   pInfo->pTX = &pInfo->ConfigTX;
   pInfo->FREQUENCY_OF_DEVIATION = 1000000;
 
-  /* if (ChannelSave == (FREQ_CHANNEL_FIRST + BAND2_108MHz)) {
-    pInfo->AM_CHANNEL_MODE = true;
-    pInfo->IsAM = true;
-  } */
-
   RADIO_ConfigureSquelchAndOutputPower(pInfo);
 }
 
@@ -222,11 +217,11 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
       Tmp = 0;
     }
     gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = Tmp;
-    gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = !!(Data[3] & 0x10);
+    gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = (Data[3] >> 4) & 0b11;
 
     Tmp = Data[6];
-    if (Tmp > STEP_8_33kHz) {
-      Tmp = STEP_25_0kHz;
+    if (Tmp > STEP_100_0kHz) {
+      Tmp = STEP_0_01kHz;
     }
     gEeprom.VfoInfo[VFO].STEP_SETTING = Tmp;
     gEeprom.VfoInfo[VFO].StepFrequency = StepFrequencyTable[Tmp];
@@ -353,13 +348,13 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
   }
 
   if (gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
-    gEeprom.VfoInfo[VFO].IsAM = true;
+    gEeprom.VfoInfo[VFO].ModulationType = gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE;
     gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = 0;
     gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = false;
     gEeprom.VfoInfo[VFO].ConfigRX.CodeType = CODE_TYPE_OFF;
     gEeprom.VfoInfo[VFO].ConfigTX.CodeType = CODE_TYPE_OFF;
   } else {
-    gEeprom.VfoInfo[VFO].IsAM = false;
+    gEeprom.VfoInfo[VFO].ModulationType = false;
   }
 
   RADIO_ConfigureSquelchAndOutputPower(pRadio);
@@ -392,6 +387,7 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo) {
     EEPROM_ReadBuffer(Base + 0x30, &pInfo->SquelchCloseNoiseThresh, 1);
     EEPROM_ReadBuffer(Base + 0x40, &pInfo->SquelchCloseGlitchThresh, 1);
     EEPROM_ReadBuffer(Base + 0x50, &pInfo->SquelchOpenGlitchThresh, 1);
+
     if (pInfo->SquelchOpenNoiseThresh >= 0x80) {
       pInfo->SquelchOpenNoiseThresh = 0x7F;
     }
@@ -519,7 +515,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   InterruptMask = 0 | BK4819_REG_3F_SQUELCH_FOUND | BK4819_REG_3F_SQUELCH_LOST;
 
   if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
-    if (!gRxVfo->IsAM) {
+    if (!gRxVfo->ModulationType) {
       uint8_t CodeType;
       uint8_t Code;
 
@@ -570,13 +566,13 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
 #if defined(ENABLE_FMRADIO)
       && !gFmRadioMode
 #endif
-      && IS_NOT_NOAA_CHANNEL(gCurrentVfo->CHANNEL_SAVE) && !gCurrentVfo->IsAM) {
+      && IS_NOT_NOAA_CHANNEL(gCurrentVfo->CHANNEL_SAVE) && !gCurrentVfo->ModulationType) {
     BK4819_EnableVox(gEeprom.VOX1_THRESHOLD, gEeprom.VOX0_THRESHOLD);
     InterruptMask |= 0 | BK4819_REG_3F_VOX_FOUND | BK4819_REG_3F_VOX_LOST;
   } else {
     BK4819_DisableVox();
   }
-  if (gRxVfo->IsAM || !gRxVfo->DTMF_DECODING_ENABLE) {
+  if (gRxVfo->ModulationType || !gRxVfo->DTMF_DECODING_ENABLE) {
     BK4819_DisableDTMF();
   } else {
     BK4819_EnableDTMF();

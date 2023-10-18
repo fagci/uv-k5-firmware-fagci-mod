@@ -372,9 +372,11 @@ void UI_DisplayMain(void) {
     }
 
     // 0x931E
-    if (gEeprom.VfoInfo[i].IsAM) {
-      memcpy(pLine1 + 128 + 27, BITMAP_AM, sizeof(BITMAP_AM));
-    } else {
+    const char *modulationTypeOptions[] = {" FM", " AM", "SSB"};
+    sprintf(String, "%s", modulationTypeOptions[gEeprom.VfoInfo[i].ModulationType]);
+    UI_PrintStringSmallest(String, 116, 1 + i * 32, false, true);
+
+    if (!gEeprom.VfoInfo[i].ModulationType) {
       const FREQ_Config_t *pConfig;
 
       if (SomeValue == 1) {

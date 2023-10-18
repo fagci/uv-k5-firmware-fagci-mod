@@ -40,7 +40,7 @@ extern const struct FrequencyBandInfo FrequencyBandTable[7];
 #if defined(ENABLE_NOAA)
 extern const uint32_t NoaaFrequencyTable[10];
 #endif
-extern const uint16_t StepFrequencyTable[7];
+extern const uint16_t StepFrequencyTable[12];
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency);
 uint8_t FREQUENCY_CalculateOutputPower(uint8_t TxpLow, uint8_t TxpMid,
