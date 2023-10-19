@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
-from serial import Serial
 from time import sleep
+from libuvk5 import uvk5
 
-SPEED = 38400
+
 PORT = '/dev/ttyUSB0'
 
-with Serial(PORT, SPEED, timeout=3) as s:
+
+with uvk5(PORT) as s:
+    s.connect()
+    s.get_fw_version()
     while True:
-        s.write(b'RR\x67;')
-        print(s.read_until())
-        
+        print(s.get_reg(0x67))
+        print(s.set_reg(0x13, 0b1010101010101010))
+        print('---')
+            
         sleep(1)
 

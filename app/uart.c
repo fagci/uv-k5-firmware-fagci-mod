@@ -141,6 +141,35 @@ typedef struct {
   uint32_t Timestamp;
 } CMD_052F_t;
 
+typedef struct {
+  Header_t Header;
+  struct {
+    uint16_t Val;
+    uint8_t v1;
+    uint8_t v2;
+  } Data;
+} REPLY_0601_t;
+
+typedef struct {
+  Header_t Header;
+  uint8_t RegNum;
+} CMD_0601_t;
+
+typedef struct {
+  Header_t Header;
+  uint8_t RegNum;
+  uint16_t RegValue;
+} CMD_0602_t;
+
+typedef struct {
+  Header_t Header;
+  struct {
+    uint16_t Val;
+    uint8_t v1;
+    uint8_t v2;
+  } Data;
+} REPLY_0602_t;
+
 static const uint8_t Obfuscation[16] = {0x16, 0x6C, 0x14, 0xE6, 0x2E, 0x91,
                                         0x0D, 0x40, 0x21, 0x35, 0xD5, 0x40,
                                         0x13, 0x03, 0xE9, 0x80};
@@ -323,6 +352,31 @@ static void CMD_0527(void) {
   SendReply(&Reply, sizeof(Reply));
 }
 
+static void CMD_0601(const uint8_t *pBuffer) {
+  const CMD_0601_t *pCmd = (const CMD_0601_t *)pBuffer;
+  REPLY_0601_t Reply;
+
+  Reply.Header.ID = 0x0601;
+  Reply.Header.Size = sizeof(Reply.Data);
+  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
+  Reply.Data.v1 = pCmd->RegNum;
+
+  SendReply(&Reply, sizeof(Reply));
+}
+
+static void CMD_0602(const uint8_t *pBuffer) {
+  const CMD_0602_t *pCmd = (const CMD_0602_t *)pBuffer;
+  REPLY_0602_t Reply;
+
+  Reply.Header.ID = 0x0602;
+  Reply.Header.Size = sizeof(Reply.Data);
+  BK4819_WriteRegister(pCmd->RegNum, pCmd->RegValue);
+  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
+  Reply.Data.v1 = pCmd->RegNum;
+
+  SendReply(&Reply, sizeof(Reply));
+}
+
 static void CMD_0529(void) {
   REPLY_0529_t Reply;
 
@@ -424,21 +478,6 @@ bool UART_IsCommandAvailable(void) {
            UART_DMA_Buffer[gUART_WriteIndex] != 0xABU) {
       gUART_WriteIndex = DMA_INDEX(gUART_WriteIndex, 1);
     }
-
-#ifdef ENABLE_UART_CAT
-    char cmd[3];
-    strncpy(cmd, (char *)UART_DMA_Buffer, 2);
-
-    if (strncmp(cmd, "RR", 2) == 0) {
-      BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true);
-      SYSTEM_DelayMs(25);
-      BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, false);
-      char Str[6];
-      sprintf(Str, "%x\n", BK4819_ReadRegister(UART_DMA_Buffer[2]));
-      UART_Send(Str, strlen(Str));
-      return true;
-    }
-#endif
 
     if (gUART_WriteIndex == DmaLength) {
       return false;
@@ -559,6 +598,12 @@ void UART_HandleCommand(void) {
 #else
     NVIC_SystemReset();
 #endif
+    break;
+  case 0x0601:
+    CMD_0601(UART_Command.Buffer);
+    break;
+  case 0x0602:
+    CMD_0602(UART_Command.Buffer);
     break;
   }
 }

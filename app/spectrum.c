@@ -292,9 +292,9 @@ static void RestoreRegisters() {
 }
 
 static void SetF(uint32_t f) {
-  if (fMeasure == f) {
+  /* if (fMeasure == f) {
     return;
-  }
+  } */
   fMeasure = f;
   BK4819_TuneTo(f);
 }
