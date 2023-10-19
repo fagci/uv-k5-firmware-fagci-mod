@@ -15,6 +15,7 @@
  */
 
 #include "../app/spectrum.h"
+#include "finput.h"
 #include <string.h>
 
 #define F_MIN FrequencyBandTable[0].lower
@@ -1018,12 +1019,14 @@ static void OnKeyDownFreqInput(uint8_t key) {
     }
     SetState(previousState);
     currentFreq = tempFreq;
+    FreqInput();
     if (currentState == SPECTRUM) {
       ResetBlacklist();
       RelaunchScan();
     } else {
       SetF(currentFreq);
     }
+    redrawScreen = true;
     break;
   default:
     break;
@@ -1089,6 +1092,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     break;
   case KEY_5:
     FreqInput();
+    SetState(FREQ_INPUT);
     break;
   case KEY_0:
     ToggleModulation();
@@ -1336,6 +1340,16 @@ static void UpdateScan() {
   }
 
   MoveHistory();
+
+  uint8_t overCnt = 0;
+  for (uint8_t x = 0; x < 128; ++x) {
+    if (rssiHistory[x] > settings.rssiTriggerLevel) {
+      overCnt++;
+    }
+  }
+  if (overCnt > 6) {
+    settings.rssiTriggerLevel = RSSI_MAX_VALUE;
+  }
 
   redrawScreen = true;
   preventKeypress = false;
