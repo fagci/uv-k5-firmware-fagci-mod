@@ -445,7 +445,8 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
   }
 
   if (Frequency > FrequencyBandTable[pInfo->Band].upper) {
-    Frequency = pInfo->ConfigRX.Frequency = FrequencyBandTable[pInfo->Band].lower;
+    Frequency = pInfo->ConfigRX.Frequency =
+        FrequencyBandTable[pInfo->Band].lower;
   } else if (Frequency < FrequencyBandTable[pInfo->Band].lower) {
     Frequency = pInfo->ConfigRX.Frequency = FREQUENCY_FloorToStep(
         FrequencyBandTable[pInfo->Band].upper, pInfo->StepFrequency,
@@ -946,7 +947,7 @@ void APP_TimeSlice10ms(void) {
 
   // once every 150ms
 #if defined(ENABLE_RSSIBAR)
-  if (gScreenToDisplay == DISPLAY_MAIN &&
+  if (gScreenToDisplay == DISPLAY_MAIN && !gKeypadLocked &&
       (gFlashLightBlinkCounter & 15U) == 0) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
         gCurrentFunction == FUNCTION_MONITOR ||

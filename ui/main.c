@@ -269,7 +269,7 @@ void UI_DisplayMain(void) {
     } else {
       if (freqInputIndex && IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i]) &&
           gEeprom.TX_CHANNEL == i) {
-        UI_PrintString(freqInputString, 2, 127, i * 4, 8, true);
+        UI_PrintString(freqInputString, 24, 127, i * 4, 8, true);
       } else {
         uint32_t frequency = gEeprom.VfoInfo[i].pRX->Frequency;
         bool noChannelName = gEeprom.VfoInfo[i].Name[0] == 0 ||
@@ -288,16 +288,24 @@ void UI_DisplayMain(void) {
 
         if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i]) ||
             gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
-          sprintf(String, "%u.%05u", frequency / 100000, frequency % 100000);
-          UI_PrintString(String, 31, 112, i * 4, 8, true);
+          /* sprintf(String, "%u.%03u", frequency / 100000,
+                  frequency / 100 % 1000);
+          UI_PrintString(String, 31, 112, i * 4, 8, true); */
+
+          NUMBER_ToDigits(frequency, String);
+          UI_DisplayFrequency(String, 32, Line, false, false);
+          UI_DisplaySmallDigits(2, String + 6, 113, Line + 1);
+
           if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
             const uint8_t Attributes =
                 gMR_ChannelAttributes[gEeprom.ScreenChannel[i]];
             if (Attributes & MR_CH_SCANLIST1) {
-              memcpy(pLine0 + 113, BITMAP_ScanList, sizeof(BITMAP_ScanList));
+              pLine0[113] = 0b01100000;
+              pLine0[114] = 0b01100000;
             }
             if (Attributes & MR_CH_SCANLIST2) {
-              memcpy(pLine0 + 120, BITMAP_ScanList, sizeof(BITMAP_ScanList));
+              pLine0[113] |= 0b00000110;
+              pLine0[114] |= 0b00000110;
             }
           }
         } else if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_CHANNEL) {
@@ -439,7 +447,7 @@ void UI_DisplayMain(void) {
   }
 
 #if defined(ENABLE_RSSIBAR)
-  if (gScreenToDisplay == DISPLAY_MAIN) {
+  if (gScreenToDisplay == DISPLAY_MAIN && !gKeypadLocked) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
         gCurrentFunction == FUNCTION_MONITOR ||
         gCurrentFunction == FUNCTION_INCOMING) {
