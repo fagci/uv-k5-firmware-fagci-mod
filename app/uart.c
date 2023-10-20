@@ -143,17 +143,17 @@ typedef struct {
 
 typedef struct {
   Header_t Header;
+  uint8_t RegNum;
+} CMD_0601_t;
+
+typedef struct {
+  Header_t Header;
   struct {
     uint16_t Val;
     uint8_t v1;
     uint8_t v2;
   } Data;
 } REPLY_0601_t;
-
-typedef struct {
-  Header_t Header;
-  uint8_t RegNum;
-} CMD_0601_t;
 
 typedef struct {
   Header_t Header;
@@ -352,31 +352,6 @@ static void CMD_0527(void) {
   SendReply(&Reply, sizeof(Reply));
 }
 
-static void CMD_0601(const uint8_t *pBuffer) {
-  const CMD_0601_t *pCmd = (const CMD_0601_t *)pBuffer;
-  REPLY_0601_t Reply;
-
-  Reply.Header.ID = 0x0601;
-  Reply.Header.Size = sizeof(Reply.Data);
-  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
-  Reply.Data.v1 = pCmd->RegNum;
-
-  SendReply(&Reply, sizeof(Reply));
-}
-
-static void CMD_0602(const uint8_t *pBuffer) {
-  const CMD_0602_t *pCmd = (const CMD_0602_t *)pBuffer;
-  REPLY_0602_t Reply;
-
-  Reply.Header.ID = 0x0602;
-  Reply.Header.Size = sizeof(Reply.Data);
-  BK4819_WriteRegister(pCmd->RegNum, pCmd->RegValue);
-  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
-  Reply.Data.v1 = pCmd->RegNum;
-
-  SendReply(&Reply, sizeof(Reply));
-}
-
 static void CMD_0529(void) {
   REPLY_0529_t Reply;
 
@@ -446,6 +421,35 @@ static void CMD_052F(const uint8_t *pBuffer) {
 
   SendVersion();
 }
+
+#ifdef ENABLE_UART_CAT
+
+static void CMD_0601(const uint8_t *pBuffer) {
+  const CMD_0601_t *pCmd = (const CMD_0601_t *)pBuffer;
+  REPLY_0601_t Reply;
+
+  Reply.Header.ID = 0x0601;
+  Reply.Header.Size = sizeof(Reply.Data);
+  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
+  Reply.Data.v1 = pCmd->RegNum;
+
+  SendReply(&Reply, sizeof(Reply));
+}
+
+static void CMD_0602(const uint8_t *pBuffer) {
+  const CMD_0602_t *pCmd = (const CMD_0602_t *)pBuffer;
+  REPLY_0602_t Reply;
+
+  Reply.Header.ID = 0x0602;
+  Reply.Header.Size = sizeof(Reply.Data);
+  BK4819_WriteRegister(pCmd->RegNum, pCmd->RegValue);
+  Reply.Data.Val = BK4819_ReadRegister(pCmd->RegNum);
+  Reply.Data.v1 = pCmd->RegNum;
+
+  SendReply(&Reply, sizeof(Reply));
+}
+
+#endif
 
 uint64_t xtou64(const char *str) {
   uint64_t res = 0;
@@ -599,11 +603,13 @@ void UART_HandleCommand(void) {
     NVIC_SystemReset();
 #endif
     break;
+#ifdef ENABLE_UART_CAT
   case 0x0601:
     CMD_0601(UART_Command.Buffer);
     break;
   case 0x0602:
     CMD_0602(UART_Command.Buffer);
     break;
+#endif
   }
 }

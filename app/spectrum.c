@@ -403,11 +403,13 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
+uint16_t delayUS = 3200;
+
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
     // if (0)
     ResetRSSI();
-    SYSTEM_DelayMs(3);
+    SYSTICK_DelayUs(delayUS);
   }
   return BK4819_GetRSSI();
 }
@@ -745,7 +747,7 @@ static void Blacklist() {
 
 static uint8_t Rssi2Y(uint16_t rssi) {
   return DrawingEndY - ConvertDomain(rssi, mov.min - 2,
-                                     mov.max + 30 + (mov.max - mov.min) / 3, 0,
+                                     mov.max + 20 + (mov.max - mov.min) / 2, 0,
                                      DrawingEndY);
 }
 
@@ -789,6 +791,9 @@ static void DrawStatus() {
     if (p != NULL) {
       UI_PrintStringSmallest(p->name, 0, 1, true, true);
     }
+
+    sprintf(String, "D: %u us", delayUS);
+    UI_PrintStringSmallest(String, 64, 1, true, true);
   }
 
   gStatusLine[127] = 0b01111110;
@@ -921,10 +926,18 @@ static void DeInitSpectrum() {
 static void OnKeyDown(uint8_t key) {
   switch (key) {
   case KEY_3:
-    SelectNearestPreset(true);
+    if (0)
+      SelectNearestPreset(true);
+    delayUS += 100;
+    SYSTEM_DelayMs(100);
+    redrawStatus = true;
     break;
   case KEY_9:
-    SelectNearestPreset(false);
+    if (0)
+      SelectNearestPreset(false);
+    delayUS -= 100;
+    SYSTEM_DelayMs(100);
+    redrawStatus = true;
     break;
   case KEY_1:
     UpdateScanStep(true);

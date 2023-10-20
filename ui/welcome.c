@@ -14,41 +14,42 @@
  *     limitations under the License.
  */
 
-#include <string.h>
+#include "ui/welcome.h"
 #include "driver/eeprom.h"
 #include "driver/st7565.h"
 #include "external/printf/printf.h"
 #include "helper/battery.h"
 #include "settings.h"
 #include "ui/helper.h"
-#include "ui/welcome.h"
 #include "version.h"
+#include <string.h>
 
-void UI_DisplayWelcome(void)
-{
-	char WelcomeString0[16];
-	char WelcomeString1[16];
+void UI_DisplayWelcome(void) {
+  char WelcomeString0[16];
+  char WelcomeString1[16];
 
-	memset(gStatusLine, 0, sizeof(gStatusLine));
-	memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
+  memset(gStatusLine, 0, sizeof(gStatusLine));
+  memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
-	if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_FULL_SCREEN) {
-		ST7565_FillScreen(0xFF);
-	} else {
-		memset(WelcomeString0, 0, sizeof(WelcomeString0));
-		memset(WelcomeString1, 0, sizeof(WelcomeString1));
-		if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE) {
-			sprintf(WelcomeString0, "VOLTAGE");
-			sprintf(WelcomeString1, "%d.%02dV", gBatteryVoltageAverage / 100, gBatteryVoltageAverage % 100);
-		} else {
-			EEPROM_ReadBuffer(0x0EB0, WelcomeString0, 16);
-			EEPROM_ReadBuffer(0x0EC0, WelcomeString1, 16);
-		}
-		UI_PrintString(WelcomeString0, 0, 127, 1, 10, true);
-		UI_PrintString(WelcomeString1, 0, 127, 3, 10, true);
-		UI_PrintString(Version, 0, 127, 5, 10, true);
-		ST7565_BlitStatusLine();
-		ST7565_BlitFullScreen();
-	}
+  if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_FULL_SCREEN) {
+    ST7565_FillScreen(0xFF);
+  } else {
+    memset(WelcomeString0, 0, sizeof(WelcomeString0));
+    memset(WelcomeString1, 0, sizeof(WelcomeString1));
+    if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE) {
+      sprintf(WelcomeString0, "VOLTAGE");
+      sprintf(WelcomeString1, "%d.%02dV", gBatteryVoltageAverage / 100,
+              gBatteryVoltageAverage % 100);
+    } else {
+      EEPROM_ReadBuffer(0x0EB0, WelcomeString0, 16);
+      EEPROM_ReadBuffer(0x0EC0, WelcomeString1, 16);
+    }
+    UI_PrintString(WelcomeString0, 0, 127, 1, 10, true);
+    UI_PrintString(WelcomeString1, 0, 127, 3, 10, true);
+    UI_PrintStringSmall(Version, 0, 127, 5);
+    UI_PrintStringSmallest(__DATE__ " " __TIME__, 24, 50, false, true);
+
+    ST7565_BlitStatusLine();
+    ST7565_BlitFullScreen();
+  }
 }
-
