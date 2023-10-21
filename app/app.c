@@ -429,7 +429,11 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
 void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
   uint32_t Frequency;
 
-  Frequency = pInfo->ConfigRX.Frequency + (Step * pInfo->StepFrequency);
+  if (gWasFKeyPressed) {
+    Frequency = pInfo->ConfigRX.Frequency + Step * 100000;
+  } else {
+    Frequency = pInfo->ConfigRX.Frequency + (Step * pInfo->StepFrequency);
+  }
 
   if (pInfo->StepFrequency == 833) {
     const uint32_t Lower = FrequencyBandTable[pInfo->Band].lower;
@@ -1521,7 +1525,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     }
   }
 
-  if (gWasFKeyPressed && Key > KEY_9 && Key != KEY_F && Key != KEY_STAR) {
+  if (gWasFKeyPressed && Key > KEY_9 && Key != KEY_F && Key != KEY_STAR && Key != KEY_UP && Key != KEY_DOWN) {
     gWasFKeyPressed = false;
     gUpdateStatus = true;
   }

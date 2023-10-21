@@ -45,6 +45,8 @@ STEP_Setting_t gStepSetting;
 
 VfoState_t VfoState[2];
 
+const char *modulationTypeOptions[] = {" FM", " AM", "SSB", "RAW"};
+
 bool RADIO_CheckValidChannel(uint16_t Channel, bool bCheckScanList,
                              uint8_t VFO) {
   uint8_t Attributes;
@@ -217,7 +219,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
       Tmp = 0;
     }
     gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = Tmp;
-    gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = (Data[3] >> 4) & 0b11;
+    gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = (Data[3] >> 4) & 0b111;
 
     Tmp = Data[6];
     if (Tmp > STEP_100_0kHz) {

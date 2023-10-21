@@ -62,10 +62,13 @@ enum STEP_Setting_t {
   STEP_100_0kHz,
 };
 
+extern const char *modulationTypeOptions[];
+
 typedef enum ModulationType {
   MOD_FM,
   MOD_AM,
   MOD_USB,
+  MOD_RAW,
 } ModulationType;
 
 typedef enum STEP_Setting_t STEP_Setting_t;

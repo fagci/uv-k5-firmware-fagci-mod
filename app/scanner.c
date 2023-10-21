@@ -335,33 +335,7 @@ void SCANNER_Start(void)
 
 void SCANNER_Stop(void)
 {
-	uint8_t Previous;
-
-	Previous = gRestoreMrChannel;
 	gScanState = SCAN_OFF;
-
-	if (!bScanKeepFrequency) {
-		if (IS_MR_CHANNEL(gNextMrChannel)) {
-			gEeprom.MrChannel[gEeprom.RX_CHANNEL] = gRestoreMrChannel;
-			gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = Previous;
-			RADIO_ConfigureChannel(gEeprom.RX_CHANNEL, 2);
-		} else {
-			gRxVfo->ConfigRX.Frequency = gRestoreFrequency;
-			RADIO_ApplyOffset(gRxVfo);
-			RADIO_ConfigureSquelchAndOutputPower(gRxVfo);
-		}
-		RADIO_SetupRegisters(true);
-		gUpdateDisplay = true;
-		return;
-	}
-
-	if (!IS_MR_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
-		RADIO_ApplyOffset(gRxVfo);
-		RADIO_ConfigureSquelchAndOutputPower(gRxVfo);
-		SETTINGS_SaveChannel(gRxVfo->CHANNEL_SAVE, gEeprom.RX_CHANNEL, gRxVfo, 1);
-		return;
-	}
-
 	SETTINGS_SaveVfoIndices();
 }
 

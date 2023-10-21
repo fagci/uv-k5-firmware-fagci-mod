@@ -339,7 +339,6 @@ void UI_DisplayMain(void) {
     }
 
     // 0x931E
-    const char *modulationTypeOptions[] = {" FM", " AM", "SSB"};
     UI_PrintStringSmallest(modulationTypeOptions[vfoInfo.ModulationType], 116,
                            2 + i * 32, false, true);
 

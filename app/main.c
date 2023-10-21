@@ -230,7 +230,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 
   case KEY_7:
     // ACTION_Vox();
-    if (vfoInfo->AM_CHANNEL_MODE == MOD_USB) {
+    if (vfoInfo->AM_CHANNEL_MODE == MOD_RAW) {
       vfoInfo->AM_CHANNEL_MODE = MOD_FM;
     } else {
       vfoInfo->AM_CHANNEL_MODE++;

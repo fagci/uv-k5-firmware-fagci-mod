@@ -43,7 +43,6 @@ ScanInfo scanInfo;
 KeyboardState kbd = {KEY_INVALID, KEY_INVALID, 0};
 
 const char *bwOptions[] = {"  25k", "12.5k", "6.25k"};
-const char *modulationTypeOptions[] = {" FM", " AM", "SSB"};
 const uint8_t modulationTypeTuneSteps[] = {100, 50, 10};
 
 SpectrumSettings settings = {
@@ -82,6 +81,25 @@ static const RegisterSpec registerSpecs[] = {
 #ifdef ENABLE_ALL_REGISTERS
 static const RegisterSpec hiddenRegisterSpecs[] = {
     {},
+    /* {"tail", 0x0c, 12, 0b11, 0},
+    {"cdcss", 0x0c, 14, 0b11, 0},
+    {"ctcss F", 0x68, 0, 0b1111111111111, 0},
+
+    {"FSK Tx Finished INT", 0x3F, 15, 1, 1},
+    {"FSK FIFO Alm Empty INT", 0x3F, 14, 1, 1},
+    {"FSK Rx Finished INT", 0x3F, 13, 1, 1},
+    {"FSK FIFO Alm Full INT", 0x3F, 12, 1, 1},
+    {"DTMF/5TON Found INT", 0x3F, 11, 1, 1},
+    {"CT/CD T Found INT", 0x3F, 10, 1, 1},
+    {"CDCSS Found INT", 0x3F, 9, 1, 1},
+    {"CDCSS Lost INT", 0x3F, 8, 1, 1},
+    {"CTCSS Found INT", 0x3F, 7, 1, 1},
+    {"CTCSS Lost INT", 0x3F, 6, 1, 1},
+    {"VoX Found INT", 0x3F, 5, 1, 1},
+    {"VoX Lost INT", 0x3F, 4, 1, 1},
+    {"Squelch Found INT", 0x3F, 3, 1, 1},
+    {"Squelch Lost INT", 0x3F, 2, 1, 1},
+    {"FSK Rx Sync INT", 0x3F, 1, 1, 1}, */
 
     {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
     {"IF step100x", 0x3D, 0, 0xFFFF, 100},
@@ -706,10 +724,10 @@ static void UpdateFreqChangeStep(bool inc) {
 }
 
 static void ToggleModulation() {
-  if (settings.modulationType < MOD_USB) {
-    settings.modulationType++;
-  } else {
+  if (settings.modulationType == MOD_RAW) {
     settings.modulationType = MOD_FM;
+  } else {
+    settings.modulationType++;
   }
   BK4819_SetModulation(settings.modulationType);
   redrawScreen = true;
@@ -898,7 +916,7 @@ static void DrawTicks() {
   }
 
   // center
-  /* if (IsCenterMode()) {
+  if (IsCenterMode()) {
     gFrameBuffer[5][62] = 0x80;
     gFrameBuffer[5][63] = 0x80;
     gFrameBuffer[5][64] = 0xff;
@@ -913,7 +931,7 @@ static void DrawTicks() {
     gFrameBuffer[5][125] = 0x80;
     gFrameBuffer[5][126] = 0x80;
     gFrameBuffer[5][127] = 0xff;
-  } */
+  }
 }
 
 static void DrawArrow(uint8_t x) {
@@ -1417,13 +1435,14 @@ static void UpdateListening() {
 
   redrawScreen = true;
 
-  // if (currentState == SPECTRUM) {
-  BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-  Measure();
-  BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-  /* } else {
+  if (currentState == SPECTRUM) {
+    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     Measure();
-  } */
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+  } else {
+    Measure();
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+  }
 
   peak.rssi = scanInfo.rssi;
   // AM_fix_reset(0);
