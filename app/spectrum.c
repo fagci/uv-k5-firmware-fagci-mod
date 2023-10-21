@@ -62,6 +62,10 @@ uint32_t currentFreq;
 uint16_t rssiHistory[128] = {0};
 bool blacklist[128] = {false};
 
+/* static const RegisterSpec ifRegSpec = {"IF step1x", 0x3D, 0, 0xFFFF, 1};
+static const RegisterSpec xtalFModeRegSpec = {"XTAL F Mode Select", 0x3C, 6,
+0b11, 1}; */
+
 static const RegisterSpec registerSpecs[] = {
     {},
     {"LNAs", 0x13, 8, 0b11, 1},
@@ -78,6 +82,19 @@ static const RegisterSpec registerSpecs[] = {
 #ifdef ENABLE_ALL_REGISTERS
 static const RegisterSpec hiddenRegisterSpecs[] = {
     {},
+
+    {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
+    {"IF step100x", 0x3D, 0, 0xFFFF, 100},
+    {"IF step1x", 0x3D, 0, 0xFFFF, 1},
+    {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
+    {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
+    {"BW Mode Selection", 0x43, 4, 0b11, 1},
+    {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
+    {"XTAL F Low-16bits 100", 0x3B, 0, 0xFFFF, 100},
+    {"XTAL F High-8bits", 0x3C, 8, 0xFF, 1},
+    {"XTAL F reserved flt", 0x3C, 0, 0b111111, 1},
+    {"XTAL Enable", 0x37, 1, 1, 1},
+
     {"Freq Scan Indicator", 0x0D, 15, 1, 1},
     {"F Scan High 16 bits", 0x0D, 0, 0xFFFF, 1},
     {"F Scan Low 16 bits", 0x0E, 0, 0xFFFF, 1},
@@ -86,14 +103,11 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"AGC idx", 0x7E, 12, 0b111, 1},
     {"49", 0x49, 0, 0xFFFF, 100},
     {"7B", 0x7B, 0, 0xFFFF, 100},
-    {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
-    {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
-    {"BW Mode Selection", 0x43, 4, 0b11, 1},
     {"rssi_rel", 0x65, 8, 0xFF, 1},
     {"agc_rssi", 0x62, 8, 0xFF, 1},
     {"lna_peak_rssi", 0x62, 0, 0xFF, 1},
     {"rssi_sq", 0x67, 0, 0xFF, 1},
-    {"weak_rssi 1\0", 0x0C, 7, 1, 1},
+    {"weak_rssi 1", 0x0C, 7, 1, 1},
     {"ext_lna_gain set", 0x2C, 0, 0b11111, 1},
     {"snr_out", 0x61, 8, 0xFF, 1},
     {"noise sq", 0x65, 0, 0xFF, 1},
@@ -104,8 +118,6 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"soft_mute_atten", 0x20, 6, 0b11, 1},
     {"soft_mute_rate", 0x20, 8, 0b11, 1},
 
-    {"IF step100x", 0x3D, 0, 0xFFFF, 100},
-    {"IF step1x", 0x3D, 0, 0xFFFF, 1},
     {"Band Selection Thr", 0x3E, 0, 0xFFFF, 100},
 
     {"chip_id", 0x00, 0, 0xFFFF, 1},
@@ -179,11 +191,6 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"Crystal iBit", 0x1A, 8, 0b1111, 1},
     {"PLL CP bit", 0x1F, 0, 0b1111, 1},
     {"PLL/VCO Enable", 0x30, 4, 0xF, 1},
-    {"XTAL Enable", 0x37, 1, 1, 1},
-    {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
-    {"XTAL F High-8bits", 0x3C, 8, 0xFF, 1},
-    {"XTAL F Mode Select", 0x3C, 6, 0b11, 1},
-    {"XTAL F reserved flt", 0x3C, 0, 0b111111, 1},
     {"Exp AF Rx Ratio", 0x28, 14, 0b11, 1},
     {"Exp AF Rx 0 dB", 0x28, 7, 0x7F, 1},
     {"Exp AF Rx noise", 0x28, 0, 0x7F, 1},
@@ -444,8 +451,6 @@ static void ToggleAudio(bool on) {
 static void ToggleTX(bool);
 static void ToggleRX(bool);
 
-// RegisterSpec xtalFMode = {"XTAL F Mode Select", 0x3C, 6, 0b11, 1};
-
 static void ToggleRX(bool on) {
   if (isListening == on) {
     return;
@@ -466,8 +471,6 @@ static void ToggleRX(bool on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
-    /* BK4819_SetRegValue((RegisterSpec){"BW Mode", 0x43, 4, 0b11, 1},
-                       settings.scanStepIndex < STEP_1_0kHz); */
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
 }
@@ -1234,10 +1237,11 @@ static void RenderStill() {
   }
 
   if (!monitorMode) {
-    uint8_t rssiTriggerX = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
-    ln[METER_PAD_LEFT + rssiTriggerX - 1] |= 0b01000001;
-    ln[METER_PAD_LEFT + rssiTriggerX] = 0b01111111;
-    ln[METER_PAD_LEFT + rssiTriggerX + 1] |= 0b01000001;
+    uint8_t rssiTriggerX = Rssi2PX(settings.rssiTriggerLevel, METER_PAD_LEFT,
+                                   121 + METER_PAD_LEFT);
+    ln[rssiTriggerX - 1] |= 0b01000001;
+    ln[rssiTriggerX] = 0b01111111;
+    ln[rssiTriggerX + 1] |= 0b01000001;
   }
 
 #ifdef ENABLE_ALL_REGISTERS
@@ -1425,7 +1429,7 @@ static void UpdateListening() {
   // AM_fix_reset(0);
 
   if (IsPeakOverLevel() || monitorMode) {
-    listenT = 1000;
+    listenT = currentState == SPECTRUM ? 1000 : 10;
     return;
   }
 
@@ -1492,7 +1496,6 @@ void APP_RunSpectrum() {
   BK4819_SetAGC(1); // normalize initial gain
   BK4819_SetRegValue((RegisterSpec){"AGC Fix Mode", 0x7E, 15, 1, 1}, 1);
   BK4819_SetRegValue(afcDisableRegSpec, 1);
-  // BK4819_SetRegValue(xtalFMode, 0);
 
   // AM_fix_init();
 
