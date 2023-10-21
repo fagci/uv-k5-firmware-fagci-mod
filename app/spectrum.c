@@ -1421,9 +1421,6 @@ static void UpdateListening() {
   if (!isListening) {
     ToggleRX(true);
   }
-  /* if (currentState == STILL) {
-    listenT = 0;
-  } */
   /* if (listenT % 10 == 0) {
     AM_fix_10ms(0);
   } */
