@@ -1122,6 +1122,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     break;
   case KEY_SIDE1:
     monitorMode = !monitorMode;
+    redrawScreen = true;
     break;
   case KEY_SIDE2:
     ToggleBacklight();
@@ -1412,13 +1413,13 @@ static void UpdateListening() {
 
   redrawScreen = true;
 
-  if (currentState == SPECTRUM) {
-    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+  // if (currentState == SPECTRUM) {
+  BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+  Measure();
+  BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+  /* } else {
     Measure();
-    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-  } else {
-    Measure();
-  }
+  } */
 
   peak.rssi = scanInfo.rssi;
   // AM_fix_reset(0);
