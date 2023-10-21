@@ -444,7 +444,7 @@ static void ToggleAudio(bool on) {
 static void ToggleTX(bool);
 static void ToggleRX(bool);
 
-RegisterSpec xtalFMode = {"XTAL F Mode Select", 0x3C, 6, 0b11, 1};
+// RegisterSpec xtalFMode = {"XTAL F Mode Select", 0x3C, 6, 0b11, 1};
 
 static void ToggleRX(bool on) {
   if (isListening == on) {
@@ -1202,17 +1202,13 @@ static void RenderStill() {
   const uint8_t METER_PAD_LEFT = 3;
   uint8_t *ln = gFrameBuffer[2];
 
-  for (uint8_t i = METER_PAD_LEFT; i < 121 + METER_PAD_LEFT; i++) {
-    if (i % 10 == 0) {
-      ln[i] = 0b11000000;
-    } else {
-      ln[i] = 0b01000000;
-    }
+  for (uint8_t i = 0; i < 121; i++) {
+    ln[i + METER_PAD_LEFT] = i % 10 ? 0b01000000 : 0b11000000;
   }
 
-  uint8_t x = Rssi2PX(scanInfo.rssi, 0, 121);
-  for (uint8_t i = 0; i < x; ++i) {
-    if (i % 5 && i / 5 < x / 5) {
+  uint8_t rssiX = Rssi2PX(scanInfo.rssi, 0, 121);
+  for (uint8_t i = 0; i < rssiX; ++i) {
+    if (i % 5 && i / 5 < rssiX / 5) {
       ln[i + METER_PAD_LEFT] |= 0b00011100;
     }
   }
@@ -1237,10 +1233,10 @@ static void RenderStill() {
   }
 
   if (!monitorMode) {
-    uint8_t x = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
-    ln[METER_PAD_LEFT + x - 1] |= 0b01000001;
-    ln[METER_PAD_LEFT + x] = 0b01111111;
-    ln[METER_PAD_LEFT + x + 1] |= 0b01000001;
+    uint8_t rssiTriggerX = Rssi2PX(settings.rssiTriggerLevel, 0, 121);
+    ln[METER_PAD_LEFT + rssiTriggerX - 1] |= 0b01000001;
+    ln[METER_PAD_LEFT + rssiTriggerX] = 0b01111111;
+    ln[METER_PAD_LEFT + rssiTriggerX + 1] |= 0b01000001;
   }
 
 #ifdef ENABLE_ALL_REGISTERS
@@ -1495,7 +1491,7 @@ void APP_RunSpectrum() {
   BK4819_SetAGC(1); // normalize initial gain
   BK4819_SetRegValue((RegisterSpec){"AGC Fix Mode", 0x7E, 15, 1, 1}, 1);
   BK4819_SetRegValue(afcDisableRegSpec, 1);
-  BK4819_SetRegValue(xtalFMode, 0);
+  // BK4819_SetRegValue(xtalFMode, 0);
 
   // AM_fix_init();
 

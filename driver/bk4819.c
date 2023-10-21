@@ -283,9 +283,9 @@ void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth) {
   if (Bandwidth == BK4819_FILTER_BW_WIDE) {
     BK4819_WriteRegister(BK4819_REG_43, 0x3028);
   } else if (Bandwidth == BK4819_FILTER_BW_NARROW) {
-    BK4819_WriteRegister(BK4819_REG_43, 0x790C);
+    BK4819_WriteRegister(BK4819_REG_43, 0x4048); // 0x790C
   } else if (Bandwidth == BK4819_FILTER_BW_NARROWER) {
-    BK4819_WriteRegister(BK4819_REG_43, 0b0100000001011000);
+    BK4819_WriteRegister(BK4819_REG_43, 0x205C); // 0b0100000001011000
   }
 }
 
