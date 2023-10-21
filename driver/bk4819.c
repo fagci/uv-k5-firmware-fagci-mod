@@ -372,7 +372,7 @@ void BK4819_SetModulation(ModulationType type) {
   BK4819_SetAF(modTypeReg47Values[type]);
   BK4819_SetRegValue(afDacGainRegSpec, 0xF);
   BK4819_WriteRegister(0x3D, type == MOD_USB ? 0 : 0x2AAB);
-  BK4819_SetRegValue(afcDisableRegSpec, type != MOD_FM);
+  BK4819_SetRegValue(afcDisableRegSpec, 1);
 }
 
 void BK4819_RX_TurnOn(void) {
@@ -964,7 +964,7 @@ void BK4819_TuneTo(uint32_t f) {
   BK4819_PickRXFilterPathBasedOnFrequency(f);
   BK4819_SetFrequency(f);
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
-  BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
-  // BK4819_WriteRegister(BK4819_REG_30, 0);
+  // BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
+  BK4819_WriteRegister(BK4819_REG_30, 0);
   BK4819_WriteRegister(BK4819_REG_30, reg);
 }

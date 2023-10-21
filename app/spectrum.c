@@ -388,7 +388,10 @@ static void TuneToPeak() {
 }
 
 uint8_t GetBWRegValueForScan() {
-  return scanStepBWRegValues[settings.scanStepIndex == STEP_100_0kHz ? 11 : 0];
+  if (settings.scanStepIndex < STEP_1_0kHz) {
+    return scanStepBWRegValues[0];
+  }
+  return scanStepBWRegValues[ARRAY_SIZE(scanStepBWRegValues) - 1];
 }
 
 uint8_t GetBWRegValueForListen() {
@@ -441,6 +444,8 @@ static void ToggleAudio(bool on) {
 static void ToggleTX(bool);
 static void ToggleRX(bool);
 
+RegisterSpec xtalFMode = {"XTAL F Mode Select", 0x3C, 6, 0b11, 1};
+
 static void ToggleRX(bool on) {
   if (isListening == on) {
     return;
@@ -461,6 +466,8 @@ static void ToggleRX(bool on) {
     listenT = 1000;
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
+    /* BK4819_SetRegValue((RegisterSpec){"BW Mode", 0x43, 4, 0b11, 1},
+                       settings.scanStepIndex < STEP_1_0kHz); */
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
 }
@@ -1421,7 +1428,7 @@ static void UpdateListening() {
   // AM_fix_reset(0);
 
   if (IsPeakOverLevel() || monitorMode) {
-    listenT = currentState == SPECTRUM ? 1000 : 10;
+    listenT = 1000;
     return;
   }
 
@@ -1486,6 +1493,9 @@ void APP_RunSpectrum() {
   BackupRegisters();
 
   BK4819_SetAGC(1); // normalize initial gain
+  BK4819_SetRegValue((RegisterSpec){"AGC Fix Mode", 0x7E, 15, 1, 1}, 1);
+  BK4819_SetRegValue(afcDisableRegSpec, 1);
+  BK4819_SetRegValue(xtalFMode, 0);
 
   // AM_fix_init();
 
