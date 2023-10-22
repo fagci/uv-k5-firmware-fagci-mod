@@ -413,9 +413,9 @@ static void TuneToPeak() {
 }
 
 uint8_t GetBWRegValueForScan() {
-  if (settings.scanStepIndex < STEP_1_0kHz) {
+  /* if (settings.scanStepIndex < STEP_1_0kHz) {
     return scanStepBWRegValues[0];
-  }
+  } */
   return scanStepBWRegValues[ARRAY_SIZE(scanStepBWRegValues) - 1];
 }
 

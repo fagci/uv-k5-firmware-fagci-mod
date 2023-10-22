@@ -25,7 +25,7 @@ const struct FrequencyBandInfo FrequencyBandTable[7] = {
     [BAND4_174MHz] = {.lower = 17400000, .upper = 34999990},
     [BAND5_350MHz] = {.lower = 35000000, .upper = 39999990},
     [BAND6_400MHz] = {.lower = 40000000, .upper = 46999990},
-    [BAND7_470MHz] = {.lower = 47000000, .upper = 130000000},
+    [BAND7_470MHz] = {.lower = 47000000, .upper = 200000000},
 };
 
 #if defined(ENABLE_NOAA)

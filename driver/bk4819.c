@@ -280,14 +280,14 @@ void BK4819_EnableVox(uint16_t VoxEnableThreshold,
   BK4819_WriteRegister(BK4819_REG_31, REG_31_Value | 4); // bit 2 - VOX Enable
 }
 
+const uint16_t listenBWRegValues[3] = {
+    0x3028, // 25
+    0x4048, // 12.5
+    0x205C, // 6.25
+};
+
 void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth) {
-  if (Bandwidth == BK4819_FILTER_BW_WIDE) {
-    BK4819_WriteRegister(BK4819_REG_43, 0x3028);
-  } else if (Bandwidth == BK4819_FILTER_BW_NARROW) {
-    BK4819_WriteRegister(BK4819_REG_43, 0x4048); // 0x790C
-  } else if (Bandwidth == BK4819_FILTER_BW_NARROWER) {
-    BK4819_WriteRegister(BK4819_REG_43, 0x205C); // 0b0100000001011000
-  }
+  BK4819_WriteRegister(BK4819_REG_43, listenBWRegValues[Bandwidth]);
 }
 
 void BK4819_SetupPowerAmplifier(uint16_t Bias, uint32_t Frequency) {

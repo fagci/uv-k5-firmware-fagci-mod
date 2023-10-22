@@ -81,14 +81,6 @@ static const uint16_t scanStepBWRegValues[12] = {
     0b0011011000111000, // 25
 };
 
-static const uint16_t listenBWRegValues[] = {
-    0x3028, 0x4048, 0x205C,
-
-    /* 0b0011011000101000, // 25
-    0b0111111100001000, // 12.5
-    0b0100100001011000, // 6.25 */
-};
-
 typedef enum State {
   SPECTRUM,
   FREQ_INPUT,

@@ -126,7 +126,7 @@ void ST7565_Init(void) {
   ST7565_WriteByte(0xA4);
   ST7565_WriteByte(0x24);
   ST7565_WriteByte(0x81);
-  ST7565_WriteByte(0x1F);
+  ST7565_WriteByte(0x1F); // contrast
   ST7565_WriteByte(0x2B);
   SYSTEM_DelayMs(1);
   ST7565_WriteByte(0x2E);

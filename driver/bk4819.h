@@ -49,6 +49,7 @@ enum BK4819_CssScanResult_t {
 };
 
 typedef enum BK4819_CssScanResult_t BK4819_CssScanResult_t;
+extern const uint16_t listenBWRegValues[3];
 
 extern bool gRxIdleMode;
 
