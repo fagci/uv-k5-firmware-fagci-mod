@@ -68,6 +68,7 @@ typedef enum ModulationType {
   MOD_FM,
   MOD_AM,
   MOD_USB,
+  MOD_BYP,
   MOD_RAW,
 } ModulationType;
 

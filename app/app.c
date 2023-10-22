@@ -657,7 +657,20 @@ void APP_CheckRadioInterrupts(void) {
 
 void APP_EndTransmission(void) {
   RADIO_SendEndOfTransmission();
-  RADIO_EnableCxCSS();
+  if (gCurrentVfo->pTX->CodeType == CODE_TYPE_OFF) { // CTCSS/DCS is enabled
+    BK4819_EnableCTCSS();
+    SYSTEM_DelayMs(200);
+  } else {
+
+    // if (gEeprom.TAIL_NOTE_ELIMINATION &&
+    // gEeprom.REPEATER_TAIL_TONE_ELIMINATION > 0)
+    if (gEeprom.TAIL_NOTE_ELIMINATION) { // send the CTCSS/DCS tail tone -
+                                         // allows the receivers to mute the
+                                         // usual FM squelch tail/crash
+      RADIO_EnableCxCSS();
+    }
+  }
+
   RADIO_SetupRegisters(false);
 }
 
@@ -1525,7 +1538,8 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     }
   }
 
-  if (gWasFKeyPressed && Key > KEY_9 && Key != KEY_F && Key != KEY_STAR && Key != KEY_UP && Key != KEY_DOWN) {
+  if (gWasFKeyPressed && Key > KEY_9 && Key != KEY_F && Key != KEY_STAR &&
+      Key != KEY_UP && Key != KEY_DOWN) {
     gWasFKeyPressed = false;
     gUpdateStatus = true;
   }

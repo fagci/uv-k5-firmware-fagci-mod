@@ -64,6 +64,7 @@ void BK4819_Init(void) {
   gBK4819_GpioOutState = 0x9000;
   BK4819_WriteRegister(BK4819_REG_33, 0x9000);
   BK4819_WriteRegister(BK4819_REG_3F, 0);
+  BK4819_WriteRegister(0x3D, 0);
 }
 
 static uint16_t BK4819_ReadU16(void) {
@@ -367,11 +368,11 @@ void BK4819_SetRegValue(RegisterSpec s, uint16_t v) {
 }
 
 void BK4819_SetModulation(ModulationType type) {
-  const uint8_t modTypeReg47Values[] = {1, 7, 5, 9};
+  const uint8_t modTypeReg47Values[] = {1, 7, 5, 9, 4};
 
   BK4819_SetAF(modTypeReg47Values[type]);
   BK4819_SetRegValue(afDacGainRegSpec, 0xF);
-  BK4819_WriteRegister(0x3D, type == MOD_USB ? 0 : 0x2AAB);
+  // BK4819_WriteRegister(0x3D, type == MOD_USB ? 0 : 0x2AAB);
   BK4819_SetRegValue(afcDisableRegSpec, 1);
 }
 

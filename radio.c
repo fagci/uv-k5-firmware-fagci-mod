@@ -45,7 +45,7 @@ STEP_Setting_t gStepSetting;
 
 VfoState_t VfoState[2];
 
-const char *modulationTypeOptions[] = {" FM", " AM", "SSB", "RAW"};
+const char *modulationTypeOptions[] = {" FM", " AM", "SSB", "BYP", "RAW"};
 
 bool RADIO_CheckValidChannel(uint16_t Channel, bool bCheckScanList,
                              uint8_t VFO) {
