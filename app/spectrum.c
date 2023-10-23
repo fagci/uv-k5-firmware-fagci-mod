@@ -458,6 +458,8 @@ static void ToggleRX(bool on) {
   if (isListening == on) {
     return;
   }
+  redrawScreen = true; // HACK: to show when we listening actually or not
+
   isListening = on;
   if (on) {
     ToggleTX(false);
