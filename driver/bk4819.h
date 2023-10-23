@@ -17,36 +17,45 @@
 #ifndef DRIVER_BK4819_h
 #define DRIVER_BK4819_h
 
-#include <stdbool.h>
-#include <stdint.h>
 #include "../driver/bk4819-regs.h"
 #include "../radio.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 enum BK4819_AF_Type_t {
-	BK4819_AF_MUTE = 0U,
-	BK4819_AF_OPEN = 1U,
-	BK4819_AF_ALAM = 2U,
-	BK4819_AF_BEEP = 3U,
-	BK4819_AF_CTCO = 6U,
-	BK4819_AF_AM   = 7U,
-	BK4819_AF_FSKO = 8U,
+  BK4819_AF_MUTE = 0U,
+  BK4819_AF_OPEN = 1U,
+  BK4819_AF_ALAM = 2U,
+  BK4819_AF_BEEP = 3U,
+  BK4819_AF_CTCO = 6U,
+  BK4819_AF_AM = 7U,
+  BK4819_AF_FSKO = 8U,
 };
 
 typedef enum BK4819_AF_Type_t BK4819_AF_Type_t;
 
 enum BK4819_FilterBandwidth_t {
-	BK4819_FILTER_BW_WIDE   = 0U,
-	BK4819_FILTER_BW_NARROW = 1U,
-	BK4819_FILTER_BW_NARROWER = 2U,
+  BK4819_FILTER_BW_WIDE = 0U,
+  BK4819_FILTER_BW_NARROW = 1U,
+  BK4819_FILTER_BW_NARROWER = 2U,
 };
 
 typedef enum BK4819_FilterBandwidth_t BK4819_FilterBandwidth_t;
 
 enum BK4819_CssScanResult_t {
-	BK4819_CSS_RESULT_NOT_FOUND = 0U,
-	BK4819_CSS_RESULT_CTCSS = 1U,
-	BK4819_CSS_RESULT_CDCSS = 2U,
+  BK4819_CSS_RESULT_NOT_FOUND = 0U,
+  BK4819_CSS_RESULT_CTCSS = 1U,
+  BK4819_CSS_RESULT_CDCSS = 2U,
 };
+
+typedef enum BK4819_XTALMode {
+  XTAL26M,
+  XTAL13M,
+  XTAL19M2,
+  XTAL12M8,
+  XTAL25M6,
+  XTAL38M4,
+} BK4819_XTALMode;
 
 typedef enum BK4819_CssScanResult_t BK4819_CssScanResult_t;
 extern const uint16_t listenBWRegValues[3];
@@ -71,10 +80,12 @@ void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth);
 void BK4819_SetupPowerAmplifier(uint16_t Bias, uint32_t Frequency);
 void BK4819_SetFrequency(uint32_t Frequency);
 uint32_t BK4819_GetFrequency(void);
-void BK4819_SetupSquelch(
-		uint8_t SquelchOpenRSSIThresh, uint8_t SquelchCloseRSSIThresh,
-		uint8_t SquelchOpenNoiseThresh, uint8_t SquelchCloseNoiseThresh,
-		uint8_t SquelchCloseGlitchThresh, uint8_t SquelchOpenGlitchThresh);
+void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh,
+                         uint8_t SquelchCloseRSSIThresh,
+                         uint8_t SquelchOpenNoiseThresh,
+                         uint8_t SquelchCloseNoiseThresh,
+                         uint8_t SquelchCloseGlitchThresh,
+                         uint8_t SquelchOpenGlitchThresh);
 
 void BK4819_SetAF(BK4819_AF_Type_t AF);
 void BK4819_RX_TurnOn(void);
@@ -104,7 +115,10 @@ void BK4819_ExitDTMF_TX(bool bKeep);
 void BK4819_EnableTXLink(void);
 
 void BK4819_PlayDTMF(char Code);
-void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst, uint16_t FirstCodePersistTime, uint16_t HashCodePersistTime, uint16_t CodePersistTime, uint16_t CodeInternalTime);
+void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst,
+                           uint16_t FirstCodePersistTime,
+                           uint16_t HashCodePersistTime,
+                           uint16_t CodePersistTime, uint16_t CodeInternalTime);
 
 void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency);
 
@@ -115,7 +129,8 @@ void BK4819_EnableCTCSS(void);
 uint16_t BK4819_GetRSSI(void);
 
 bool BK4819_GetFrequencyScanResult(uint32_t *pFrequency);
-BK4819_CssScanResult_t BK4819_GetCxCSSScanResult(uint32_t *pCdcssFreq, uint16_t *pCtcssFreq);
+BK4819_CssScanResult_t BK4819_GetCxCSSScanResult(uint32_t *pCdcssFreq,
+                                                 uint16_t *pCtcssFreq);
 void BK4819_DisableFrequencyScan(void);
 void BK4819_EnableFrequencyScan(void);
 void BK4819_SetScanFrequency(uint32_t Frequency);
@@ -149,4 +164,3 @@ void BK4819_SetModulation(ModulationType type);
 void BK4819_TuneTo(uint32_t f);
 
 #endif
-

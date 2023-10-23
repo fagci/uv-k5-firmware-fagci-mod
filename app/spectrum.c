@@ -412,14 +412,9 @@ static void TuneToPeak() {
   SetF(scanInfo.f);
 }
 
-uint8_t GetBWRegValueForScan() {
-  /* if (settings.scanStepIndex < STEP_1_0kHz) {
-    return scanStepBWRegValues[0];
-  } */
-  return scanStepBWRegValues[ARRAY_SIZE(scanStepBWRegValues) - 1];
-}
+uint16_t GetBWRegValueForScan() { return 0b0000000110111100; }
 
-uint8_t GetBWRegValueForListen() {
+uint16_t GetBWRegValueForListen() {
   return listenBWRegValues[settings.listenBw];
 }
 
@@ -431,7 +426,7 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-uint16_t delayUS = 3200;
+uint16_t delayUS = 800;
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
@@ -1508,10 +1503,6 @@ static void AutomaticPresetChoose(uint32_t f) {
 
 void APP_RunSpectrum() {
   BackupRegisters();
-
-  BK4819_SetAGC(1); // normalize initial gain
-  BK4819_SetRegValue((RegisterSpec){"AGC Fix Mode", 0x7E, 15, 1, 1}, 1);
-  BK4819_SetRegValue(afcDisableRegSpec, 1);
 
   // AM_fix_init();
 

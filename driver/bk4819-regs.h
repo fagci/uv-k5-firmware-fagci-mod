@@ -17,6 +17,7 @@
 #ifndef BK4819_REGS_H
 #define BK4819_REGS_H
 
+#include <stdint.h>
 typedef struct RegisterSpec {
   const char *name;
   uint8_t num;
