@@ -48,15 +48,6 @@ enum BK4819_CssScanResult_t {
   BK4819_CSS_RESULT_CDCSS = 2U,
 };
 
-typedef enum BK4819_XTALMode {
-  XTAL26M,
-  XTAL13M,
-  XTAL19M2,
-  XTAL12M8,
-  XTAL25M6,
-  XTAL38M4,
-} BK4819_XTALMode;
-
 typedef enum BK4819_CssScanResult_t BK4819_CssScanResult_t;
 extern const uint16_t listenBWRegValues[3];
 

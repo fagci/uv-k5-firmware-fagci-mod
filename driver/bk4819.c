@@ -39,7 +39,7 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_00, 0x0000);
   BK4819_WriteRegister(BK4819_REG_37, 0x1D0F);
   BK4819_WriteRegister(BK4819_REG_36, 0x0022);
-  BK4819_SetAGC(0);
+  BK4819_SetAGC(1);
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
@@ -187,9 +187,11 @@ void BK4819_SetAGC(uint8_t Value) {
     BK4819_WriteRegister(BK4819_REG_7C, 0x595E);
     BK4819_WriteRegister(BK4819_REG_20, 0x8DEF);
     for (i = 0; i < 8; i++) {
-      // Bug? The bit 0x2000 below overwrites the (i << 13)
-      BK4819_WriteRegister(BK4819_REG_06, ((i << 13) | 0x2500U) + 0x36U);
+      BK4819_WriteRegister(0x06, (i & 7) << 13 | 0x4A << 7 | 0x36);
     }
+    /* for (i = 0; i < 8; i++) {
+      BK4819_WriteRegister(BK4819_REG_06, ((i << 13) | 0x2500U) + 0x36U);
+    } */
   }
 }
 
@@ -968,4 +970,3 @@ void BK4819_TuneTo(uint32_t f) {
   BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
   BK4819_WriteRegister(BK4819_REG_30, reg);
 }
-
