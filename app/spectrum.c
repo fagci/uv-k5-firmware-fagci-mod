@@ -316,18 +316,8 @@ static void RestoreRegisters() {
   }
 }
 
-static void SetF(uint32_t f) {
-  /* if (fMeasure == f) {
-    return;
-  } */
-  fMeasure = f;
-  BK4819_TuneTo(f);
-}
-
-static void SetTxF(uint32_t f) {
-  fTx = f;
-  BK4819_TuneTo(f);
-}
+static void SetF(uint32_t f) { BK4819_TuneTo(fMeasure = f); }
+static void SetTxF(uint32_t f) { BK4819_TuneTo(fTx = f); }
 
 // Spectrum related
 
@@ -418,6 +408,7 @@ uint16_t GetBWRegValueForListen() {
   return listenBWRegValues[settings.listenBw];
 }
 
+// Needed to cleanup RSSI if we're hurry (< 10ms)
 static void ResetRSSI() {
   uint32_t Reg = BK4819_ReadRegister(BK4819_REG_30);
   Reg &= ~1;
@@ -426,11 +417,10 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-uint16_t delayUS = 800;
+uint16_t delayUS = 1200;
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
-    // if (0)
     ResetRSSI();
     SYSTICK_DelayUs(delayUS);
   }
@@ -1376,7 +1366,7 @@ static void UpdateScan() {
   MoveHistory();
 
   uint8_t overCnt = 0;
-  for (uint8_t x = 0; x < 128; ++x) {
+  for (uint8_t x = 0; x < scanInfo.measurementsCount; ++x) {
     if (rssiHistory[x] > settings.rssiTriggerLevel) {
       overCnt++;
     }

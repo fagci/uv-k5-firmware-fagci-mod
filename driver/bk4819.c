@@ -39,7 +39,7 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_00, 0x0000);
   BK4819_WriteRegister(BK4819_REG_37, 0x1D0F);
   BK4819_WriteRegister(BK4819_REG_36, 0x0022);
-  BK4819_SetAGC(1);
+  BK4819_SetAGC(0);
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
