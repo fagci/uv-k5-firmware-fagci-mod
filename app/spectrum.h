@@ -206,6 +206,16 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"XTAL F reserved flt", 0x3C, 0, 0b111111, 1},
     {"XTAL Enable", 0x37, 1, 1, 1},
 
+    // {"DSP Voltage Setting", 0x37, 12, 0b111, 1},
+    {"ANA LDO Selection", 0x37, 11, 1, 1},
+    {"VCO LDO Selection", 0x37, 10, 1, 1},
+    {"RF LDO Selection", 0x37, 9, 1, 1},
+    {"PLL LDO Selection", 0x37, 8, 1, 1},
+    {"ANA LDO Bypass", 0x37, 7, 1, 1},
+    {"VCO LDO Bypass", 0x37, 6, 1, 1},
+    {"RF LDO Bypass", 0x37, 5, 1, 1},
+    {"PLL LDO Bypass", 0x37, 4, 1, 1},
+
     {"Freq Scan Indicator", 0x0D, 15, 1, 1},
     {"F Scan High 16 bits", 0x0D, 0, 0xFFFF, 1},
     {"F Scan Low 16 bits", 0x0E, 0, 0xFFFF, 1},
