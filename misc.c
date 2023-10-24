@@ -148,6 +148,7 @@ volatile bool gNextTimeslice40ms;
 volatile bool gSchedulePowerSave;
 volatile bool gBatterySaveCountdownExpired;
 volatile bool gScheduleDualWatch = true;
+uint8_t gAbrTxRx;
 #if defined(ENABLE_NOAA)
 volatile bool gScheduleNOAA = true;
 #endif

@@ -47,7 +47,8 @@ static const char MenuList[][7] = {
     "MEM-CH",
     "SAVE",
     "VOX",
-    "ABR",
+    "BL",
+    "BL TRX",
     // 0x10
     "TDR",
     "WX",
@@ -85,7 +86,7 @@ static const char MenuList[][7] = {
     "PONMSG",
     "ROGER",
     "VOL",
-    "AM",
+    "MODUL",
 // 0x30
 #if defined(ENABLE_NOAA)
     "NOAA_S",
@@ -183,6 +184,8 @@ static const char gSubMenu_RESET[2][4] = {
 static const char gSubMenu_F_LOCK[5][8] = {
     "OFF", "FCC", "CE", "GB", "LPD PMR",
 };
+const char gSubMenuBacklight[8][7] = {"OFF",   "5 sec", "10 sec", "20 sec",
+                                      "1 min", "2 min", "ON"};
 
 static const char *defaultEnableDisable[3] = {"DEFAULT", "ENABLE", "DISABLE"};
 static const char *offOn[3] = {"OFF", "ON"};
@@ -298,12 +301,15 @@ void UI_DisplayMenu(void) {
 
   case MENU_SCR:
   case MENU_VOX:
-  case MENU_ABR:
     if (gSubMenuSelection == 0) {
       strcpy(String, "OFF");
     } else {
       sprintf(String, "%d", gSubMenuSelection);
     }
+    break;
+
+  case MENU_ABR:
+    strcpy(String, gSubMenuBacklight[gSubMenuSelection]);
     break;
 
   case MENU_ALL_TX:

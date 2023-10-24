@@ -53,6 +53,7 @@ SpectrumSettings settings = {
     .backlightState = true,
     .listenBw = BK4819_FILTER_BW_WIDE,
     .modulationType = MOD_FM,
+    .delayUS = 1200,
 };
 
 uint32_t fMeasure = 0;
@@ -417,12 +418,14 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-uint16_t delayUS = 1200;
+/* uint16_t GetSNR() {
+  return BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1});
+} */
 
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
     ResetRSSI();
-    SYSTICK_DelayUs(delayUS);
+    SYSTICK_DelayUs(settings.delayUS);
   }
   return BK4819_GetRSSI();
 }
@@ -567,8 +570,8 @@ static void RelaunchScan() {
 #ifdef SPECTRUM_AUTOMATIC_SQUELCH
   settings.rssiTriggerLevel = RSSI_MAX_VALUE;
 #endif
-  preventKeypress = true;
   scanInfo.rssiMin = RSSI_MAX_VALUE;
+  preventKeypress = true;
   redrawStatus = true;
 }
 
@@ -807,7 +810,7 @@ static void DrawStatus() {
       UI_PrintStringSmallest(p->name, 0, 1, true, true);
     }
 
-    sprintf(String, "D: %u us", delayUS);
+    sprintf(String, "D: %u us", settings.delayUS);
     UI_PrintStringSmallest(String, 64, 1, true, true);
   }
 
@@ -885,8 +888,8 @@ static void DrawRssiTriggerLevel() {
   if (settings.rssiTriggerLevel == RSSI_MAX_VALUE || monitorMode)
     return;
   uint8_t y = Rssi2Y(settings.rssiTriggerLevel);
-  for (uint8_t x = 0; x < 128; x += 2) {
-    PutPixel(x, y, true);
+  for (uint8_t x = 0; x < 128; ++x) {
+    PutPixel(x, y, 2);
   }
 }
 
@@ -943,14 +946,14 @@ static void OnKeyDown(uint8_t key) {
   case KEY_3:
     if (0)
       SelectNearestPreset(true);
-    delayUS += 100;
+    settings.delayUS += 100;
     SYSTEM_DelayMs(100);
     redrawStatus = true;
     break;
   case KEY_9:
     if (0)
       SelectNearestPreset(false);
-    delayUS -= 100;
+    settings.delayUS -= 100;
     SYSTEM_DelayMs(100);
     redrawStatus = true;
     break;
@@ -1367,16 +1370,6 @@ static void UpdateScan() {
 
   MoveHistory();
 
-  uint8_t overCnt = 0;
-  for (uint8_t x = 0; x < scanInfo.measurementsCount; ++x) {
-    if (rssiHistory[x] > settings.rssiTriggerLevel) {
-      overCnt++;
-    }
-  }
-  if (overCnt > 6) {
-    settings.rssiTriggerLevel = RSSI_MAX_VALUE;
-  }
-
   redrawScreen = true;
   preventKeypress = false;
 
@@ -1430,6 +1423,8 @@ static void UpdateListening() {
 
   peak.rssi = scanInfo.rssi;
   // AM_fix_reset(0);
+
+  MoveHistory();
 
   if (IsPeakOverLevel() || monitorMode) {
     listenT = currentState == SPECTRUM ? 1000 : 10;

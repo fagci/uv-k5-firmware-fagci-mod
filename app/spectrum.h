@@ -76,6 +76,7 @@ typedef struct SpectrumSettings {
   bool backlightState;
   BK4819_FilterBandwidth_t listenBw;
   ModulationType modulationType;
+  uint16_t delayUS;
 } SpectrumSettings;
 
 typedef struct KeyboardState {
