@@ -243,10 +243,6 @@ static void ResetRSSI() {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-/* uint16_t GetSNR() {
-  return BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1});
-} */
-
 uint16_t GetRssi() {
   if (currentState == SPECTRUM) {
     ResetRSSI();

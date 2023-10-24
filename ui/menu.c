@@ -47,10 +47,9 @@ static const char MenuList[][7] = {
     "MEM-CH",
     "SAVE",
     "VOX",
-    "BL",
-    "BL TRX",
+    "BACKLI",
     // 0x10
-    "TDR",
+    "DW",
     "WX",
     "BEEP",
     "TOT",
