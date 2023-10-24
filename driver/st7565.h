@@ -20,8 +20,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-extern uint8_t gStatusLine[128];
-extern uint8_t gFrameBuffer[7][128];
+#define LCD_WIDTH 128
+
+extern uint8_t gStatusLine[LCD_WIDTH];
+extern uint8_t gFrameBuffer[7][LCD_WIDTH];
 
 void ST7565_DrawLine(uint8_t Column, uint8_t Line, uint16_t Size, const uint8_t *pBitmap, bool bIsClearMode);
 void ST7565_BlitFullScreen(void);
