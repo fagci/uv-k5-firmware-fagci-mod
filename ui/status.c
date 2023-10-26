@@ -14,71 +14,56 @@
  *     limitations under the License.
  */
 
+#include "battery.h"
 #include <string.h>
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
-#include "bitmaps.h"
-#include "driver/keyboard.h"
-#include "driver/st7565.h"
-#include "functions.h"
-#include "helper/battery.h"
-#include "misc.h"
-#include "settings.h"
-#include "ui/status.h"
+#include "../bitmaps.h"
+#include "../driver/keyboard.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
+#include "../functions.h"
+#include "../helper/battery.h"
+#include "../misc.h"
+#include "../settings.h"
+#include "../ui/helper.h"
+#include "status.h"
 
-void UI_DisplayStatus(void)
-{
-	memset(gStatusLine, 0, sizeof(gStatusLine));
-	if (gCurrentFunction == FUNCTION_POWER_SAVE) {
-		memcpy(gStatusLine, BITMAP_PowerSave, sizeof(BITMAP_PowerSave));
-	}
-	if (gBatteryDisplayLevel < 2) {
-		if (gLowBatteryBlink == 1) {
-			memcpy(gStatusLine + 110, BITMAP_BatteryLevel1, sizeof(BITMAP_BatteryLevel1));
-		}
-	} else {
-		if (gBatteryDisplayLevel == 2) {
-			memcpy(gStatusLine + 110, BITMAP_BatteryLevel2, sizeof(BITMAP_BatteryLevel2));
-		} else if (gBatteryDisplayLevel == 3) {
-			memcpy(gStatusLine + 110, BITMAP_BatteryLevel3, sizeof(BITMAP_BatteryLevel3));
-		} else if (gBatteryDisplayLevel == 4) {
-			memcpy(gStatusLine + 110, BITMAP_BatteryLevel4, sizeof(BITMAP_BatteryLevel4));
-		} else {
-			memcpy(gStatusLine + 110, BITMAP_BatteryLevel5, sizeof(BITMAP_BatteryLevel5));
-		}
-	}
-	if (gChargingWithTypeC) {
-		memcpy(gStatusLine + 100, BITMAP_USB_C, sizeof(BITMAP_USB_C));
-	}
-	if (gEeprom.KEY_LOCK) {
-		memcpy(gStatusLine + 90, BITMAP_KeyLock, sizeof(BITMAP_KeyLock));
-	} else if (gWasFKeyPressed) {
-		memcpy(gStatusLine + 90, BITMAP_F_Key, sizeof(BITMAP_F_Key));
-	}
+void UI_DisplayStatus(void) {
+  memset(gStatusLine, 64, sizeof(gStatusLine));
 
-	if (gEeprom.VOX_SWITCH) {
-		memcpy(gStatusLine + 71, BITMAP_VOX, sizeof(BITMAP_VOX));
-	}
-	if (gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF) {
-		memcpy(gStatusLine + 58, BITMAP_WX, sizeof(BITMAP_WX));
-	}
-	if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-		memcpy(gStatusLine + 45, BITMAP_TDR, sizeof(BITMAP_TDR));
-	}
-	if (gEeprom.VOICE_PROMPT != VOICE_PROMPT_OFF) {
-		memcpy(gStatusLine + 34, BITMAP_VoicePrompt, sizeof(BITMAP_VoicePrompt));
-	}
+  if (gBatteryDisplayLevel < 2) {
+    if (gLowBatteryBlink == 1) {
+      UI_DisplayBattery(1);
+    }
+  } else {
+    UI_DisplayBattery(gBatteryDisplayLevel);
+  }
+
+  bool isPowerSave = true; // gCurrentFunction == FUNCTION_POWER_SAVE;
+  bool isKeyLock = true; // gEeprom.KEY_LOCK;
+  bool isFPressed = true; // gWasFKeyPressed;
+  bool isVox = true; // gEeprom.VOX_SWITCH;
+  bool isWx = true; // gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF;
+  bool isDw = true; // gEeprom.DUAL_WATCH != DUAL_WATCH_OFF;
 #if defined(ENABLE_FMRADIO)
-	else if (gFmRadioMode) {
-		memcpy(gStatusLine + 21, BITMAP_FM, sizeof(BITMAP_FM));
-	}
+  bool isFm = true; // gFmRadioMode;
+#else
+  bool isFm = true; // false;
 #endif
-#if defined(ENABLE_NOAA)
-	if (gIsNoaaMode) {
-		memcpy(gStatusLine + 7, BITMAP_NOAA, sizeof(BITMAP_NOAA));
-	}
-#endif
-	ST7565_BlitStatusLine();
-}
 
+  char String[32];
+  sprintf(String, "%s %s %s %s %s %s %s",
+          isPowerSave ? "S" : " ", //
+          isKeyLock ? "L" : " ",   //
+          isFPressed ? "F" : " ",  //
+          isVox ? "VOX" : "   ",   //
+          isWx ? "WX" : "  ",      //
+          isDw ? "DW" : "  ",      //
+          isFm ? "FM" : "  "       //
+  );
+  UI_PrintStringSmallest(String, 0, 0, true, true);
+
+  ST7565_BlitStatusLine();
+}

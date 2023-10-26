@@ -17,7 +17,8 @@
 #ifndef UI_RSSI_H
 #define UI_RSSI_H
 
-void UI_UpdateRSSI(uint16_t RSSI);
+#include <stdint.h>
+void UI_DisplayRSSIBar(int16_t rssi);
 
 #endif
 

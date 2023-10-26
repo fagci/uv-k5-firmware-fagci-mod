@@ -87,9 +87,6 @@ static const char MenuList[][7] = {
     "VOL",
     "MODUL",
 // 0x30
-#if defined(ENABLE_NOAA)
-    "NOAA_S",
-#endif
     "DEL-CH",
     "RESET",
     "350TX",
@@ -322,9 +319,6 @@ void UI_DisplayMenu(void) {
   case MENU_S_ADD2:
   case MENU_D_ST:
   case MENU_D_DCD:
-#if defined(ENABLE_NOAA)
-  case MENU_NOAA_S:
-#endif
   case MENU_350TX:
   case MENU_200TX:
   case MENU_500TX:

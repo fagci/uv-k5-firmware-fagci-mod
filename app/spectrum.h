@@ -38,6 +38,7 @@
 #include "../misc.h"
 #include "../radio.h"
 #include "../settings.h"
+#include "../ui/battery.h"
 #include "../ui/helper.h"
 #include "ARMCM0.h"
 #include <stdbool.h>

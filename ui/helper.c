@@ -14,12 +14,12 @@
  *     limitations under the License.
  */
 
-#include "ui/helper.h"
-#include "driver/st7565.h"
-#include "external/printf/printf.h"
-#include "font.h"
-#include "misc.h"
-#include "ui/inputbox.h"
+#include "helper.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
+#include "../font.h"
+#include "../misc.h"
+#include "inputbox.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -205,7 +205,7 @@ void PutPixelStatus(uint8_t x, uint8_t y, bool fill) {
 
 void DrawHLine(int sy, int ey, int nx, bool fill) {
   for (int i = sy; i <= ey; i++) {
-    if (i < 56 && nx < 128) {
+    if (i < 56 && nx < LCD_WIDTH) {
       PutPixel(nx, i, fill);
     }
   }

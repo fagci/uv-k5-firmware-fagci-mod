@@ -71,9 +71,6 @@ enum {
 	MENU_ROGER,
 	MENU_VOL,
 	MENU_AM,
-#if defined(ENABLE_NOAA)
-	MENU_NOAA_S,
-#endif
 	MENU_DEL_CH,
 	MENU_RESET,
 	MENU_350TX,

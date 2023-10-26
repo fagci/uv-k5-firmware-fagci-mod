@@ -251,22 +251,6 @@ uint16_t GetRssi() {
   return BK4819_GetRSSI();
 }
 
-uint32_t GetOffsetedF(uint32_t f) {
-  switch (gCurrentVfo->FREQUENCY_DEVIATION_SETTING) {
-  case FREQUENCY_DEVIATION_OFF:
-    break;
-  case FREQUENCY_DEVIATION_ADD:
-    f += gCurrentVfo->FREQUENCY_OF_DEVIATION;
-    break;
-  case FREQUENCY_DEVIATION_SUB:
-    f -= gCurrentVfo->FREQUENCY_OF_DEVIATION;
-    break;
-  }
-
-  return Clamp(f, FrequencyBandTable[0].lower,
-               FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper);
-}
-
 static void ToggleAudio(bool on) {
   if (on) {
     GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
@@ -329,7 +313,7 @@ static void ToggleTX(bool on) {
   if (on) {
     ToggleAudio(false);
 
-    SetTxF(GetOffsetedF(fMeasure));
+    SetTxF(GetOffsetedF(gCurrentVfo, fMeasure));
 
     RegBackupSet(BK4819_REG_47, 0x6040);
     RegBackupSet(BK4819_REG_7E, 0x302E);
@@ -627,7 +611,7 @@ static void DrawStatus() {
     if (hiddenMenuState) {
       RegisterSpec s = hiddenRegisterSpecs[hiddenMenuState];
       sprintf(String, "%x %s: %u", s.num, s.name, BK4819_GetRegValue(s));
-      UI_PrintStringSmallest(String, 0, 1, true, true);
+      UI_PrintStringSmallest(String, 0, 0, true, true);
     } else {
 #endif
       const FreqPreset *p = NULL;
@@ -638,29 +622,17 @@ static void DrawStatus() {
         }
       }
       if (p != NULL) {
-        UI_PrintStringSmallest(p->name, 0, 1, true, true);
+        UI_PrintStringSmallest(p->name, 0, 0, true, true);
       }
 
       sprintf(String, "D: %u us", settings.delayUS);
-      UI_PrintStringSmallest(String, 64, 1, true, true);
+      UI_PrintStringSmallest(String, 64, 0, true, true);
     }
 #ifdef ENABLE_ALL_REGISTERS
   }
 #endif
 
-  gStatusLine[127] = 0b01111110;
-  for (uint8_t i = 126; i >= 116; i--) {
-    gStatusLine[i] = 0b01000010;
-  }
-  uint8_t v = gBatteryDisplayLevel;
-  v <<= 1;
-  for (uint8_t i = 125; i >= 116; i--) {
-    if (126 - i <= v) {
-      gStatusLine[i + 2] = 0b01111110;
-    }
-  }
-  gStatusLine[117] = 0b01111110;
-  gStatusLine[116] = 0b00011000;
+  UI_DisplayBattery(gBatteryDisplayLevel);
 }
 
 static void DrawF(uint32_t f) {
@@ -673,10 +645,14 @@ static void DrawF(uint32_t f) {
     return;
   }
 
-  sprintf(String, "R%03u S%03u A%03u", scanInfo.rssi,
-          BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1}),
-          BK4819_GetRegValue((RegisterSpec){"agc_rssi", 0x62, 8, 0xFF, 1}));
-  UI_PrintStringSmallest(String, 26, 8, false, true);
+#ifdef ENABLE_ALL_REGISTERS
+  if (currentState == SPECTRUM) {
+    sprintf(String, "R%03u S%03u A%03u", scanInfo.rssi,
+            BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1}),
+            BK4819_GetRegValue((RegisterSpec){"agc_rssi", 0x62, 8, 0xFF, 1}));
+    UI_PrintStringSmallest(String, 26, 8, false, true);
+  }
+#endif
 
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
@@ -684,7 +660,7 @@ static void DrawF(uint32_t f) {
     switch (txAllowState) {
     case VFO_STATE_NORMAL:
       if (isTransmitting) {
-        f = GetOffsetedF(f);
+        f = GetOffsetedF(gCurrentVfo, f);
         sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
       }
       break;
@@ -853,14 +829,14 @@ static void OnKeyDown(uint8_t key) {
     break;
   case KEY_SIDE1:
 #ifdef ENABLE_ALL_REGISTERS
-        if(settings.rssiTriggerLevel != RSSI_MAX_VALUE - 1) {
-            settings.rssiTriggerLevel = RSSI_MAX_VALUE - 1;
-        } else {
-            settings.rssiTriggerLevel = RSSI_MAX_VALUE;
-        }
-        redrawScreen = true;
+    if (settings.rssiTriggerLevel != RSSI_MAX_VALUE - 1) {
+      settings.rssiTriggerLevel = RSSI_MAX_VALUE - 1;
+    } else {
+      settings.rssiTriggerLevel = RSSI_MAX_VALUE;
+    }
+    redrawScreen = true;
 #else
-        Blacklist();
+    Blacklist();
 #endif
     break;
   case KEY_STAR:
@@ -1039,7 +1015,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     UpdateBatteryInfo();
     if (gBatteryDisplayLevel == 6) {
       txAllowState = VFO_STATE_VOL_HIGH;
-    } else if (IsTXAllowed(GetOffsetedF(fMeasure))) {
+    } else if (IsTXAllowed(GetOffsetedF(gCurrentVfo, fMeasure))) {
       txAllowState = VFO_STATE_NORMAL;
       ToggleTX(true);
     } else {

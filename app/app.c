@@ -58,7 +58,7 @@
 #if defined(ENABLE_OVERLAY)
 #include "sram-overlay.h"
 #endif
-#include "../ui/main.h"
+#include "../ui/rssi.h"
 #include "ui/battery.h"
 #include "ui/helper.h"
 #include "ui/inputbox.h"
@@ -86,12 +86,6 @@ static void APP_CheckForIncoming(void) {
       gRxReceptionMode = RX_MODE_DETECTED;
     }
     if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF) {
-#if defined(ENABLE_NOAA)
-      if (gIsNoaaMode) {
-        gNOAA_Countdown = 20;
-        gScheduleNOAA = false;
-      }
-#endif
       FUNCTION_Select(FUNCTION_INCOMING);
       return;
     }
@@ -123,12 +117,6 @@ static void APP_HandleIncoming(void) {
   }
 
   bFlag = (gScanState == SCAN_OFF && gCurrentCodeType == CODE_TYPE_OFF);
-#if defined(ENABLE_NOAA)
-  if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) && gSystickCountdown2) {
-    bFlag = true;
-    gSystickCountdown2 = 0;
-  }
-#endif
   if (g_CTCSS_Lost && gCurrentCodeType == CODE_TYPE_CONTINUOUS_TONE) {
     bFlag = true;
     gFoundCTCSS = false;
@@ -259,11 +247,6 @@ Skip:
   switch (Mode) {
   case END_OF_RX_MODE_END:
     RADIO_SetupRegisters(true);
-#if defined(ENABLE_NOAA)
-    if (IS_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
-      gSystickCountdown2 = 300;
-    }
-#endif
     gUpdateDisplay = true;
     if (gScanState != SCAN_OFF) {
       switch (gEeprom.SCAN_RESUME_MODE) {
@@ -347,17 +330,6 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
 
     bScanKeepFrequency = true;
   }
-
-#ifdef ENABLE_NOAA
-  if (IS_NOAA_CHANNEL(gRxVfo->channelSave) && gIsNoaaMode) {
-    gRxVfo->channelSave = gNoaaChannel + NOAA_CHANNEL_FIRST;
-    gRxVfo->pRX->frequency = NoaaFrequencyTable[gNoaaChannel];
-    gRxVfo->pTX->frequency = NoaaFrequencyTable[gNoaaChannel];
-    gEeprom.screenChannel[chan] = gRxVfo->channelSave;
-    gNoaaCountDown_10ms = 500; // 5 sec
-    gScheduleNoaa = false;
-  }
-#endif
 
   if (gCssScanMode != CSS_SCAN_MODE_OFF)
     gCssScanMode = CSS_SCAN_MODE_FOUND;
@@ -533,42 +505,11 @@ Skip:
   }
 }
 
-#if defined(ENABLE_NOAA)
-static void NOAA_NextChannel(void) {
-  gNoaaChannel++;
-  if (gNoaaChannel > 9) {
-    gNoaaChannel = 0;
-  }
-}
-#endif
-
 static void DUALWATCH_Alternate(void) {
-#if defined(ENABLE_NOAA)
-  if (gIsNoaaMode) {
-    if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0]) ||
-        IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) {
-      gEeprom.RX_CHANNEL = gEeprom.RX_CHANNEL == 0;
-    } else {
-      gEeprom.RX_CHANNEL = 0;
-    }
-    gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_CHANNEL];
-    if (gEeprom.VfoInfo[0].CHANNEL_SAVE >= NOAA_CHANNEL_FIRST) {
-      NOAA_NextChannel();
-    }
-  } else {
-#endif
-    gEeprom.RX_CHANNEL = gEeprom.RX_CHANNEL == 0;
-    gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_CHANNEL];
-#if defined(ENABLE_NOAA)
-  }
-#endif
+  gEeprom.RX_CHANNEL = gEeprom.RX_CHANNEL == 0;
+  gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_CHANNEL];
   RADIO_SetupRegisters(false);
-#if defined(ENABLE_NOAA)
-  if (gIsNoaaMode) {
-    gDualWatchCountdown = 7;
-  } else
-#endif
-    gDualWatchCountdown = 10;
+  gDualWatchCountdown = 10;
 }
 
 void APP_CheckRadioInterrupts(void) {
@@ -774,15 +715,6 @@ void APP_Update(void) {
     gScheduleScanListen = false;
   }
 
-#if defined(ENABLE_NOAA)
-  if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF && gIsNoaaMode && gScheduleNOAA) {
-    NOAA_NextChannel();
-    RADIO_SetupRegisters(false);
-    gScheduleNOAA = false;
-    gNOAA_Countdown = 7;
-  }
-#endif
-
   if (gScreenToDisplay != DISPLAY_SCANNER &&
       gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
     if (gScheduleDualWatch) {
@@ -831,11 +763,7 @@ void APP_Update(void) {
       gBatterySaveCountdown = 1000;
     } else {
       if ((IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0]) &&
-           IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1]))
-#if defined(ENABLE_NOAA)
-          || !gIsNoaaMode
-#endif
-      ) {
+           IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1]))) {
         FUNCTION_Select(FUNCTION_POWER_SAVE);
       } else {
         gBatterySaveCountdown = 1000;
@@ -860,10 +788,6 @@ void APP_Update(void) {
       gRxIdleMode = false;
     } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_OFF || gScanState != SCAN_OFF ||
                gCssScanMode != CSS_SCAN_MODE_OFF || gUpdateRSSI) {
-#ifndef ENABLE_RSSIBAR
-      gCurrentRSSI = BK4819_GetRSSI();
-      UI_UpdateRSSI(gCurrentRSSI);
-#endif
       gBatterySave = gEeprom.BATTERY_SAVE * 10;
       gRxIdleMode = true;
       BK4819_DisableVox();
@@ -963,7 +887,6 @@ void APP_TimeSlice10ms(void) {
 #endif
 
   // once every 150ms
-#if defined(ENABLE_RSSIBAR)
   if (gScreenToDisplay == DISPLAY_MAIN && !gKeypadLocked &&
       (gFlashLightBlinkCounter & 15U) == 0) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
@@ -972,7 +895,6 @@ void APP_TimeSlice10ms(void) {
       UI_DisplayRSSIBar(BK4819_GetRSSI());
     }
   }
-#endif
 
   if (gReducedService) {
     return;
@@ -1229,12 +1151,6 @@ void APP_TimeSlice500ms(void) {
       }
       BATTERY_GetReadings(true);
     }
-#ifndef ENABLE_RSSIBAR
-    if (gCurrentFunction != FUNCTION_POWER_SAVE) {
-      gCurrentRSSI = BK4819_GetRSSI();
-      UI_UpdateRSSI(gCurrentRSSI);
-    }
-#endif
     if (
 #if defined(ENABLE_FMRADIO)
         (gFM_ScanState == FM_SCAN_OFF || gAskToSave) &&
@@ -1727,9 +1643,6 @@ Skip:
 
   if (gFlagReconfigureVfos) {
     RADIO_SelectVfos();
-#if defined(ENABLE_NOAA)
-    RADIO_ConfigureNOAA();
-#endif
     RADIO_SetupRegisters(true);
     gDTMF_AUTO_RESET_TIME = 0;
     gDTMF_CallState = DTMF_CALL_STATE_NONE;

@@ -15,6 +15,7 @@
  */
 
 #include "app/dtmf.h"
+#include "helper/measurements.h"
 #include <string.h>
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
@@ -147,18 +148,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
 
   Channel = gEeprom.ScreenChannel[VFO];
   if (IS_VALID_CHANNEL(Channel)) {
-#if defined(ENABLE_NOAA)
-    if (Channel >= NOAA_CHANNEL_FIRST) {
-      RADIO_InitInfo(pRadio, gEeprom.ScreenChannel[VFO], 2,
-                     NoaaFrequencyTable[Channel - NOAA_CHANNEL_FIRST]);
-      if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-        return;
-      }
-      gUpdateStatus = true;
-      gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
-      return;
-    }
-#endif
     if (IS_MR_CHANNEL(Channel)) {
       Channel = RADIO_FindNextChannel(Channel, RADIO_CHANNEL_UP, false, VFO);
       if (Channel == 0xFF) {
@@ -406,30 +395,24 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo) {
       FrequencyBandTable[Band].upper, pInfo->pTX->Frequency);
 }
 
-void RADIO_ApplyOffset(VFO_Info_t *pInfo) {
-  uint32_t Frequency;
-
-  Frequency = pInfo->ConfigRX.Frequency;
+uint32_t GetOffsetedF(VFO_Info_t *pInfo, uint32_t f) {
   switch (pInfo->FREQUENCY_DEVIATION_SETTING) {
   case FREQUENCY_DEVIATION_OFF:
     break;
   case FREQUENCY_DEVIATION_ADD:
-    Frequency += pInfo->FREQUENCY_OF_DEVIATION;
+    f += pInfo->FREQUENCY_OF_DEVIATION;
     break;
   case FREQUENCY_DEVIATION_SUB:
-    Frequency -= pInfo->FREQUENCY_OF_DEVIATION;
+    f -= pInfo->FREQUENCY_OF_DEVIATION;
     break;
   }
 
-  if (Frequency < FrequencyBandTable[0].lower) {
-    Frequency = FrequencyBandTable[0].lower;
-    /* Lowest is upper limit of FrequencyBandTable*/
-  } else if (Frequency >
-             FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper) {
-    Frequency = FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper;
-  }
+  return Clamp(f, FrequencyBandTable[0].lower,
+               FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper);
+}
 
-  pInfo->ConfigTX.Frequency = Frequency;
+void RADIO_ApplyOffset(VFO_Info_t *pInfo) {
+  pInfo->ConfigTX.Frequency = GetOffsetedF(pInfo, pInfo->ConfigRX.Frequency);
 }
 
 static void RADIO_SelectCurrentVfo(void) {
@@ -496,15 +479,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   }
   BK4819_WriteRegister(BK4819_REG_3F, 0);
   BK4819_WriteRegister(BK4819_REG_7D, gEeprom.MIC_SENSITIVITY_TUNING | 0xE94F);
-#if defined(ENABLE_NOAA)
-  if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE) || !gIsNoaaMode) {
-    Frequency = gRxVfo->pRX->Frequency;
-  } else {
-    Frequency = NoaaFrequencyTable[gNoaaChannel];
-  }
-#else
   Frequency = gRxVfo->pRX->Frequency;
-#endif
   BK4819_SetFrequency(Frequency);
   BK4819_SetupSquelch(
       gRxVfo->SquelchOpenRSSIThresh, gRxVfo->SquelchCloseRSSIThresh,
@@ -568,7 +543,8 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
 #if defined(ENABLE_FMRADIO)
       && !gFmRadioMode
 #endif
-      && IS_NOT_NOAA_CHANNEL(gCurrentVfo->CHANNEL_SAVE) && !gCurrentVfo->ModulationType) {
+      && IS_NOT_NOAA_CHANNEL(gCurrentVfo->CHANNEL_SAVE) &&
+      !gCurrentVfo->ModulationType) {
     BK4819_EnableVox(gEeprom.VOX1_THRESHOLD, gEeprom.VOX0_THRESHOLD);
     InterruptMask |= 0 | BK4819_REG_3F_VOX_FOUND | BK4819_REG_3F_VOX_LOST;
   } else {
@@ -591,42 +567,6 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   }
 }
 
-#if defined(ENABLE_NOAA)
-void RADIO_ConfigureNOAA(void) {
-  uint8_t ChanAB;
-
-  gUpdateStatus = true;
-  if (gEeprom.NOAA_AUTO_SCAN) {
-    if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
-      if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[0])) {
-        if (IS_NOT_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) {
-          gIsNoaaMode = false;
-          return;
-        }
-        ChanAB = 1;
-      } else {
-        ChanAB = 0;
-      }
-      if (!gIsNoaaMode) {
-        gNoaaChannel =
-            gEeprom.VfoInfo[ChanAB].CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
-      }
-      gIsNoaaMode = true;
-      return;
-    }
-    if (gRxVfo->CHANNEL_SAVE >= NOAA_CHANNEL_FIRST) {
-      gIsNoaaMode = true;
-      gNoaaChannel = gRxVfo->CHANNEL_SAVE - NOAA_CHANNEL_FIRST;
-      gNOAA_Countdown = 50;
-      gScheduleNOAA = false;
-    } else {
-      gIsNoaaMode = false;
-    }
-  } else {
-    gIsNoaaMode = false;
-  }
-}
-#endif
 
 void RADIO_SetTxParameters(void) {
   BK4819_FilterBandwidth_t Bandwidth;

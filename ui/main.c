@@ -27,40 +27,10 @@
 #include "../radio.h"
 #include "../settings.h"
 #include "../ui/helper.h"
+#include "../ui/rssi.h"
 #include "../ui/inputbox.h"
 #include "../ui/ui.h"
 #include <string.h>
-
-#if defined(ENABLE_RSSIBAR)
-void UI_DisplayRSSIBar(int16_t rssi) {
-  char String[16];
-
-  const uint8_t LINE = 3;
-  const uint8_t BAR_LEFT_MARGIN = 24;
-
-  int dBm = Rssi2DBm(rssi);
-  uint8_t s = DBm2S(dBm);
-  uint8_t *line = gFrameBuffer[LINE];
-
-  memset(line, 0, 128);
-
-  for (int i = BAR_LEFT_MARGIN, sv = 1; i < BAR_LEFT_MARGIN + s * 4;
-       i += 4, sv++) {
-    line[i] = line[i + 2] = 0b00111110;
-    line[i + 1] = sv > 9 ? 0b00100010 : 0b00111110;
-  }
-
-  sprintf(String, "%d", dBm);
-  UI_PrintStringSmallest(String, 110, 25, false, true);
-  if (s < 10) {
-    sprintf(String, "S%u", s);
-  } else {
-    sprintf(String, "S9+%u0", s - 9);
-  }
-  UI_PrintStringSmallest(String, 3, 25, false, true);
-  ST7565_BlitFullScreen();
-}
-#endif
 
 void UI_DisplayMain(void) {
   char String[16];
@@ -208,18 +178,6 @@ void UI_DisplayMain(void) {
       memcpy(pLine1 + 14, BITMAP_F, sizeof(BITMAP_F));
       c = (gEeprom.ScreenChannel[i] - FREQ_CHANNEL_FIRST) + 1;
       UI_DisplaySmallDigits(1, &c, 22, Line + 1);
-    } else {
-#if defined(ENABLE_NOAA)
-      memcpy(pLine1 + 7, BITMAP_NarrowBand, sizeof(BITMAP_NarrowBand));
-      if (gInputBoxIndex == 0 || gEeprom.TX_CHANNEL != i) {
-        NUMBER_ToDigits((gEeprom.ScreenChannel[i] - NOAA_CHANNEL_FIRST) + 1,
-                        String);
-      } else {
-        String[6] = gInputBox[0];
-        String[7] = gInputBox[1];
-      }
-      UI_DisplaySmallDigits(2, String + 6, 15, Line + 1);
-#endif
     }
 
     // 0x8FEC
@@ -360,7 +318,7 @@ void UI_DisplayMain(void) {
 
     // 0x936C
     char *power[3] = {"LOW", "MID", "HIGH"};
-    UI_PrintStringSmallest(power[vfoInfo.OUTPUT_POWER], 44, (Line + 2) * 8,
+    UI_PrintStringSmallest(power[vfoInfo.OUTPUT_POWER], 40, (Line + 2) * 8,
                            false, true);
 
     if (vfoInfo.ConfigRX.Frequency != vfoInfo.ConfigTX.Frequency) {
@@ -386,7 +344,6 @@ void UI_DisplayMain(void) {
     }
   }
 
-#if defined(ENABLE_RSSIBAR)
   if (gScreenToDisplay == DISPLAY_MAIN && !gKeypadLocked) {
     if (gCurrentFunction == FUNCTION_RECEIVE ||
         gCurrentFunction == FUNCTION_MONITOR ||
@@ -394,7 +351,6 @@ void UI_DisplayMain(void) {
       UI_DisplayRSSIBar(BK4819_GetRSSI());
     }
   }
-#endif
 
   ST7565_BlitFullScreen();
 }

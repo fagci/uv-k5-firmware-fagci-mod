@@ -28,13 +28,6 @@ const struct FrequencyBandInfo FrequencyBandTable[7] = {
     [BAND7_470MHz] = {.lower = 47000000, .upper = 200000000},
 };
 
-#if defined(ENABLE_NOAA)
-const uint32_t NoaaFrequencyTable[10] = {
-    16255000, 16240000, 16247500, 16242500, 16245000,
-    16250000, 16252500, 16152500, 16177500, 16327500,
-};
-#endif
-
 const uint16_t StepFrequencyTable[12] = {
     1,   10,  50,  100,
 

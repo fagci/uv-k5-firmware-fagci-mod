@@ -51,9 +51,6 @@ volatile uint16_t gBatterySaveCountdown = 1000;
 volatile uint16_t gDualWatchCountdown;
 volatile uint16_t gTxTimerCountdown;
 volatile uint16_t gTailNoteEliminationCountdown;
-#if defined(ENABLE_NOAA)
-volatile uint16_t gNOAA_Countdown;
-#endif
 bool gEnableSpeaker;
 uint8_t gKeyLockCountdown;
 uint8_t gRTTECountdown;
@@ -129,13 +126,7 @@ uint8_t gAircopySendCountdown;
 uint8_t gFSKWriteIndex;
 uint8_t gNeverUsed;
 
-#if defined(ENABLE_NOAA)
-bool gIsNoaaMode;
-#endif
 volatile bool gNextTimeslice;
-#if defined(ENABLE_NOAA)
-uint8_t gNoaaChannel;
-#endif
 bool gUpdateDisplay;
 bool gF_LOCK;
 uint8_t gShowChPrefix;
@@ -149,9 +140,6 @@ volatile bool gSchedulePowerSave;
 volatile bool gBatterySaveCountdownExpired;
 volatile bool gScheduleDualWatch = true;
 uint8_t gAbrTxRx;
-#if defined(ENABLE_NOAA)
-volatile bool gScheduleNOAA = true;
-#endif
 volatile bool gFlagTteComplete;
 #if defined(ENABLE_FMRADIO)
 volatile bool gScheduleFM;
