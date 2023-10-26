@@ -27,8 +27,8 @@
 #include "../radio.h"
 #include "../settings.h"
 #include "../ui/helper.h"
-#include "../ui/rssi.h"
 #include "../ui/inputbox.h"
+#include "../ui/rssi.h"
 #include "../ui/ui.h"
 #include <string.h>
 
@@ -46,7 +46,7 @@ void UI_DisplayMain(void) {
 
   for (i = 0; i < 2; i++) {
     uint8_t *pLine0;
-    uint8_t *pLine1;
+    // uint8_t *pLine1;
     uint8_t Line;
     uint8_t Channel;
     bool bIsSameVfo;
@@ -54,11 +54,11 @@ void UI_DisplayMain(void) {
 
     if (i == 0) {
       pLine0 = gFrameBuffer[0];
-      pLine1 = gFrameBuffer[1];
+      // pLine1 = gFrameBuffer[1];
       Line = 0;
     } else {
       pLine0 = gFrameBuffer[4];
-      pLine1 = gFrameBuffer[5];
+      // pLine1 = gFrameBuffer[5];
       Line = 4;
     }
 
@@ -122,15 +122,15 @@ void UI_DisplayMain(void) {
         UI_PrintString(String, 2, 127, 2 + (i * 3), 8, false);
         continue;
       } else if (bIsSameVfo) {
-        memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
+        // memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
       }
     } else {
-      if (bIsSameVfo) {
+      /* if (bIsSameVfo) {
         memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
       } else {
         memcpy(pLine0 + 2, BITMAP_VFO_NotDefault,
                sizeof(BITMAP_VFO_NotDefault));
-      }
+      } */
     }
 
     // 0x8EE2
@@ -151,7 +151,7 @@ void UI_DisplayMain(void) {
         }
         if (Channel == i) {
           SomeValue = 1;
-          memcpy(pLine0 + 14, BITMAP_TX, sizeof(BITMAP_TX));
+          UI_PrintStringSmallest("TX", 20, Line * 8 + 1, false, true);
         }
       }
     } else {
@@ -159,25 +159,37 @@ void UI_DisplayMain(void) {
       if ((gCurrentFunction == FUNCTION_RECEIVE ||
            gCurrentFunction == FUNCTION_MONITOR) &&
           gEeprom.RX_CHANNEL == i) {
-        memcpy(pLine0 + 14, BITMAP_RX, sizeof(BITMAP_RX));
+        UI_PrintStringSmallest("RX", 20, Line * 8 + 1, false, true);
       }
     }
 
     // 0x8F3C
+    bool isActiveChannel = Channel == i;
+    if (isActiveChannel) {
+      memset(gFrameBuffer[Line], 127, 19);
+    }
+
     if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
-      memcpy(pLine1 + 2, BITMAP_M, sizeof(BITMAP_M));
+      if (gInputBoxIndex == 0 || gEeprom.TX_CHANNEL != i) {
+        sprintf(String, "M%03d", gEeprom.ScreenChannel[i] + 1);
+      } else {
+        sprintf(String, "M%3s", gInputBox);
+      }
+      UI_PrintStringSmallest(String, 2, Line * 8 + 1, false, !isActiveChannel);
+      /* memcpy(pLine1 + 2, BITMAP_M, sizeof(BITMAP_M));
       if (gInputBoxIndex == 0 || gEeprom.TX_CHANNEL != i) {
         NUMBER_ToDigits(gEeprom.ScreenChannel[i] + 1, String);
       } else {
         memcpy(String + 5, gInputBox, 3);
       }
-      UI_DisplaySmallDigits(3, String + 5, 10, Line + 1);
+      UI_DisplaySmallDigits(3, String + 5, 10, Line + 1); */
     } else if (IS_FREQ_CHANNEL(gEeprom.ScreenChannel[i])) {
-      char c;
+      UI_PrintStringSmallest("VFO", 4, Line * 8 + 1, false, !isActiveChannel);
+      /* char c;
 
       memcpy(pLine1 + 14, BITMAP_F, sizeof(BITMAP_F));
       c = (gEeprom.ScreenChannel[i] - FREQ_CHANNEL_FIRST) + 1;
-      UI_DisplaySmallDigits(1, &c, 22, Line + 1);
+      UI_DisplaySmallDigits(1, &c, 22, Line + 1); */
     }
 
     // 0x8FEC

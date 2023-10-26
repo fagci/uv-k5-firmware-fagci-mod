@@ -41,16 +41,16 @@ void UI_DisplayStatus(void) {
     UI_DisplayBattery(gBatteryDisplayLevel);
   }
 
-  bool isPowerSave = true; // gCurrentFunction == FUNCTION_POWER_SAVE;
-  bool isKeyLock = true; // gEeprom.KEY_LOCK;
-  bool isFPressed = true; // gWasFKeyPressed;
-  bool isVox = true; // gEeprom.VOX_SWITCH;
-  bool isWx = true; // gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF;
-  bool isDw = true; // gEeprom.DUAL_WATCH != DUAL_WATCH_OFF;
+  bool isPowerSave = gCurrentFunction == FUNCTION_POWER_SAVE;
+  bool isKeyLock = gEeprom.KEY_LOCK;
+  bool isFPressed = gWasFKeyPressed;
+  bool isVox = gEeprom.VOX_SWITCH;
+  bool isWx = gEeprom.CROSS_BAND_RX_TX != CROSS_BAND_OFF;
+  bool isDw = gEeprom.DUAL_WATCH != DUAL_WATCH_OFF;
 #if defined(ENABLE_FMRADIO)
-  bool isFm = true; // gFmRadioMode;
+  bool isFm = gFmRadioMode;
 #else
-  bool isFm = true; // false;
+  bool isFm = false;
 #endif
 
   char String[32];
