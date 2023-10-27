@@ -258,15 +258,15 @@ void UI_DisplayMain(void) {
 
         if (!IS_MR_CHANNEL(gEeprom.ScreenChannel[i]) ||
             gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
-          sprintf(String, "%4u.%03u", frequency / 100000,
+          /* sprintf(String, "%4u.%03u", frequency / 100000,
                   frequency / 100 % 1000);
-          UI_PrintString(String, 46, 112, i * 4, 8, false);
+          UI_PrintString(String, 46, 112, i * 4, 8, false); */
 
           /* sprintf(String, "%02u", frequency % 100);
           UI_PrintStringSmallest(String, 116, 8 + i * 32, false, true); */
 
           NUMBER_ToDigits(frequency, String);
-          // UI_DisplayFrequency(String, 32, Line, false, false);
+                        UI_DisplayFrequency(String, 32, Line, false, false);
           UI_DisplaySmallDigits(2, String + 6, 113, Line + 1);
 
           if (IS_MR_CHANNEL(gEeprom.ScreenChannel[i])) {
