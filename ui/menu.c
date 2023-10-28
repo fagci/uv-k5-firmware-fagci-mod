@@ -14,19 +14,20 @@
  *     limitations under the License.
  */
 
-#include "ui/menu.h"
+#include "menu.h"
+#include "../app/dtmf.h"
+#include "../bitmaps.h"
+#include "../dcs.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
 #include "../frequencies.h"
-#include "app/dtmf.h"
-#include "bitmaps.h"
-#include "dcs.h"
-#include "driver/st7565.h"
-#include "external/printf/printf.h"
-#include "helper/battery.h"
-#include "misc.h"
-#include "settings.h"
-#include "ui/helper.h"
-#include "ui/inputbox.h"
-#include "ui/ui.h"
+#include "../helper/battery.h"
+#include "../helper/measurements.h"
+#include "../misc.h"
+#include "../settings.h"
+#include "helper.h"
+#include "inputbox.h"
+#include "ui.h"
 #include <string.h>
 
 static const char MenuList[][7] = {
@@ -83,7 +84,7 @@ static const char MenuList[][7] = {
     "ROGER",
     "VOL",
     "MODUL",
-// 0x30
+    // 0x30
     "DEL-CH",
     "RESET",
     "350TX",
@@ -189,23 +190,31 @@ void UI_DisplayMenu(void) {
 
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
-  for (i = 0; i < 3; i++) {
-    if (gMenuCursor || i) {
-      if ((gMenuListCount - 1) != gMenuCursor || (i != 2)) {
-        UI_PrintString(MenuList[gMenuCursor + i - 1], 0, 127, i * 2, 8, false);
-      }
+  uint8_t offset = Clamp(gMenuCursor - 2, 0, gMenuListCount - 5);
+  for (int i = 0; i < 5; ++i) {
+    const char *s = MenuList[i + offset];
+    bool isCurrent = gMenuCursor == i + offset;
+    if (isCurrent) {
+      UI_PrintStringSmallBold(s, 0, 48, i);
+    } else {
+      UI_PrintStringSmall(s, 0, 48, i);
     }
   }
-  for (i = 0; i < 48; i++) {
-    gFrameBuffer[2][i] ^= 0xFF;
-    gFrameBuffer[3][i] ^= 0xFF;
-  }
+
+  uint8_t menuScrollbarPosY =
+      ConvertDomain(gMenuCursor, 0, gMenuListCount, 0, 7 * 8 - 3);
+
   for (i = 0; i < 7; i++) {
-    gFrameBuffer[i][48] = 0xFF;
     gFrameBuffer[i][49] = 0xFF;
   }
-  NUMBER_ToDigits(gMenuCursor + 1, String);
-  UI_DisplaySmallDigits(2, String + 6, 33, 6);
+
+  for (uint8_t a = 0; a < 3; a++) {
+    PutPixel(48, menuScrollbarPosY + a, true);
+    PutPixel(50, menuScrollbarPosY + a, true);
+  }
+
+  sprintf(String, "%03u", gMenuCursor + 1);
+  UI_PrintStringSmall(String, 32, 48, 6);
   if (gIsInSubMenu) {
     memcpy(gFrameBuffer[0] + 50, BITMAP_CurrentIndicator,
            sizeof(BITMAP_CurrentIndicator));
