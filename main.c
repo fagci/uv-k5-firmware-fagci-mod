@@ -103,12 +103,6 @@ void Main(void) {
     BACKLIGHT_TurnOn();
     SYSTEM_DelayMs(1000);
     gMenuListCount = 49;
-#if defined(ENABLE_ALARM)
-    gMenuListCount++;
-#endif
-#if defined(ENABLE_NOAA)
-    gMenuListCount++;
-#endif
 
     BootMode = BOOT_GetMode();
     if (gEeprom.POWER_ON_PASSWORD < 1000000) {
@@ -120,9 +114,6 @@ void Main(void) {
     BOOT_ProcessMode(BootMode);
 
     gUpdateStatus = true;
-#if defined(ENABLE_NOAA)
-    RADIO_ConfigureNOAA();
-#endif
   }
 
   while (1) {

@@ -16,4 +16,3 @@ void FreqInput();
 
 #endif /* end of include guard: FINPUT_H */
 
-// vim: ft=c

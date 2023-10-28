@@ -63,6 +63,10 @@ enum STEP_Setting_t {
 };
 
 extern const char *modulationTypeOptions[];
+extern const char *vfoStateNames[];
+extern const char *powerNames[];
+extern const char *bwNames[];
+extern const char *deviationNames[];
 
 typedef enum ModulationType {
   MOD_FM,
@@ -145,10 +149,10 @@ void RADIO_InitInfo(VFO_Info_t *pInfo, uint8_t ChannelSave, uint8_t ChIndex,
                     uint32_t Frequency);
 void RADIO_ConfigureChannel(uint8_t RadioNum, uint32_t Arg);
 void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo);
+uint32_t GetOffsetedF(VFO_Info_t *pInfo, uint32_t f);
 void RADIO_ApplyOffset(VFO_Info_t *pInfo);
 void RADIO_SelectVfos(void);
 void RADIO_SetupRegisters(bool bSwitchToFunction0);
-void RADIO_ConfigureNOAA(void);
 void RADIO_SetTxParameters(void);
 
 void RADIO_SetVfoState(VfoState_t State);

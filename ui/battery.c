@@ -1,5 +1,5 @@
-/* Copyright 2023 Dual Tachyon
- * https://github.com/DualTachyon
+/* Copyright 2023 fagci
+ * https://github.com/fagci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,44 @@
  *     limitations under the License.
  */
 
-#include <stddef.h>
-#include "bitmaps.h"
-#include "driver/st7565.h"
-#include "functions.h"
-#include "ui/battery.h"
+#include "battery.h"
+#include "../driver/st7565.h"
+#include "../helper/battery.h"
 
-void UI_DisplayBattery(uint8_t Level)
-{
-	const uint8_t *pBitmap;
-	bool bClearMode = false;
+void UI_DisplayBattery(uint8_t Level) {
+  const uint8_t START = 115;
+  const uint8_t WORK_START = START + 2;
+  const uint8_t WORK_WIDTH = 10;
+  const uint8_t WORK_END = WORK_START + WORK_WIDTH;
 
-	if (gCurrentFunction != 1) {
-		switch (Level) {
-		case 0:
-			pBitmap = NULL;
-			bClearMode = true;
-			break;
-		case 1:
-			pBitmap = BITMAP_BatteryLevel1;
-			break;
-		case 2:
-			pBitmap = BITMAP_BatteryLevel2;
-			break;
-		case 3:
-			pBitmap = BITMAP_BatteryLevel3;
-			break;
-		case 4:
-			pBitmap = BITMAP_BatteryLevel4;
-			break;
-		default:
-			pBitmap = BITMAP_BatteryLevel5;
-			break;
-		}
-		ST7565_DrawLine(110, 0, 18, pBitmap, bClearMode);
-	}
+  gStatusLine[START] |= 0b000001110;
+  gStatusLine[START + 1] |= 0b000011111;
+  gStatusLine[WORK_END] |= 0b000011111;
+
+  Level <<= 1;
+
+  for (uint8_t i = 1; i <= WORK_WIDTH; ++i) {
+    if (Level >= i) {
+      gStatusLine[WORK_END - i] |= 0b000011111;
+    } else {
+      gStatusLine[WORK_END - i] |= 0b000010001;
+    }
+  }
+
+  if (gChargingWithTypeC) {
+    gStatusLine[WORK_START + 1] &= 0b11110111;
+    gStatusLine[WORK_START + 2] &= 0b11110111;
+    gStatusLine[WORK_START + 3] &= 0b11110111;
+    gStatusLine[WORK_START + 4] &= 0b11110111;
+    gStatusLine[WORK_START + 5] &= 0b11110111;
+
+    gStatusLine[WORK_START + 4] &= 0b11111011;
+
+    gStatusLine[WORK_START + 3] &= 0b11111101;
+    gStatusLine[WORK_START + 4] &= 0b11111101;
+    gStatusLine[WORK_START + 5] &= 0b11111101;
+    gStatusLine[WORK_START + 6] &= 0b11111101;
+    gStatusLine[WORK_START + 7] &= 0b11111101;
+    gStatusLine[WORK_START + 8] &= 0b11111101;
+  }
 }
-

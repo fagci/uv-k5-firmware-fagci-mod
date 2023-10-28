@@ -63,12 +63,6 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode)
 		gSubMenuSelection = gSetting_350TX;
 		GUI_SelectNextDisplay(DISPLAY_MENU);
 		gMenuListCount = 55;
-#if defined(ENABLE_ALARM)
-		gMenuListCount++;
-#endif
-#if defined(ENABLE_NOAA)
-		gMenuListCount++;
-#endif
 		gF_LOCK = true;
 #if defined(ENABLE_AIRCOPY)
 	} else if (Mode == BOOT_MODE_AIRCOPY) {

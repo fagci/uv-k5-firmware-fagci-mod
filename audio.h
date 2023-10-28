@@ -21,17 +21,45 @@
 #include <stdint.h>
 
 enum BEEP_Type_t {
-	BEEP_NONE = 0U,
-	BEEP_1KHZ_60MS_OPTIONAL = 1U,
-	BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL = 2U,
-	BEEP_440HZ_500MS = 3U,
-	BEEP_500HZ_60MS_DOUBLE_BEEP = 4U,
+  BEEP_NONE = 0U,
+  BEEP_1KHZ_60MS_OPTIONAL = 1U,
+  BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL = 2U,
+  BEEP_440HZ_500MS = 3U,
+  BEEP_500HZ_60MS_DOUBLE_BEEP = 4U,
 };
 
 typedef enum BEEP_Type_t BEEP_Type_t;
 extern BEEP_Type_t gBeepToPlay;
 
+typedef struct Note {
+  uint16_t f;
+  uint16_t dur;
+} Note;
+
+static const Note MELODY_NOKIA[] = {
+    {1319, 133}, {1175, 133}, {740, 267}, {831, 267}, {1109, 133},
+    {988, 133},  {587, 267},  {659, 267}, {988, 133}, {880, 133},
+    {554, 267},  {659, 267},  {880, 533},
+};
+
+static const Note MELODY_TETRIS[] = {
+    {1319, 375}, {988, 188},  {1047, 188}, {1175, 188}, {1319, 94},
+    {1175, 94},  {1047, 188}, {988, 188},  {880, 375},  {880, 188},
+    {1047, 188}, {1319, 375}, {1175, 188}, {1047, 188}, {988, 375},
+    {988, 188},  {1047, 188}, {1175, 375}, {1319, 375}, {1047, 375},
+    {880, 375},  {880, 750},  {1175, 375}, {1397, 188}, {1760, 375},
+    {1568, 188}, {1397, 188}, {1319, 375}, {1319, 188}, {1047, 188},
+    {1319, 375}, {1175, 188}, {1047, 188}, {988, 375},  {988, 188},
+    {1047, 188}, {1175, 375}, {1319, 375}, {1047, 375}, {880, 375},
+    {880, 375},
+};
+
+static const Note MELODY_ARKANOID[] = {
+    {1568, 214}, {1568, 161}, {1865, 857}, {1760, 214},
+    {1568, 214}, {1397, 214}, {1760, 214}, {1568, 857},
+};
+
 void AUDIO_PlayBeep(BEEP_Type_t Beep);
+void AUDIO_PlayMelody(const Note *melody, uint8_t size);
 
 #endif
-

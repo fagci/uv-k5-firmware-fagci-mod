@@ -14,12 +14,12 @@
  *     limitations under the License.
  */
 
-#include "ui/helper.h"
-#include "driver/st7565.h"
-#include "external/printf/printf.h"
-#include "font.h"
-#include "misc.h"
-#include "ui/inputbox.h"
+#include "helper.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
+#include "../font.h"
+#include "../misc.h"
+#include "inputbox.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -108,6 +108,26 @@ void UI_PrintStringSmall(const char *pString, uint8_t Start, uint8_t End,
   }
 }
 
+void UI_PrintStringSmallBold(const char *pString, uint8_t Start, uint8_t End,
+                             uint8_t Line) {
+  const size_t Length = strlen(pString);
+  size_t i;
+
+  if (End > Start)
+    Start += (((End - Start) - (Length * 8)) + 1) / 2;
+
+  const unsigned int char_width = ARRAY_SIZE(gFontSmallBold[0]);
+  const unsigned int char_spacing = char_width + 1;
+  uint8_t *pFb = gFrameBuffer[Line] + Start;
+  for (i = 0; i < Length; i++) {
+    if (pString[i] >= 32) {
+      const unsigned int Index = (unsigned int)pString[i] - 32;
+      if (Index < ARRAY_SIZE(gFontSmallBold))
+        memmove(pFb + (i * char_spacing), &gFontSmallBold[Index], char_width);
+    }
+  }
+}
+
 #if 1
 void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
                          bool bDisplayLeadingZero, bool flag) {
@@ -118,7 +138,7 @@ void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
   unsigned int i = 0;
 
   // MHz
-  while (i < 3) {
+  while (i < 4) {
     const unsigned int Digit = pDigits[i++];
     if (bDisplayLeadingZero || bCanDisplay || Digit > 0) {
       bCanDisplay = true;
@@ -144,7 +164,7 @@ void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
   pFb1++;
 
   // kHz
-  while (i < 6) {
+  while (i < 7) {
     const unsigned int Digit = pDigits[i++];
     memmove(pFb0, gFontBigDigits[Digit], charWidth);
     memmove(pFb1, gFontBigDigits[Digit] + charWidth, charWidth);
@@ -205,7 +225,7 @@ void PutPixelStatus(uint8_t x, uint8_t y, bool fill) {
 
 void DrawHLine(int sy, int ey, int nx, bool fill) {
   for (int i = sy; i <= ey; i++) {
-    if (i < 56 && nx < 128) {
+    if (i < 56 && nx < LCD_WIDTH) {
       PutPixel(nx, i, fill);
     }
   }

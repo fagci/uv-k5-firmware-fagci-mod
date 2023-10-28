@@ -30,4 +30,3 @@
 
 #endif
 
-// vim: ft=c

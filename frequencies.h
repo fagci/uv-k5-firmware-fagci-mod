@@ -37,9 +37,6 @@ struct FrequencyBandInfo {
   uint32_t upper;
 };
 extern const struct FrequencyBandInfo FrequencyBandTable[7];
-#if defined(ENABLE_NOAA)
-extern const uint32_t NoaaFrequencyTable[10];
-#endif
 extern const uint16_t StepFrequencyTable[12];
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency);

@@ -251,22 +251,6 @@ uint16_t GetRssi() {
   return BK4819_GetRSSI();
 }
 
-uint32_t GetOffsetedF(uint32_t f) {
-  switch (gCurrentVfo->FREQUENCY_DEVIATION_SETTING) {
-  case FREQUENCY_DEVIATION_OFF:
-    break;
-  case FREQUENCY_DEVIATION_ADD:
-    f += gCurrentVfo->FREQUENCY_OF_DEVIATION;
-    break;
-  case FREQUENCY_DEVIATION_SUB:
-    f -= gCurrentVfo->FREQUENCY_OF_DEVIATION;
-    break;
-  }
-
-  return Clamp(f, FrequencyBandTable[0].lower,
-               FrequencyBandTable[ARRAY_SIZE(FrequencyBandTable) - 1].upper);
-}
-
 static void ToggleAudio(bool on) {
   if (on) {
     GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
@@ -298,9 +282,9 @@ static void ToggleRX(bool on) {
 
   if (on) {
     listenT = 1000;
-    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
-    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+    // BK4819_WriteRegister(0x43, GetBWRegValueForScan());
   }
 }
 
@@ -329,7 +313,7 @@ static void ToggleTX(bool on) {
   if (on) {
     ToggleAudio(false);
 
-    SetTxF(GetOffsetedF(fMeasure));
+    SetTxF(GetOffsetedF(gCurrentVfo, fMeasure));
 
     RegBackupSet(BK4819_REG_47, 0x6040);
     RegBackupSet(BK4819_REG_7E, 0x302E);
@@ -429,10 +413,10 @@ static void UpdatePeakInfo() {
 
 static void Measure() {
   // rm harmonics using blacklist for now
-  if (scanInfo.f % 1300000 == 0) {
+  /* if (scanInfo.f % 1300000 == 0) {
     blacklist[scanInfo.i] = true;
     return;
-  }
+  } */
   rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi();
 }
 
@@ -574,6 +558,7 @@ static void ToggleStepsCount() {
   redrawScreen = true;
 }
 
+#ifndef ENABLE_ALL_REGISTERS
 static void Blacklist() {
   blacklist[peak.i] = true;
   ResetPeak();
@@ -581,6 +566,7 @@ static void Blacklist() {
   newScanStart = true;
   redrawScreen = true;
 }
+#endif
 
 // Draw things
 
@@ -620,61 +606,61 @@ static void UpdateBatteryInfo() {
 static void DrawStatus() {
 
   if (currentState == SPECTRUM) {
-    const FreqPreset *p = NULL;
-    for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-      if (currentFreq >= freqPresets[i].fStart &&
-          currentFreq < freqPresets[i].fEnd) {
-        p = &freqPresets[i];
+
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      RegisterSpec s = hiddenRegisterSpecs[hiddenMenuState];
+      sprintf(String, "%x %s: %u", s.num, s.name, BK4819_GetRegValue(s));
+      UI_PrintStringSmallest(String, 0, 0, true, true);
+    } else {
+#endif
+      const FreqPreset *p = NULL;
+      for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
+        if (currentFreq >= freqPresets[i].fStart &&
+            currentFreq < freqPresets[i].fEnd) {
+          p = &freqPresets[i];
+        }
       }
-    }
-    if (p != NULL) {
-      UI_PrintStringSmallest(p->name, 0, 1, true, true);
-    }
+      if (p != NULL) {
+        UI_PrintStringSmallest(p->name, 0, 0, true, true);
+      }
 
-    sprintf(String, "D: %u us", settings.delayUS);
-    UI_PrintStringSmallest(String, 64, 1, true, true);
-  }
-
-  gStatusLine[127] = 0b01111110;
-  for (uint8_t i = 126; i >= 116; i--) {
-    gStatusLine[i] = 0b01000010;
-  }
-  uint8_t v = gBatteryDisplayLevel;
-  v <<= 1;
-  for (uint8_t i = 125; i >= 116; i--) {
-    if (126 - i <= v) {
-      gStatusLine[i + 2] = 0b01111110;
+      sprintf(String, "D: %u us", settings.delayUS);
+      UI_PrintStringSmallest(String, 64, 0, true, true);
     }
+#ifdef ENABLE_ALL_REGISTERS
   }
-  gStatusLine[117] = 0b01111110;
-  gStatusLine[116] = 0b00011000;
+#endif
+
+  UI_DisplayBattery(gBatteryDisplayLevel);
 }
 
 static void DrawF(uint32_t f) {
-  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  UI_PrintStringSmallest(String, 116, 1, false, true);
-  sprintf(String, "%s", bwOptions[settings.listenBw]);
-  UI_PrintStringSmallest(String, 108, 7, false, true);
+  UI_PrintStringSmallest(modulationTypeOptions[settings.modulationType], 116, 1,
+                         false, true);
+  UI_PrintStringSmallest(bwOptions[settings.listenBw], 108, 7, false, true);
 
   if (currentState == SPECTRUM && !f) {
     return;
   }
 
+#ifdef ENABLE_ALL_REGISTERS
+  if (currentState == SPECTRUM) {
+    sprintf(String, "R%03u S%03u A%03u", scanInfo.rssi,
+            BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1}),
+            BK4819_GetRegValue((RegisterSpec){"agc_rssi", 0x62, 8, 0xFF, 1}));
+    UI_PrintStringSmallest(String, 26, 8, false, true);
+  }
+#endif
+
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
   if (currentState == STILL && kbd.current == KEY_PTT) {
-    switch (txAllowState) {
-    case VFO_STATE_NORMAL:
-      if (isTransmitting) {
-        f = GetOffsetedF(f);
-        sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
-      }
-      break;
-    case VFO_STATE_VOL_HIGH:
-      sprintf(String, "VOLTAGE HIGH");
-      break;
-    default:
-      sprintf(String, "DISABLED");
+    if (txAllowState) {
+      sprintf(String, vfoStateNames[txAllowState]);
+    } else if (isTransmitting) {
+      f = GetOffsetedF(gCurrentVfo, f);
+      sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
     }
   }
   UI_PrintStringSmall(String, 8, 127, 0);
@@ -786,19 +772,64 @@ static void OnKeyDown(uint8_t key) {
     UpdateScanStep(false);
     break;
   case KEY_2:
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      if (hiddenMenuState <= 1) {
+        hiddenMenuState = ARRAY_SIZE(hiddenRegisterSpecs) - 1;
+      } else {
+        hiddenMenuState--;
+      }
+      redrawStatus = true;
+      break;
+    }
+#endif
     UpdateFreqChangeStep(true);
     break;
   case KEY_8:
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      if (hiddenMenuState == ARRAY_SIZE(hiddenRegisterSpecs) - 1) {
+        hiddenMenuState = 1;
+      } else {
+        hiddenMenuState++;
+      }
+      redrawStatus = true;
+      break;
+    }
+#endif
     UpdateFreqChangeStep(false);
     break;
   case KEY_UP:
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], true);
+      redrawStatus = true;
+      break;
+    }
+#endif
     UpdateCurrentFreq(true);
     break;
   case KEY_DOWN:
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], false);
+      redrawStatus = true;
+      break;
+    }
+#endif
     UpdateCurrentFreq(false);
     break;
   case KEY_SIDE1:
+#ifdef ENABLE_ALL_REGISTERS
+    if (settings.rssiTriggerLevel != RSSI_MAX_VALUE - 1) {
+      settings.rssiTriggerLevel = RSSI_MAX_VALUE - 1;
+    } else {
+      settings.rssiTriggerLevel = RSSI_MAX_VALUE;
+    }
+    redrawScreen = true;
+#else
     Blacklist();
+#endif
     break;
   case KEY_STAR:
     UpdateRssiTriggerLevel(true);
@@ -828,8 +859,19 @@ static void OnKeyDown(uint8_t key) {
     settings.rssiTriggerLevel = 120;
     break;
   case KEY_MENU:
+#ifdef ENABLE_ALL_REGISTERS
+    hiddenMenuState = 1;
+    redrawStatus = true;
+#endif
     break;
   case KEY_EXIT:
+#ifdef ENABLE_ALL_REGISTERS
+    if (hiddenMenuState) {
+      hiddenMenuState = 0;
+      redrawStatus = true;
+      break;
+    }
+#endif
     if (menuState) {
       menuState = 0;
       redrawScreen = true;
@@ -965,7 +1007,7 @@ void OnKeyDownStill(KEY_Code_t key) {
     UpdateBatteryInfo();
     if (gBatteryDisplayLevel == 6) {
       txAllowState = VFO_STATE_VOL_HIGH;
-    } else if (IsTXAllowed(GetOffsetedF(fMeasure))) {
+    } else if (IsTXAllowed(GetOffsetedF(gCurrentVfo, fMeasure))) {
       txAllowState = VFO_STATE_NORMAL;
       ToggleTX(true);
     } else {
@@ -1235,12 +1277,12 @@ static void UpdateListening() {
   redrawScreen = true;
 
   if (currentState == SPECTRUM) {
-    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+    // BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     Measure();
-    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   } else {
     Measure();
-    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
   }
 
   peak.rssi = scanInfo.rssi;

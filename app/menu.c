@@ -104,15 +104,9 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_S_ADD1:
   case MENU_S_ADD2:
   case MENU_STE:
-#if defined(ENABLE_ALARM)
-  case MENU_AL_MOD:
-#endif
   case MENU_D_ST:
   case MENU_D_DCD:
   case MENU_AM:
-#if defined(ENABLE_NOAA)
-  case MENU_NOAA_S:
-#endif
   case MENU_RESET:
   case MENU_350TX:
   case MENU_200TX:
@@ -312,14 +306,6 @@ void MENU_AcceptSetting(void) {
     return;
 
   case MENU_WX:
-#if defined(ENABLE_NOAA)
-    if (IS_NOAA_CHANNEL(gEeprom.ScreenChannel[0])) {
-      return;
-    }
-    if (IS_NOAA_CHANNEL(gEeprom.ScreenChannel[1])) {
-      return;
-    }
-#endif
     gEeprom.CROSS_BAND_RX_TX = gSubMenuSelection;
     gFlagReconfigureVfos = true;
     gRequestSaveSettings = true;
@@ -390,12 +376,6 @@ void MENU_AcceptSetting(void) {
     gEeprom.SCAN_LIST_DEFAULT = gSubMenuSelection - 1;
     break;
 
-#if defined(ENABLE_ALARM)
-  case MENU_AL_MOD:
-    gEeprom.ALARM_MODE = gSubMenuSelection;
-    break;
-#endif
-
   case MENU_D_ST:
     gEeprom.DTMF_SIDE_TONE = gSubMenuSelection;
     break;
@@ -445,14 +425,6 @@ void MENU_AcceptSetting(void) {
     gTxVfo->AM_CHANNEL_MODE = gSubMenuSelection;
     gRequestSaveChannel = 1;
     return;
-
-#if defined(ENABLE_NOAA)
-  case MENU_NOAA_S:
-    gEeprom.NOAA_AUTO_SCAN = gSubMenuSelection;
-    gRequestSaveSettings = true;
-    gFlagReconfigureVfos = true;
-    return;
-#endif
 
   case MENU_DEL_CH:
     SETTINGS_UpdateChannel(gSubMenuSelection, NULL, false);
@@ -728,12 +700,6 @@ void MENU_ShowCurrentSetting(void) {
     gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 1);
     break;
 
-#if defined(ENABLE_ALARM)
-  case MENU_AL_MOD:
-    gSubMenuSelection = gEeprom.ALARM_MODE;
-    break;
-#endif
-
   case MENU_D_ST:
     gSubMenuSelection = gEeprom.DTMF_SIDE_TONE;
     break;
@@ -773,12 +739,6 @@ void MENU_ShowCurrentSetting(void) {
   case MENU_AM:
     gSubMenuSelection = gTxVfo->AM_CHANNEL_MODE;
     break;
-
-#if defined(ENABLE_NOAA)
-  case MENU_NOAA_S:
-    gSubMenuSelection = gEeprom.NOAA_AUTO_SCAN;
-    break;
-#endif
 
   case MENU_DEL_CH:
 #ifndef ENABLE_KEEPNAMEONSAVE
