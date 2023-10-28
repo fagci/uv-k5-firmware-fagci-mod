@@ -282,9 +282,13 @@ static void ToggleRX(bool on) {
 
   if (on) {
     listenT = 1000;
-    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#ifndef ENABLE_ALL_REGISTERS
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#endif
   } else {
-    // BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+#ifndef ENABLE_ALL_REGISTERS
+    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+#endif
   }
 }
 
@@ -1277,12 +1281,18 @@ static void UpdateListening() {
   redrawScreen = true;
 
   if (currentState == SPECTRUM) {
-    // BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+#ifndef ENABLE_ALL_REGISTERS
+    BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+#endif
     Measure();
-    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#ifndef ENABLE_ALL_REGISTERS
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#endif
   } else {
     Measure();
-    // BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#ifndef ENABLE_ALL_REGISTERS
+    BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#endif
   }
 
   peak.rssi = scanInfo.rssi;
