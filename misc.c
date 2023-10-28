@@ -173,10 +173,10 @@ void NUMBER_ToDigits(uint32_t Value, char *pDigits)
 {
 	uint8_t i;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 9; i++) {
 		uint32_t Result = Value / 10U;
 
-		pDigits[7 - i] = Value - (Result * 10U);
+		pDigits[8 - i] = Value - (Result * 10U);
 		Value = Result;
 	}
 }

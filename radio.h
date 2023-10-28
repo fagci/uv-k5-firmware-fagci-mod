@@ -63,6 +63,10 @@ enum STEP_Setting_t {
 };
 
 extern const char *modulationTypeOptions[];
+extern const char *vfoStateNames[];
+extern const char *powerNames[];
+extern const char *bwNames[];
+extern const char *deviationNames[];
 
 typedef enum ModulationType {
   MOD_FM,

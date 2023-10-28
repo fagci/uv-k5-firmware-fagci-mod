@@ -17,4 +17,3 @@ int Mid(uint16_t *array, uint8_t n);
 
 #endif /* end of include guard: MEASUREMENTS_H */
 
-// vim: ft=c

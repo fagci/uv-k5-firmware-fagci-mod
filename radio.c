@@ -47,6 +47,12 @@ STEP_Setting_t gStepSetting;
 VfoState_t VfoState[2];
 
 const char *modulationTypeOptions[] = {" FM", " AM", "SSB", "BYP", "RAW"};
+const char *vfoStateNames[] = {
+    "NORMAL", "BUSY", "BAT LOW", "DISABLE", "TIMEOUT", "ALARM", "VOL HIGH",
+};
+const char *powerNames[] = {"LOW", "MID", "HIGH"};
+const char *bwNames[] = {"  25k", "12.5k", "6.25k"};
+const char *deviationNames[] = {"", "+", "-"};
 
 bool RADIO_CheckValidChannel(uint16_t Channel, bool bCheckScanList,
                              uint8_t VFO) {
@@ -566,7 +572,6 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
     FUNCTION_Select(FUNCTION_FOREGROUND);
   }
 }
-
 
 void RADIO_SetTxParameters(void) {
   BK4819_FilterBandwidth_t Bandwidth;

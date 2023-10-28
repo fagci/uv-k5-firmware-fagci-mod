@@ -359,4 +359,3 @@ void APP_RunSpectrum(void);
 
 #endif /* ifndef SPECTRUM_H */
 
-// vim: ft=c

@@ -118,7 +118,7 @@ void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
   unsigned int i = 0;
 
   // MHz
-  while (i < 3) {
+  while (i < 4) {
     const unsigned int Digit = pDigits[i++];
     if (bDisplayLeadingZero || bCanDisplay || Digit > 0) {
       bCanDisplay = true;
@@ -144,7 +144,7 @@ void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
   pFb1++;
 
   // kHz
-  while (i < 6) {
+  while (i < 7) {
     const unsigned int Digit = pDigits[i++];
     memmove(pFb0, gFontBigDigits[Digit], charWidth);
     memmove(pFb1, gFontBigDigits[Digit] + charWidth, charWidth);
