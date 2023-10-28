@@ -64,7 +64,7 @@ uint8_t gReducedService;
 uint8_t gBatteryVoltageIndex;
 CssScanMode_t gCssScanMode;
 bool gUpdateRSSI;
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
+#if defined(ENABLE_TX1750)
 AlarmState_t gAlarmState;
 #endif
 uint8_t gVoltageMenuCountdown;
@@ -110,10 +110,6 @@ uint8_t gCurrentScanList;
 uint8_t gPreviousMrChannel;
 uint32_t gRestoreFrequency;
 uint8_t gRxVfoIsActive;
-#if defined(ENABLE_ALARM)
-uint8_t gAlarmToneCounter;
-uint16_t gAlarmRunningCounter;
-#endif
 bool gKeyBeingHeld;
 bool gPttIsPressed;
 uint8_t gPttDebounceCounter;

@@ -45,26 +45,15 @@ void UI_DisplayMain(void) {
   }
 
   for (i = 0; i < 2; i++) {
-    uint8_t *pLine0;
-    // uint8_t *pLine1;
-    uint8_t Line;
-    uint8_t Channel;
-    bool bIsSameVfo;
+    bool filled = false;
+    uint8_t Line = i * 4;
+    uint8_t lineSubY = (Line + 2) * 8;
+
+    uint8_t Channel = gEeprom.TX_CHANNEL;
+    bool bIsSameVfo = !!(Channel == i);
     VFO_Info_t vfoInfo = gEeprom.VfoInfo[i];
     uint8_t screenCH = gEeprom.ScreenChannel[i];
-
-    if (i == 0) {
-      pLine0 = gFrameBuffer[0];
-      // pLine1 = gFrameBuffer[1];
-      Line = 0;
-    } else {
-      pLine0 = gFrameBuffer[4];
-      // pLine1 = gFrameBuffer[5];
-      Line = 4;
-    }
-
-    Channel = gEeprom.TX_CHANNEL;
-    bIsSameVfo = !!(Channel == i);
+    uint8_t *pLine0 = gFrameBuffer[Line];
 
     if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF && gRxVfoIsActive) {
       Channel = gEeprom.RX_CHANNEL;
@@ -123,51 +112,44 @@ void UI_DisplayMain(void) {
         UI_PrintString(String, 2, 127, 2 + (i * 3), 8, false);
         continue;
       } else if (bIsSameVfo) {
-        // memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
+        // Default
+        filled = true;
+        memset(pLine0, 127, 19);
       }
     } else {
-      /* if (bIsSameVfo) {
-        memcpy(pLine0 + 2, BITMAP_VFO_Default, sizeof(BITMAP_VFO_Default));
+      if (bIsSameVfo) {
+        // Default
+        filled = true;
+        memset(pLine0, 127, 19);
       } else {
-        memcpy(pLine0 + 2, BITMAP_VFO_NotDefault,
-               sizeof(BITMAP_VFO_NotDefault));
-      } */
+        // Not default
+        pLine0[0] = 0b01111111;
+        pLine0[1] = 0b01000001;
+        pLine0[17] = 0b01000001;
+        pLine0[18] = 0b01111111;
+      }
     }
 
     // 0x8EE2
     uint32_t SomeValue = 0;
 
     if (gCurrentFunction == FUNCTION_TRANSMIT) {
-#if defined(ENABLE_ALARM)
-      if (gAlarmState == ALARM_STATE_ALARM) {
-        SomeValue = 2;
+      if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
+        Channel = gEeprom.RX_CHANNEL;
       } else {
-#else
-      if (1) {
-#endif
-        if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-          Channel = gEeprom.RX_CHANNEL;
-        } else {
-          Channel = gEeprom.TX_CHANNEL;
-        }
-        if (Channel == i) {
-          SomeValue = 1;
-          UI_PrintStringSmallest("TX", 20, Line * 8 + 1, false, true);
-        }
+        Channel = gEeprom.TX_CHANNEL;
+      }
+      if (Channel == i) {
+        SomeValue = 1;
+        UI_PrintStringSmallBold("TX", 0, 0, Line + 1);
       }
     } else {
       SomeValue = 2;
       if ((gCurrentFunction == FUNCTION_RECEIVE ||
            gCurrentFunction == FUNCTION_MONITOR) &&
           gEeprom.RX_CHANNEL == i) {
-        UI_PrintStringSmallest("RX", 20, Line * 8 + 1, false, true);
+        UI_PrintStringSmallBold("RX", 0, 0, Line + 1);
       }
-    }
-
-    // 0x8F3C
-    bool isActiveChannel = Channel == i;
-    if (isActiveChannel) {
-      memset(gFrameBuffer[Line], 127, 19);
     }
 
     if (IS_MR_CHANNEL(screenCH)) {
@@ -181,27 +163,12 @@ void UI_DisplayMain(void) {
           String[j + 1] = v == 10 ? '-' : v + '0';
         }
       }
-      UI_PrintStringSmallest(String, 2, Line * 8 + 1, false, !isActiveChannel);
+      UI_PrintStringSmallest(String, 2, Line * 8 + 1, false, !filled);
     } else {
-      UI_PrintStringSmallest("VFO", 4, Line * 8 + 1, false, !isActiveChannel);
+      UI_PrintStringSmallest("VFO", 4, Line * 8 + 1, false, !filled);
     }
-
-    // 0x8FEC
 
     uint8_t State = VfoState[i];
-#if defined(ENABLE_ALARM)
-    if (gCurrentFunction == FUNCTION_TRANSMIT &&
-        gAlarmState == ALARM_STATE_ALARM) {
-      if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-        Channel = gEeprom.RX_CHANNEL;
-      } else {
-        Channel = gEeprom.TX_CHANNEL;
-      }
-      if (Channel == i) {
-        State = VFO_STATE_ALARM;
-      }
-    }
-#endif
     if (State) {
       uint8_t Width = 10;
 
@@ -233,23 +200,23 @@ void UI_DisplayMain(void) {
           }
         }
 
+        if (IS_MR_CHANNEL(screenCH)) {
+          const uint8_t ATTR = gMR_ChannelAttributes[screenCH];
+          if (ATTR & MR_CH_SCANLIST1) {
+            UI_PrintStringSmallest("s1", 112, lineSubY, false, true);
+          }
+          if (ATTR & MR_CH_SCANLIST2) {
+            UI_PrintStringSmallest("s2", 120, lineSubY, false, true);
+          }
+        }
+
         sprintf(String, "CH-%03u", screenCH + 1);
 
         if (!IS_MR_CHANNEL(screenCH) ||
             gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {
           NUMBER_ToDigits(frequency, String);
-          UI_DisplayFrequency(String, 18, Line, false, false);
+          UI_DisplayFrequency(String, 19, Line, false, false);
           UI_DisplaySmallDigits(2, String + 7, 113, Line + 1);
-
-          if (IS_MR_CHANNEL(screenCH)) {
-            const uint8_t Attr = gMR_ChannelAttributes[screenCH];
-            if (Attr & MR_CH_SCANLIST1) {
-              pLine0[114] = 0b11000000;
-            }
-            if (Attr & MR_CH_SCANLIST2) {
-              pLine0[114] |= 0b00011000;
-            }
-          }
         } else if (gEeprom.CHANNEL_DISPLAY_MODE == MDF_CHANNEL ||
                    (gEeprom.CHANNEL_DISPLAY_MODE == MDF_NAME &&
                     noChannelName)) {
@@ -260,7 +227,7 @@ void UI_DisplayMain(void) {
             memset(String, 0, sizeof(String));
             memmove(String, vfoInfo.Name, 10);
           }
-          UI_PrintStringSmall(String, 31 + 8, 0, Line);
+          UI_PrintStringSmallBold(String, 31 + 8, 0, Line);
 
           // show the channel frequency below the channel number/name
           sprintf(String, "%u.%05u", frequency / 100000, frequency % 100000);
@@ -271,39 +238,31 @@ void UI_DisplayMain(void) {
       }
     }
 
-    uint8_t lineSubY = (Line + 2) * 8;
-
-    // 0x931E
-    UI_PrintStringSmallest(modulationTypeOptions[vfoInfo.ModulationType], 116,
-                           2 + i * 32, false, true);
-
     if (vfoInfo.ModulationType == MOD_FM) {
       const FREQ_Config_t *pConfig = SomeValue == 1 ? vfoInfo.pTX : vfoInfo.pRX;
 
-      UI_PrintStringSmallest(dcsNames[pConfig->CodeType], 27, lineSubY, false,
+      UI_PrintStringSmallest(dcsNames[pConfig->CodeType], 21, lineSubY, false,
                              true);
     }
+    UI_PrintStringSmallest(modulationTypeOptions[vfoInfo.ModulationType], 116,
+                           2 + i * 32, false, true);
 
-    // 0x936C
-    UI_PrintStringSmallest(powerNames[vfoInfo.OUTPUT_POWER], 40, lineSubY,
+    UI_PrintStringSmallest(powerNames[vfoInfo.OUTPUT_POWER], 35, lineSubY,
                            false, true);
 
-    if (vfoInfo.ConfigRX.Frequency != vfoInfo.ConfigTX.Frequency) {
-      UI_PrintStringSmallest(
-          deviationNames[vfoInfo.FREQUENCY_DEVIATION_SETTING], 60, lineSubY,
-          false, true);
-    }
+    UI_PrintStringSmallest(deviationNames[vfoInfo.FREQUENCY_DEVIATION_SETTING],
+                           54, lineSubY, false, true);
 
     if (vfoInfo.FrequencyReverse) {
       UI_PrintStringSmallest("R", 64, lineSubY, false, true);
     }
-    UI_PrintStringSmallest(bwNames[vfoInfo.CHANNEL_BANDWIDTH], 64, lineSubY,
+    UI_PrintStringSmallest(bwNames[vfoInfo.CHANNEL_BANDWIDTH], 60, lineSubY,
                            false, true);
     if (vfoInfo.DTMF_DECODING_ENABLE) {
-      UI_PrintStringSmallest("DTMF", 84, lineSubY, false, true);
+      UI_PrintStringSmallest("DTMF", 81, lineSubY, false, true);
     }
     if (vfoInfo.SCRAMBLING_TYPE && gSetting_ScrambleEnable) {
-      UI_PrintStringSmallest("SCR", 110, lineSubY, false, true);
+      UI_PrintStringSmallest("SCR", 98, lineSubY, false, true);
     }
   }
 

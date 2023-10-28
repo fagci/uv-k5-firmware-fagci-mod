@@ -636,10 +636,9 @@ static void DrawStatus() {
 }
 
 static void DrawF(uint32_t f) {
-  sprintf(String, "%s", modulationTypeOptions[settings.modulationType]);
-  UI_PrintStringSmallest(String, 116, 1, false, true);
-  sprintf(String, "%s", bwOptions[settings.listenBw]);
-  UI_PrintStringSmallest(String, 108, 7, false, true);
+  UI_PrintStringSmallest(modulationTypeOptions[settings.modulationType], 116, 1,
+                         false, true);
+  UI_PrintStringSmallest(bwOptions[settings.listenBw], 108, 7, false, true);
 
   if (currentState == SPECTRUM && !f) {
     return;
@@ -657,18 +656,11 @@ static void DrawF(uint32_t f) {
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
   if (currentState == STILL && kbd.current == KEY_PTT) {
-    switch (txAllowState) {
-    case VFO_STATE_NORMAL:
-      if (isTransmitting) {
-        f = GetOffsetedF(gCurrentVfo, f);
-        sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
-      }
-      break;
-    case VFO_STATE_VOL_HIGH:
-      sprintf(String, "VOLTAGE HIGH");
-      break;
-    default:
-      sprintf(String, "DISABLED");
+    if (txAllowState) {
+      sprintf(String, vfoStateNames[txAllowState]);
+    } else if (isTransmitting) {
+      f = GetOffsetedF(gCurrentVfo, f);
+      sprintf(String, "TX %u.%05u", f / 100000, f % 100000);
     }
   }
   UI_PrintStringSmall(String, 8, 127, 0);

@@ -1,4 +1,4 @@
-/* Copyright 2023 Dual Tachyon
+/* Copyright 2023 fagci
  * https://github.com/fagci
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,14 @@
 #include "../driver/st7565.h"
 #include "../helper/battery.h"
 
-void drawBat(uint8_t Level, uint8_t start) {
-  const uint8_t WORK_START = start + 2;
+void UI_DisplayBattery(uint8_t Level) {
+  const uint8_t START = 115;
+  const uint8_t WORK_START = START + 2;
   const uint8_t WORK_WIDTH = 10;
   const uint8_t WORK_END = WORK_START + WORK_WIDTH;
 
-  gStatusLine[start] |= 0b000001110;
-  gStatusLine[start + 1] |= 0b000011111;
+  gStatusLine[START] |= 0b000001110;
+  gStatusLine[START + 1] |= 0b000011111;
   gStatusLine[WORK_END] |= 0b000011111;
 
   Level <<= 1;
@@ -54,5 +55,3 @@ void drawBat(uint8_t Level, uint8_t start) {
     gStatusLine[WORK_START + 8] &= 0b11111101;
   }
 }
-
-void UI_DisplayBattery(uint8_t Level) { drawBat(Level, 115); }

@@ -103,9 +103,6 @@ void Main(void) {
     BACKLIGHT_TurnOn();
     SYSTEM_DelayMs(1000);
     gMenuListCount = 49;
-#if defined(ENABLE_ALARM)
-    gMenuListCount++;
-#endif
 
     BootMode = BOOT_GetMode();
     if (gEeprom.POWER_ON_PASSWORD < 1000000) {

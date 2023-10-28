@@ -939,45 +939,6 @@ void APP_TimeSlice10ms(void) {
     gVoxPauseCountdown--;
   }
   if (gCurrentFunction == FUNCTION_TRANSMIT) {
-#if defined(ENABLE_ALARM)
-    if (gAlarmState == ALARM_STATE_TXALARM ||
-        gAlarmState == ALARM_STATE_ALARM) {
-      uint16_t Tone;
-
-      gAlarmRunningCounter++;
-      gAlarmToneCounter++;
-
-      Tone = 500 + (gAlarmToneCounter * 25);
-      if (Tone > 1500) {
-        Tone = 500;
-        gAlarmToneCounter = 0;
-      }
-      BK4819_SetScrambleFrequencyControlWord(Tone);
-      if (gEeprom.ALARM_MODE == ALARM_MODE_TONE &&
-          gAlarmRunningCounter == 512) {
-        gAlarmRunningCounter = 0;
-        if (gAlarmState == ALARM_STATE_TXALARM) {
-          gAlarmState = ALARM_STATE_ALARM;
-          RADIO_EnableCxCSS();
-          BK4819_SetupPowerAmplifier(0, 0);
-          BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, false);
-          BK4819_Enable_AfDac_DiscMode_TxDsp();
-          BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, false);
-          GUI_DisplayScreen();
-        } else {
-          gAlarmState = ALARM_STATE_TXALARM;
-          GUI_DisplayScreen();
-          BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, true);
-          RADIO_SetTxParameters();
-          BK4819_TransmitTone(true, 500);
-          SYSTEM_DelayMs(2);
-          GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-          gEnableSpeaker = true;
-          gAlarmToneCounter = 0;
-        }
-      }
-    }
-#endif
     if (gRTTECountdown > 0) {
       gRTTECountdown--;
       if (gRTTECountdown == 0) {
@@ -1303,7 +1264,7 @@ void APP_TimeSlice500ms(void) {
   }
 }
 
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
+#if defined(ENABLE_TX1750)
 static void ALARM_Off(void) {
   gAlarmState = ALARM_STATE_OFF;
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
@@ -1474,7 +1435,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 
   if (!bFlag) {
     if (gCurrentFunction == FUNCTION_TRANSMIT) {
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
+#if defined(ENABLE_TX1750)
       if (gAlarmState == ALARM_STATE_OFF) {
 #else
       if (1) {
@@ -1519,7 +1480,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
           }
         }
       } else if (!bKeyHeld && bKeyPressed) {
-#if defined(ENABLE_ALARM) || defined(ENABLE_TX1750)
+#if defined(ENABLE_TX1750)
         ALARM_Off();
         if (gEeprom.REPEATER_TAIL_TONE_ELIMINATION == 0) {
           FUNCTION_Select(FUNCTION_FOREGROUND);
