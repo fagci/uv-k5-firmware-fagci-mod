@@ -31,7 +31,8 @@
 #include "status.h"
 
 void UI_DisplayStatus(void) {
-  memset(gStatusLine, 64, sizeof(gStatusLine));
+  // memset(gStatusLine, 64, sizeof(gStatusLine));
+  memset(gStatusLine, 0, sizeof(gStatusLine));
 
   if (gBatteryDisplayLevel < 2) {
     if (gLowBatteryBlink == 1) {

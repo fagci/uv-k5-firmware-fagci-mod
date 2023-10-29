@@ -142,8 +142,10 @@ static void RestoreRegisters() {
   }
 }
 
-static void SetF(uint32_t f) { BK4819_TuneTo(fMeasure = f); }
-static void SetTxF(uint32_t f) { BK4819_TuneTo(fTx = f); }
+static void SetF(uint32_t f, bool precise) {
+  BK4819_TuneTo(fMeasure = f, precise);
+}
+static void SetTxF(uint32_t f) { BK4819_TuneTo(fTx = f, true); }
 
 // Spectrum related
 
@@ -225,7 +227,7 @@ static void TuneToPeak() {
   scanInfo.f = peak.f;
   scanInfo.rssi = peak.rssi;
   scanInfo.i = peak.i;
-  SetF(scanInfo.f);
+  SetF(scanInfo.f, true);
 }
 
 uint16_t GetBWRegValueForScan() { return 0b0000000110111100; }
@@ -345,7 +347,7 @@ static void ToggleTX(bool on) {
     RegRestore(BK4819_REG_7E);
     RegRestore(BK4819_REG_47);
 
-    SetF(fMeasure);
+    SetF(fMeasure, true);
   }
   BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, !on);
   BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, on);
@@ -417,10 +419,12 @@ static void UpdatePeakInfo() {
 
 static void Measure() {
   // rm harmonics using blacklist for now
-  /* if (scanInfo.f % 1300000 == 0) {
+#ifndef ENABLE_ALL_REGISTERS
+  if (scanInfo.f % 1300000 == 0) {
     blacklist[scanInfo.i] = true;
     return;
-  } */
+  }
+#endif
   rssiHistory[scanInfo.i] = scanInfo.rssi = GetRssi();
 }
 
@@ -506,7 +510,7 @@ static void UpdateCurrentFreqStill(bool inc) {
   } else if (!inc && f > F_MIN) {
     f -= offset;
   }
-  SetF(f);
+  SetF(f, false);
   SYSTEM_DelayMs(10);
   redrawScreen = true;
 }
@@ -640,9 +644,9 @@ static void DrawStatus() {
 }
 
 static void DrawF(uint32_t f) {
-  UI_PrintStringSmallest(modulationTypeOptions[settings.modulationType], 116, 1,
+  UI_PrintStringSmallest(modulationTypeOptions[settings.modulationType], 116, 2,
                          false, true);
-  UI_PrintStringSmallest(bwOptions[settings.listenBw], 108, 7, false, true);
+  UI_PrintStringSmallest(bwOptions[settings.listenBw], 108, 8, false, true);
 
   if (currentState == SPECTRUM && !f) {
     return;
@@ -653,7 +657,7 @@ static void DrawF(uint32_t f) {
     sprintf(String, "R%03u S%03u A%03u", scanInfo.rssi,
             BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1}),
             BK4819_GetRegValue((RegisterSpec){"agc_rssi", 0x62, 8, 0xFF, 1}));
-    UI_PrintStringSmallest(String, 26, 8, false, true);
+    UI_PrintStringSmallest(String, 36, 8, false, true);
   }
 #endif
 
@@ -673,9 +677,9 @@ static void DrawF(uint32_t f) {
 static void DrawNums() {
   if (currentState == SPECTRUM) {
     sprintf(String, "%ux", GetStepsCount());
-    UI_PrintStringSmallest(String, 0, 1, false, true);
+    UI_PrintStringSmallest(String, 0, 2, false, true);
     sprintf(String, "%u.%02uk", GetScanStep() / 100, GetScanStep() % 100);
-    UI_PrintStringSmallest(String, 0, 7, false, true);
+    UI_PrintStringSmallest(String, 0, 8, false, true);
   }
 
   if (IsCenterMode()) {
@@ -747,7 +751,7 @@ static void DrawArrow(uint8_t x) {
 }
 
 static void DeInitSpectrum() {
-  SetF(initialFreq);
+  SetF(initialFreq, true);
   ToggleRX(false);
   RestoreRegisters();
   isInitialized = false;
@@ -923,7 +927,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
       ResetBlacklist();
       RelaunchScan();
     } else {
-      SetF(currentFreq);
+      SetF(currentFreq, true);
     }
     redrawScreen = true;
     break;
@@ -1217,7 +1221,7 @@ static void Scan() {
   if (blacklist[scanInfo.i]) {
     return;
   }
-  SetF(scanInfo.f);
+  SetF(scanInfo.f, true);
   Measure();
   UpdateScanInfo();
 }

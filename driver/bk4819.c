@@ -39,7 +39,7 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_00, 0x0000);
   BK4819_WriteRegister(BK4819_REG_37, 0x1D0F);
   BK4819_WriteRegister(BK4819_REG_36, 0x0022);
-  BK4819_SetAGC(1);
+  BK4819_SetAGC(0);
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
@@ -963,11 +963,14 @@ void BK4819_ToggleAFDAC(bool on) {
   BK4819_WriteRegister(BK4819_REG_30, Reg);
 }
 
-void BK4819_TuneTo(uint32_t f) {
+void BK4819_TuneTo(uint32_t f, bool precise) {
   BK4819_PickRXFilterPathBasedOnFrequency(f);
   BK4819_SetFrequency(f);
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
-  // BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
-  BK4819_WriteRegister(BK4819_REG_30, 0);
+  if (precise) {
+    BK4819_WriteRegister(BK4819_REG_30, 0);
+  } else {
+    BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
+  }
   BK4819_WriteRegister(BK4819_REG_30, reg);
 }

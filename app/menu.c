@@ -97,7 +97,6 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     *pMin = 0;
     *pMax = 50;
     break;
-  case MENU_W_N:
   case MENU_BCL:
   case MENU_BEEP:
   case MENU_AUTOLK:
@@ -106,7 +105,6 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_STE:
   case MENU_D_ST:
   case MENU_D_DCD:
-  case MENU_AM:
   case MENU_RESET:
   case MENU_350TX:
   case MENU_200TX:
@@ -114,6 +112,14 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_SCREN:
     *pMin = 0;
     *pMax = 1;
+    break;
+  case MENU_W_N:
+    *pMin = 0;
+    *pMax = ARRAY_SIZE(bwNames) - 1;
+    break;
+  case MENU_AM:
+    *pMin = 0;
+    *pMax = ARRAY_SIZE(modulationTypeOptions) - 1;
     break;
   case MENU_SCR:
   case MENU_VOX:

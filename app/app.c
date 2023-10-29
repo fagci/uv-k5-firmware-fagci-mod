@@ -361,12 +361,12 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
       AM_fix_10ms(chan);
 
     } else {            // FM RX mode
-      BK4819_SetAGC(1); // normalize gain
+      BK4819_SetAGC(0); // normalize gain
       /* BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
                                               (mixer << 3) | (pga << 0)); */
     }
 #else
-    BK4819_SetAGC(1); // normalize gain
+    BK4819_SetAGC(0); // normalize gain
     /* BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
                                             (mixer << 3) | (pga << 0)); */
 #endif
@@ -431,7 +431,7 @@ void APP_SetFrequencyByStep(VFO_Info_t *pInfo, int8_t Step) {
     pInfo->ConfigRX.Frequency = Frequency;
   }
 
-  BK4819_TuneTo(Frequency);
+  BK4819_TuneTo(Frequency, false);
 }
 
 static void FREQ_NextChannel(void) {

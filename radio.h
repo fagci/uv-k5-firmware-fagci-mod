@@ -62,10 +62,10 @@ enum STEP_Setting_t {
   STEP_100_0kHz,
 };
 
-extern const char *modulationTypeOptions[];
+extern const char *modulationTypeOptions[5];
 extern const char *vfoStateNames[];
 extern const char *powerNames[];
-extern const char *bwNames[];
+extern const char *bwNames[3];
 extern const char *deviationNames[];
 
 typedef enum ModulationType {

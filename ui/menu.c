@@ -30,70 +30,70 @@
 #include "ui.h"
 #include <string.h>
 
-static const char MenuList[][7] = {
-    // 0x00
-    "SQL",
-    "STEP",
-    "TXP",
-    "R_DCS",
-    "R_CTCS",
-    "T_DCS",
-    "T_CTCS",
-    "SFT-D",
+static const char MenuList[][8] = {
+        // 0x00
+    "Squelch",
+    "Step",
+    "TxPower",
+    "RxDCS",
+    "RxCTCS",
+    "TxDCS",
+    "TxCTCS",
+    "TxODir",
     // 0x08
-    "OFFSET",
-    "W/N",
-    "SCR",
-    "BCL",
-    "MEM-CH",
-    "SAVE",
+    "TxOffs",
+    "Bandwid",
+    "Scrambl",
+    "BusyCL",
+    "ChSave",
+    "BatSave",
     "VOX",
-    "BACKLI",
+    "Backlit",
     // 0x10
-    "DW",
-    "WX",
-    "BEEP",
-    "TOT",
-    "VOICE",
-    "SC-REV",
-    "MDF",
-    "AUTOLK",
+    "DualRx",
+    "XBand",
+    "Beep",
+    "TxTime",
+    "Voice",
+    "ScnRev",
+    "ChDisp",
+    "KeyLock",
     // 0x18
-    "S-ADD1",
-    "S-ADD2",
+    "ScAdd1",
+    "ScAdd2",
     "STE",
-    "RP-STE",
-    "MIC",
-    "1-CALL",
-    "S-LIST",
-    "SLIST1",
+    "RP STE",
+    "Mic",
+    "1 Call",
+    "SList",
+    "SList1",
     // 0x20
-    "SLIST2",
-    "ANI-ID",
-    "UPCODE",
-    "DWCODE",
-    "D-ST",
-    "D-RSP",
-    "D-HOLD",
+    "SList2",
+    "ANI ID",
+    "UPCode",
+    "DWCode",
+    "D ST",
+    "D Resp",
+    "D Hold",
     // 0x28
-    "D-PRE",
-    "PTT-ID",
-    "D-DCD",
-    "D-LIST",
-    "PONMSG",
-    "ROGER",
-    "VOL",
-    "MODUL",
-    // 0x30
-    "DEL-CH",
-    "RESET",
-    "350TX",
-    "F-LOCK",
-    "200TX",
-    "500TX",
-    "ALL_TX",
+    "D Prel",
+    "PTT ID",
+    "D Decd",
+    "D List",
+    "PonMsg",
+    "Roger",
+    "Voltage",
+    "Modulat",
+// 0x30
+    "ChDele",
+    "Reset",
+    "Tx 350",
+    "F Lock",
+    "Tx 200",
+    "Tx 500",
+    "Tx All",
     // 0x38
-    "SCREN",
+    "ScramEn",
 };
 
 static const char gSubMenu_TXP[3][5] = {
@@ -106,11 +106,6 @@ static const char gSubMenu_SFT_D[3][4] = {
     "OFF",
     "+",
     "-",
-};
-
-static const char gSubMenu_W_N[2][7] = {
-    "WIDE",
-    "NARROW",
 };
 
 static const char gSubMenu_SAVE[5][4] = {
@@ -190,14 +185,14 @@ void UI_DisplayMenu(void) {
 
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
-  uint8_t offset = Clamp(gMenuCursor - 2, 0, gMenuListCount - 5);
-  for (int i = 0; i < 5; ++i) {
+  uint8_t offset = Clamp(gMenuCursor - 2, 0, gMenuListCount - 6);
+  for (int i = 0; i < 6; ++i) {
     const char *s = MenuList[i + offset];
     bool isCurrent = gMenuCursor == i + offset;
     if (isCurrent) {
-      UI_PrintStringSmallBold(s, 0, 48, i);
+      UI_PrintStringSmallBold(s, 0, 0, i);
     } else {
-      UI_PrintStringSmall(s, 0, 48, i);
+      UI_PrintStringSmall(s, 0, 0, i);
     }
   }
 
@@ -214,7 +209,7 @@ void UI_DisplayMenu(void) {
   }
 
   sprintf(String, "%03u", gMenuCursor + 1);
-  UI_PrintStringSmall(String, 32, 48, 6);
+  UI_PrintStringSmallest(String, 36, 49, false, true);
   if (gIsInSubMenu) {
     memcpy(gFrameBuffer[0] + 50, BITMAP_CurrentIndicator,
            sizeof(BITMAP_CurrentIndicator));
@@ -291,7 +286,7 @@ void UI_DisplayMenu(void) {
     break;
 
   case MENU_W_N:
-    strcpy(String, gSubMenu_W_N[gSubMenuSelection]);
+    strcpy(String, bwNames[gSubMenuSelection]);
     break;
 
   case MENU_SCR:
@@ -323,8 +318,10 @@ void UI_DisplayMenu(void) {
   case MENU_500TX:
   case MENU_SCREN:
   case MENU_STE:
-  case MENU_AM:
     strcpy(String, offOn[gSubMenuSelection]);
+    break;
+  case MENU_AM:
+    strcpy(String, modulationTypeOptions[gSubMenuSelection]);
     break;
 
   case MENU_MEM_CH:
