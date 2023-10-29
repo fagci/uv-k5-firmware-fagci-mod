@@ -261,23 +261,28 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld) {
 }
 
 static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
-  if (!bKeyHeld && bKeyPressed) {
-    bool bFlag;
-
+  if (!bKeyPressed && !bKeyHeld) {
     if (freqInputIndex > 0) {
       MAIN_ApplyFreq();
+      gRequestDisplayScreen = DISPLAY_MAIN;
+      return;
+    } else {
+
+      gRequestDisplayScreen = DISPLAY_CONTEXT_MENU;
       return;
     }
+  }
 
+  if (bKeyHeld && bKeyPressed) {
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-    bFlag = gInputBoxIndex == 0;
-    gInputBoxIndex = 0;
-    if (bFlag) {
+    if (gInputBoxIndex) {
+      gInputBoxIndex = 0;
+      gRequestDisplayScreen = DISPLAY_MAIN;
+    } else {
       gFlagRefreshSetting = true;
       gRequestDisplayScreen = DISPLAY_MENU;
-    } else {
-      gRequestDisplayScreen = DISPLAY_MAIN;
     }
+    return;
   }
 }
 

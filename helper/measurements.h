@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 static const uint8_t U8RssiMap[] = {
-    141, 135, 129, 123, 117, 111, 105, 99, 93, 83, 73, 63,
+    141, 135, 129, 123, 117, 111, 105, 99, 93, 83, 73, 63, 53, 43, 33
 };
 
 int Clamp(int v, int min, int max);

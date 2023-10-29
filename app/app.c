@@ -27,6 +27,7 @@
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
+#include "app/contextmenu.h"
 #include "app/generic.h"
 #include "app/main.h"
 #include "app/menu.h"
@@ -345,32 +346,19 @@ void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
     gUpdateStatus = true;
   }
 
-  { // RF RX front end gain
-
-    // original setting
-    /* uint16_t lnaShort = origLnaShort;
-    uint16_t lna = origLna;
-    uint16_t mixer = origMixer;
-    uint16_t pga = origPga; */
-
 #ifdef ENABLE_AM_FIX
-    if (gRxVfo->ModulationType == MOD_AM) { // AM RX mode
-      if (resetAmFix) {
-        AM_fix_reset(chan); // TODO: only reset it when moving channel/frequency
-      }
-      AM_fix_10ms(chan);
-
-    } else {            // FM RX mode
-      BK4819_SetAGC(0); // normalize gain
-      /* BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
-                                              (mixer << 3) | (pga << 0)); */
+  if (gRxVfo->ModulationType == MOD_AM) { // AM RX mode
+    if (resetAmFix) {
+      AM_fix_reset(chan); // TODO: only reset it when moving channel/frequency
     }
-#else
+    AM_fix_10ms(chan);
+
+  } else {            // FM RX mode
     BK4819_SetAGC(0); // normalize gain
-    /* BK4819_WriteRegister(BK4819_REG_13, (lnaShort << 8) | (lna << 5) |
-                                            (mixer << 3) | (pga << 0)); */
-#endif
   }
+#else
+  BK4819_SetAGC(0); // normalize gain
+#endif
 
   // AF gain - original QS values
   BK4819_WriteRegister(
@@ -803,6 +791,8 @@ void APP_Update(void) {
   }
 }
 
+#define KEY_HOLD_TIME 50
+
 void APP_CheckKeys(void) {
   KEY_Code_t Key;
 
@@ -855,13 +845,16 @@ void APP_CheckKeys(void) {
       APP_ProcessKey(Key, true, false);
     }
     gKeyBeingHeld = false;
-  } else if (gDebounceCounter == 128) {
+  } else if (gDebounceCounter == KEY_HOLD_TIME) {
+    // NOTE: Here keys to process hold start
     if (Key == KEY_STAR || Key == KEY_F || Key == KEY_SIDE2 ||
-        Key == KEY_SIDE1 || Key == KEY_UP || Key == KEY_DOWN) {
+        Key == KEY_SIDE1 || Key == KEY_UP || Key == KEY_DOWN ||
+        Key == KEY_MENU) {
       gKeyBeingHeld = true;
       APP_ProcessKey(Key, true, true);
     }
-  } else if (gDebounceCounter > 128) {
+  } else if (gDebounceCounter > KEY_HOLD_TIME) {
+    // NOTE: Here keys to process hold continue
     if (Key == KEY_UP || Key == KEY_DOWN) {
       gKeyBeingHeld = true;
       if ((gDebounceCounter & 15) == 0) {
@@ -871,7 +864,7 @@ void APP_CheckKeys(void) {
     if (gDebounceCounter != 0xFFFF) {
       return;
     }
-    gDebounceCounter = 128;
+    gDebounceCounter = KEY_HOLD_TIME;
   }
 }
 
@@ -1386,8 +1379,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   if ((gScanState != SCAN_OFF && Key != KEY_PTT && Key != KEY_UP &&
        Key != KEY_DOWN && Key != KEY_EXIT && Key != KEY_STAR) ||
       (gCssScanMode != CSS_SCAN_MODE_OFF && Key != KEY_PTT && Key != KEY_UP &&
-       Key != KEY_DOWN && Key != KEY_EXIT && Key != KEY_STAR &&
-       Key != KEY_MENU)) {
+       Key != KEY_DOWN && Key != KEY_EXIT && Key != KEY_STAR)) {
     if (!bKeyPressed || bKeyHeld) {
       return;
     }
@@ -1506,6 +1498,9 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 #endif
       case DISPLAY_MENU:
         MENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+      case DISPLAY_CONTEXT_MENU:
+        CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
         break;
       case DISPLAY_SCANNER:
         SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);

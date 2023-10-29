@@ -283,9 +283,9 @@ void BK4819_EnableVox(uint16_t VoxEnableThreshold,
 }
 
 const uint16_t listenBWRegValues[3] = {
-    0x3028, // 25
-    0x4048, // 12.5
-    0x205C, // 6.25
+    0x3028,             // 25
+    0x4048,             // 12.5
+    0b0000000000011000, // was 0x205C, // 6.25
 };
 
 void BK4819_SetFilterBandwidth(BK4819_FilterBandwidth_t Bandwidth) {
@@ -340,10 +340,7 @@ void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh,
                            SquelchOpenGlitchThresh); //  0 ~ 255
 #else
                                       // original (*)
-                       (1u << 14) |     //  1 ???
-                           (3u << 11) | // *5  squelch = open  delay .. 0 ~ 7
-                           (2u << 9) |  // *3  squelch = close delay .. 0 ~ 3
-                           SquelchOpenGlitchThresh); //  0 ~ 255
+                       0x6F00 | SquelchOpenGlitchThresh);
 #endif
   BK4819_WriteRegister(BK4819_REG_4F,
                        (SquelchCloseNoiseThresh << 8) | SquelchOpenNoiseThresh);

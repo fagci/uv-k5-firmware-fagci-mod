@@ -38,9 +38,9 @@ static void ACTION_FlashLight(void) {
     gFlashLightState++;
     GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);
     break;
-  case 1:
+  /* case 1:
     gFlashLightState++;
-    break;
+    break; */
   default:
     gFlashLightState = 0;
     GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);

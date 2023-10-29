@@ -26,6 +26,7 @@ enum BEEP_Type_t {
   BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL = 2U,
   BEEP_440HZ_500MS = 3U,
   BEEP_500HZ_60MS_DOUBLE_BEEP = 4U,
+  BEEP_TEST = 5U,
 };
 
 typedef enum BEEP_Type_t BEEP_Type_t;

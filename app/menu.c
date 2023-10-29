@@ -19,25 +19,25 @@
 #if !defined(ENABLE_OVERLAY)
 #include "ARMCM0.h"
 #endif
+#include "../audio.h"
+#include "../board.h"
+#include "../bsp/dp32g030/gpio.h"
+#include "../driver/backlight.h"
+#include "../driver/gpio.h"
+#include "../driver/keyboard.h"
+#include "../frequencies.h"
+#include "../misc.h"
+#include "../settings.h"
 #include "app/dtmf.h"
 #include "app/generic.h"
 #include "app/menu.h"
 #include "app/scanner.h"
-#include "audio.h"
-#include "board.h"
-#include "bsp/dp32g030/gpio.h"
-#include "driver/backlight.h"
-#include "driver/gpio.h"
-#include "driver/keyboard.h"
-#include "frequencies.h"
-#include "misc.h"
-#include "settings.h"
 #if defined(ENABLE_OVERLAY)
-#include "sram-overlay.h"
+#include "../sram-overlay.h"
 #endif
-#include "ui/inputbox.h"
-#include "ui/menu.h"
-#include "ui/ui.h"
+#include "../ui/inputbox.h"
+#include "../ui/menu.h"
+#include "../ui/ui.h"
 
 void MENU_StartCssScan(int8_t Direction) {
   gCssScanMode = CSS_SCAN_MODE_SCANNING;
@@ -115,7 +115,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     break;
   case MENU_W_N:
     *pMin = 0;
-    *pMax = ARRAY_SIZE(bwNames) - 1;
+    *pMax = 1;
     break;
   case MENU_AM:
     *pMin = 0;

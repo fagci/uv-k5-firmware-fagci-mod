@@ -69,6 +69,9 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep) {
 #endif
   SYSTEM_DelayMs(20);
   switch (Beep) {
+  case BEEP_TEST:
+    ToneFrequency = 4000;
+    break;
   case BEEP_1KHZ_60MS_OPTIONAL:
     ToneFrequency = 1000;
     break;
@@ -128,7 +131,7 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep) {
   }
 }
 
-void AUDIO_PlayMelody(const Note *melody, uint8_t size){
+void AUDIO_PlayMelody(const Note *melody, uint8_t size) {
 
   if (gCurrentFunction == FUNCTION_RECEIVE ||
       gCurrentFunction == FUNCTION_MONITOR

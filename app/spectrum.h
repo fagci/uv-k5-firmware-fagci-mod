@@ -200,6 +200,7 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"IF step1x", 0x3D, 0, 0xFFFF, 1},
     {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
     {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
+    {"AFTxLPF2fltBW1.7-4.5khz", 0x43, 6, 0b111, 1},
     {"BW Mode Selection", 0x43, 4, 0b11, 1},
     {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
     {"XTAL F Low-16bits 100", 0x3B, 0, 0xFFFF, 100},
@@ -341,7 +342,6 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"PA Gain2 Tuning", 0x36, 0, 0b111, 1},
     {"RF TxDeviation ON", 0x40, 12, 1, 1},
     {"RF Tx Deviation", 0x40, 0, 0xFFF, 10},
-    {"AFTxLPF2fltBW1.7-4.5khz", 0x43, 6, 0b111, 1},
     {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 100},
     {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 100},
 

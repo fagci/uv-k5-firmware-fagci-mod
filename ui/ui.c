@@ -14,8 +14,9 @@
  *     limitations under the License.
  */
 
-#include <string.h>
+#include "ui.h"
 #include "app/dtmf.h"
+#include <string.h>
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
@@ -29,6 +30,7 @@
 #include "ui/inputbox.h"
 #include "ui/main.h"
 #include "ui/menu.h"
+#include "ui/contextmenu.h"
 #include "ui/scanner.h"
 #include "ui/ui.h"
 
@@ -39,57 +41,57 @@ uint8_t gAskForConfirmation;
 bool gAskToSave;
 bool gAskToDelete;
 
-void GUI_DisplayScreen(void)
-{
-	switch (gScreenToDisplay) {
-	case DISPLAY_MAIN:
-		UI_DisplayMain();
-		break;
+void GUI_DisplayScreen(void) {
+  switch (gScreenToDisplay) {
+  case DISPLAY_MAIN:
+    UI_DisplayMain();
+    break;
 #if defined(ENABLE_FMRADIO)
-	case DISPLAY_FM:
-		UI_DisplayFM();
-		break;
+  case DISPLAY_FM:
+    UI_DisplayFM();
+    break;
 #endif
-	case DISPLAY_MENU:
-		UI_DisplayMenu();
-		break;
-	case DISPLAY_SCANNER:
-		UI_DisplayScanner();
-		break;
+  case DISPLAY_MENU:
+    UI_DisplayMenu();
+    break;
+  case DISPLAY_CONTEXT_MENU:
+    UI_DisplayContextMenu();
+    break;
+  case DISPLAY_SCANNER:
+    UI_DisplayScanner();
+    break;
 #if defined(ENABLE_AIRCOPY)
-	case DISPLAY_AIRCOPY:
-		UI_DisplayAircopy();
-		break;
+  case DISPLAY_AIRCOPY:
+    UI_DisplayAircopy();
+    break;
 #endif
-	default:
-		break;
-	}
+  default:
+    break;
+  }
 }
 
-void GUI_SelectNextDisplay(GUI_DisplayType_t Display)
-{
-	if (Display != DISPLAY_INVALID) {
-		if (gScreenToDisplay != Display) {
-			gInputBoxIndex = 0;
-			gIsInSubMenu = false;
-			gCssScanMode = CSS_SCAN_MODE_OFF;
-			gScanState = SCAN_OFF;
+void GUI_SelectNextDisplay(GUI_DisplayType_t Display) {
+  if (Display != DISPLAY_INVALID) {
+    if (gScreenToDisplay != Display) {
+      gInputBoxIndex = 0;
+      gIsInSubMenu = false;
+      gCssScanMode = CSS_SCAN_MODE_OFF;
+      gScanState = SCAN_OFF;
 #if defined(ENABLE_FMRADIO)
-			gFM_ScanState = FM_SCAN_OFF;
+      gFM_ScanState = FM_SCAN_OFF;
 #endif
-			gAskForConfirmation = 0;
-			gDTMF_InputMode = false;
-			gDTMF_InputIndex = 0;
-			gF_LOCK = false;
-			gAskToSave = false;
-			gAskToDelete = false;
-			if (gWasFKeyPressed) {
-				gWasFKeyPressed = false;
-				gUpdateStatus = true;
-			}
-		}
-		gUpdateDisplay = true;
-		gScreenToDisplay = Display;
-	}
+      gAskForConfirmation = 0;
+      gDTMF_InputMode = false;
+      gDTMF_InputIndex = 0;
+      gF_LOCK = false;
+      gAskToSave = false;
+      gAskToDelete = false;
+      if (gWasFKeyPressed) {
+        gWasFKeyPressed = false;
+        gUpdateStatus = true;
+      }
+    }
+    gUpdateDisplay = true;
+    gScreenToDisplay = Display;
+  }
 }
-

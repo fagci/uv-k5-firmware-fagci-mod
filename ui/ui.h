@@ -21,16 +21,17 @@
 #include <stdint.h>
 
 enum GUI_DisplayType_t {
-	DISPLAY_MAIN	= 0x00U,
+  DISPLAY_MAIN = 0x00U,
 #if defined(ENABLE_FMRADIO)
-	DISPLAY_FM	= 0x01U,
+  DISPLAY_FM = 0x01U,
 #endif
-	DISPLAY_MENU	= 0x02U,
-	DISPLAY_SCANNER	= 0x03U,
+  DISPLAY_MENU = 0x02U,
+  DISPLAY_SCANNER = 0x03U,
 #if defined(ENABLE_AIRCOPY)
-	DISPLAY_AIRCOPY	= 0x04U,
+  DISPLAY_AIRCOPY = 0x04U,
 #endif
-	DISPLAY_INVALID	= 0xFFU,
+  DISPLAY_CONTEXT_MENU = 0x05U,
+  DISPLAY_INVALID = 0xFFU,
 };
 
 typedef enum GUI_DisplayType_t GUI_DisplayType_t;
@@ -46,4 +47,3 @@ void GUI_DisplayScreen(void);
 void GUI_SelectNextDisplay(GUI_DisplayType_t Display);
 
 #endif
-

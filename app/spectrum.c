@@ -542,6 +542,10 @@ static void ToggleListeningBW() {
   } else {
     settings.listenBw++;
   }
+
+#ifdef ENABLE_ALL_REGISTERS
+  BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#endif
   redrawScreen = true;
 }
 
