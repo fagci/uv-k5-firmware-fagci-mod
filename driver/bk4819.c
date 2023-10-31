@@ -676,14 +676,12 @@ void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst,
 void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency) {
   BK4819_EnterTxMute();
   BK4819_WriteRegister(BK4819_REG_70,
-                       0 | BK4819_REG_70_MASK_ENABLE_TONE1 |
+                       BK4819_REG_70_MASK_ENABLE_TONE1 |
                            (96U << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
   BK4819_SetToneFrequency(Frequency);
-  if (bLocalLoopback) {
-    BK4819_SetAF(BK4819_AF_BEEP);
-  } else {
-    BK4819_SetAF(BK4819_AF_MUTE);
-  }
+
+  BK4819_SetAF(bLocalLoopback ? BK4819_AF_BEEP : BK4819_AF_MUTE);
+
   BK4819_EnableTXLink();
   SYSTEM_DelayMs(50);
   BK4819_ExitTxMute();
@@ -726,7 +724,7 @@ uint16_t BK4819_GetRSSI(void) {
 bool BK4819_GetFrequencyScanResult(uint32_t *pFrequency) {
   uint16_t High = BK4819_ReadRegister(BK4819_REG_0D);
   bool Finished = (High & 0x8000) == 0;
-  
+
   if (Finished) {
     uint16_t Low = BK4819_ReadRegister(BK4819_REG_0E);
     *pFrequency = (uint32_t)((High & 0x7FF) << 16) | Low;
@@ -914,11 +912,7 @@ void BK4819_GetVoxAmp(uint16_t *pResult) {
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code) {
   BK4819_EnableDTMF();
   BK4819_EnterTxMute();
-  if (bLocalLoopback) {
-    BK4819_SetAF(BK4819_AF_BEEP);
-  } else {
-    BK4819_SetAF(BK4819_AF_MUTE);
-  }
+  BK4819_SetAF(bLocalLoopback ? BK4819_AF_BEEP : BK4819_AF_MUTE);
   BK4819_WriteRegister(BK4819_REG_70, 0xD3D3);
   BK4819_EnableTXLink();
   SYSTEM_DelayMs(50);

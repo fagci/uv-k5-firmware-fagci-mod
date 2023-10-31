@@ -587,17 +587,12 @@ void APP_CheckRadioInterrupts(void) {
 
 void APP_EndTransmission(void) {
   RADIO_SendEndOfTransmission();
-  if (gCurrentVfo->pTX->CodeType == CODE_TYPE_OFF) { // CTCSS/DCS is enabled
-    BK4819_EnableCTCSS();
-    SYSTEM_DelayMs(200);
-  } else {
-
-    // if (gEeprom.TAIL_NOTE_ELIMINATION &&
-    // gEeprom.REPEATER_TAIL_TONE_ELIMINATION > 0)
-    if (gEeprom.TAIL_NOTE_ELIMINATION) { // send the CTCSS/DCS tail tone -
-                                         // allows the receivers to mute the
-                                         // usual FM squelch tail/crash
+  if (gCurrentVfo->pTX->CodeType != CODE_TYPE_OFF) { // CTCSS/DCS is enabled
+    if (gEeprom.TAIL_NOTE_ELIMINATION) {
       RADIO_EnableCxCSS();
+    } else {
+      BK4819_ExitSubAu();
+			SYSTEM_DelayMs(200);
     }
   }
 
