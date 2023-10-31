@@ -172,7 +172,7 @@ void AUDIO_PlayMelody(const Note *melody, uint8_t size) {
                                           BK4819_REG_30_ENABLE_TX_DSP);
   for (uint8_t i = 0; i < size; i++) {
     Note n = melody[i];
-    BK4819_WriteRegister(BK4819_REG_71, (uint16_t)((n.f * 1032444) / 100000));
+    BK4819_SetToneFrequency(n.f);
     SYSTEM_DelayMs(n.dur);
   }
 

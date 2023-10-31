@@ -17,8 +17,8 @@
 #ifndef APP_SCANNER_H
 #define APP_SCANNER_H
 
-#include "dcs.h"
-#include "driver/keyboard.h"
+#include "../dcs.h"
+#include "../driver/keyboard.h"
 
 enum SCAN_CssState_t {
 	SCAN_CSS_STATE_OFF      = 0U,

@@ -144,7 +144,6 @@ void BK4819_PlayRogerMDC(void);
 void BK4819_Enable_AfDac_DiscMode_TxDsp(void);
 
 void BK4819_GetVoxAmp(uint16_t *pResult);
-void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency);
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code);
 
 void BK4819_ToggleAFBit(bool on);
@@ -153,5 +152,6 @@ uint16_t BK4819_GetRegValue(RegisterSpec s);
 void BK4819_SetRegValue(RegisterSpec s, uint16_t v);
 void BK4819_SetModulation(ModulationType type);
 void BK4819_TuneTo(uint32_t f, bool precise);
+void BK4819_SetToneFrequency(uint16_t f);
 
 #endif

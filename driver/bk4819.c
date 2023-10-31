@@ -21,6 +21,7 @@
 #include "../driver/system.h"
 #include "../driver/systick.h"
 #include "../driver/uart.h"
+#include "../misc.h"
 
 static const uint16_t FSK_RogerTable[7] = {
     0xF1A2, 0x7446, 0x61A4, 0x6544, 0x4E8A, 0xE044, 0xEA84,
@@ -29,6 +30,9 @@ static const uint16_t FSK_RogerTable[7] = {
 static uint16_t gBK4819_GpioOutState;
 
 bool gRxIdleMode;
+
+const uint8_t DTMF_COEFFS[] = {111, 107, 103, 98, 80,  71,  58,  44,
+                               65,  55,  37,  23, 228, 203, 181, 159};
 
 void BK4819_Init(void) {
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
@@ -43,28 +47,16 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
-  BK4819_WriteRegister(BK4819_REG_09, 0x006F);
-  BK4819_WriteRegister(BK4819_REG_09, 0x106B);
-  BK4819_WriteRegister(BK4819_REG_09, 0x2067);
-  BK4819_WriteRegister(BK4819_REG_09, 0x3062);
-  BK4819_WriteRegister(BK4819_REG_09, 0x4050);
-  BK4819_WriteRegister(BK4819_REG_09, 0x5047);
-  BK4819_WriteRegister(BK4819_REG_09, 0x603A);
-  BK4819_WriteRegister(BK4819_REG_09, 0x702C);
-  BK4819_WriteRegister(BK4819_REG_09, 0x8041);
-  BK4819_WriteRegister(BK4819_REG_09, 0x9037);
-  BK4819_WriteRegister(BK4819_REG_09, 0xA025);
-  BK4819_WriteRegister(BK4819_REG_09, 0xB017);
-  BK4819_WriteRegister(BK4819_REG_09, 0xC0E4);
-  BK4819_WriteRegister(BK4819_REG_09, 0xD0CB);
-  BK4819_WriteRegister(BK4819_REG_09, 0xE0B5);
-  BK4819_WriteRegister(BK4819_REG_09, 0xF09F);
+
+  for (uint8_t i = 0; i < ARRAY_SIZE(DTMF_COEFFS); ++i) {
+    BK4819_WriteRegister(0x09, (i << 12) | DTMF_COEFFS[i]);
+  }
+
   BK4819_WriteRegister(BK4819_REG_1F, 0x5454);
   BK4819_WriteRegister(BK4819_REG_3E, 0xA037);
   gBK4819_GpioOutState = 0x9000;
   BK4819_WriteRegister(BK4819_REG_33, 0x9000);
   BK4819_WriteRegister(BK4819_REG_3F, 0);
-  // BK4819_WriteRegister(0x3D, 0); // IF
 }
 
 static uint16_t BK4819_ReadU16(void) {
@@ -471,10 +463,8 @@ void BK4819_PlayTone(uint16_t Frequency, bool bTuningGainSwitch) {
   BK4819_WriteRegister(BK4819_REG_30, 0 | BK4819_REG_30_ENABLE_AF_DAC |
                                           BK4819_REG_30_ENABLE_DISC_MODE |
                                           BK4819_REG_30_ENABLE_TX_DSP);
-  ;
 
-  BK4819_WriteRegister(BK4819_REG_71,
-                       (uint16_t)((Frequency * 1032444) / 100000));
+  BK4819_SetToneFrequency(Frequency);
 }
 
 void BK4819_EnterTxMute(void) { BK4819_WriteRegister(BK4819_REG_50, 0xBB20); }
@@ -688,8 +678,7 @@ void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency) {
   BK4819_WriteRegister(BK4819_REG_70,
                        0 | BK4819_REG_70_MASK_ENABLE_TONE1 |
                            (96U << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
-  BK4819_WriteRegister(BK4819_REG_71,
-                       (uint16_t)((Frequency * 1032444) / 100000));
+  BK4819_SetToneFrequency(Frequency);
   if (bLocalLoopback) {
     BK4819_SetAF(BK4819_AF_BEEP);
   } else {
@@ -924,11 +913,6 @@ void BK4819_GetVoxAmp(uint16_t *pResult) {
   *pResult = BK4819_ReadRegister(BK4819_REG_64) & 0x7FFF;
 }
 
-void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency) {
-  BK4819_WriteRegister(BK4819_REG_71,
-                       (uint16_t)((Frequency * 1032444) / 100000));
-}
-
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code) {
   BK4819_EnableDTMF();
   BK4819_EnterTxMute();
@@ -966,9 +950,13 @@ void BK4819_TuneTo(uint32_t f, bool precise) {
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_30);
   if (precise) {
     // BK4819_WriteRegister(BK4819_REG_30, 0);
-    BK4819_WriteRegister(BK4819_REG_30, 0x0200);
+    BK4819_WriteRegister(BK4819_REG_30, 0x0200); // from radtel-rt-890-oefw
   } else {
     BK4819_WriteRegister(BK4819_REG_30, reg & ~BK4819_REG_30_ENABLE_VCO_CALIB);
   }
   BK4819_WriteRegister(BK4819_REG_30, reg);
+}
+
+void BK4819_SetToneFrequency(uint16_t f) {
+  BK4819_WriteRegister(0x71, (f * 103U) / 10U);
 }

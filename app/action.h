@@ -17,7 +17,7 @@
 #ifndef APP_ACTION_H
 #define APP_ACTION_H
 
-#include "driver/keyboard.h"
+#include "../driver/keyboard.h"
 
 //static void ACTION_FlashLight(void)
 void ACTION_Power(void);
