@@ -128,7 +128,6 @@ void UI_PrintStringSmallBold(const char *pString, uint8_t Start, uint8_t End,
   }
 }
 
-#if 1
 void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
                          bool bDisplayLeadingZero, bool flag) {
   const unsigned int charWidth = 13;
@@ -172,28 +171,6 @@ void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
     pFb1 += charWidth;
   }
 }
-#else
-void UI_DisplayFrequency(const char *pDigits, uint8_t X, uint8_t Y,
-                         bool bDisplayLeadingZero, bool bFlag) {
-  char String[8];
-  char baseDigit = '0';
-  uint8_t d;
-  sprintf(String, "---.---");
-  for (int i = 0; i < 3; i++) {
-    d = pDigits[i];
-    if (d < 10) {
-      String[i] = d + baseDigit;
-    }
-  }
-  for (int i = 0; i < 3; i++) {
-    d = pDigits[i + 3];
-    if (d < 10) {
-      String[i + 4] = d + baseDigit;
-    }
-  }
-  UI_PrintString(String, 8, 127, Y, 8, 1);
-}
-#endif
 
 void UI_DisplaySmallDigits(uint8_t Size, const char *pString, uint8_t X,
                            uint8_t Y) {

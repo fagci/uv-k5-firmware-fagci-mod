@@ -14,9 +14,9 @@
  *     limitations under the License.
  */
 
-#include "driver/eeprom.h"
-#include "driver/i2c.h"
-#include "driver/system.h"
+#include "../driver/eeprom.h"
+#include "../driver/i2c.h"
+#include "../driver/system.h"
 
 void EEPROM_ReadBuffer(uint16_t Address, void *pBuffer, uint8_t Size)
 {

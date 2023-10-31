@@ -15,9 +15,9 @@
  */
 
 #include <string.h>
-#include "app/action.h"
-#include "app/fm.h"
-#include "app/generic.h"
+#include "action.h"
+#include "fm.h"
+#include "generic.h"
 #include "audio.h"
 #include "bsp/dp32g030/gpio.h"
 #if defined(ENABLE_FMRADIO)
@@ -73,11 +73,9 @@ uint8_t FM_FindNextChannel(uint8_t Channel, uint8_t Direction)
 
 int FM_ConfigureChannelState(void)
 {
-	uint8_t Channel;
-
 	gEeprom.FM_FrequencyPlaying = gEeprom.FM_SelectedFrequency;
 	if (gEeprom.FM_IsMrMode) {
-		Channel = FM_FindNextChannel(gEeprom.FM_SelectedChannel, FM_CHANNEL_UP);
+		uint8_t Channel = FM_FindNextChannel(gEeprom.FM_SelectedChannel, FM_CHANNEL_UP);
 		if (Channel == 0xFF) {
 			gEeprom.FM_IsMrMode = false;
 			return -1;

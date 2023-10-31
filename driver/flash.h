@@ -17,7 +17,7 @@
 #ifndef DRIVER_FLASH_H
 #define DRIVER_FLASH_H
 
-#include "bsp/dp32g030/flash.h"
+#include "../bsp/dp32g030/flash.h"
 
 enum FLASH_READ_MODE {
 	FLASH_READ_MODE_1_CYCLE = FLASH_CFG_READ_MD_VALUE_1_CYCLE,

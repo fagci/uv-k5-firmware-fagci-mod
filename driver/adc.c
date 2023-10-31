@@ -16,9 +16,9 @@
 
 #include "ARMCM0.h"
 #include "adc.h"
-#include "bsp/dp32g030/irq.h"
-#include "bsp/dp32g030/saradc.h"
-#include "bsp/dp32g030/syscon.h"
+#include "../bsp/dp32g030/irq.h"
+#include "../bsp/dp32g030/saradc.h"
+#include "../bsp/dp32g030/syscon.h"
 
 uint8_t ADC_GetChannelNumber(ADC_CH_MASK Mask)
 {

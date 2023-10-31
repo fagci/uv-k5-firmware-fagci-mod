@@ -22,9 +22,9 @@
 
 #define ARRAY_SIZE(a)    (sizeof(a) / sizeof(a[0]))
 
-#define IS_MR_CHANNEL(x) ((x) >= MR_CHANNEL_FIRST && (x) <= MR_CHANNEL_LAST)
+#define IS_MR_CHANNEL(x) ((x) <= MR_CHANNEL_LAST)
 #define IS_FREQ_CHANNEL(x) ((x) >= FREQ_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
-#define IS_NOT_NOAA_CHANNEL(x) ((x) >= MR_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
+#define IS_NOT_NOAA_CHANNEL(x) ((x) <= FREQ_CHANNEL_LAST)
 #define IS_VALID_CHANNEL(x) ((x) < LAST_CHANNEL)
 
 enum {

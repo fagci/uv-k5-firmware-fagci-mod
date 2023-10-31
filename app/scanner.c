@@ -14,16 +14,16 @@
  *     limitations under the License.
  */
 
-#include "app/generic.h"
-#include "app/scanner.h"
-#include "audio.h"
-#include "driver/bk4819.h"
-#include "frequencies.h"
-#include "misc.h"
-#include "radio.h"
-#include "settings.h"
-#include "ui/inputbox.h"
-#include "ui/ui.h"
+#include "generic.h"
+#include "scanner.h"
+#include "../audio.h"
+#include "../driver/bk4819.h"
+#include "../frequencies.h"
+#include "../misc.h"
+#include "../radio.h"
+#include "../settings.h"
+#include "../ui/inputbox.h"
+#include "../ui/ui.h"
 
 DCS_CodeType_t gScanCssResultType;
 uint8_t gScanCssResultCode;
@@ -280,7 +280,7 @@ void SCANNER_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
 void SCANNER_Start(void)
 {
-	uint8_t BackupStep;
+	STEP_Setting_t BackupStep;
 	uint16_t BackupFrequency;
 
 	BK4819_StopScan();

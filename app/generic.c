@@ -14,13 +14,13 @@
  *     limitations under the License.
  */
 
-#include "app/app.h"
+#include "app.h"
 #if defined(ENABLE_FMRADIO)
-#include "app/fm.h"
+#include "fm.h"
 #endif
-#include "app/generic.h"
-#include "app/menu.h"
-#include "app/scanner.h"
+#include "generic.h"
+#include "menu.h"
+#include "scanner.h"
 #include "audio.h"
 #include "driver/keyboard.h"
 #include "dtmf.h"

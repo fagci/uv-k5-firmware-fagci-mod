@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-#include "app/aircopy.h"
+#include "aircopy.h"
 #include "audio.h"
 #include "driver/bk4819.h"
 #include "driver/crc.h"
@@ -78,12 +78,9 @@ void AIRCOPY_StorePacket(void)
 
 		CRC = CRC_Calculate(&g_FSK_Buffer[1], 2 + 64);
 		if (g_FSK_Buffer[34] == CRC) {
-			const uint16_t *pData;
-			uint16_t Offset;
-
-			Offset = g_FSK_Buffer[1];
+			uint16_t Offset = g_FSK_Buffer[1];
 			if (Offset < 0x1E00) {
-				pData = &g_FSK_Buffer[2];
+				const uint16_t *pData = &g_FSK_Buffer[2];
 				for (i = 0; i < 8; i++) {
 					EEPROM_WriteBuffer(Offset, pData);
 					pData += 4;

@@ -14,13 +14,13 @@
  *     limitations under the License.
  */
 
-#include "app/action.h"
-#include "app/app.h"
-#include "app/dtmf.h"
+#include "action.h"
+#include "app.h"
+#include "dtmf.h"
 #if defined(ENABLE_FMRADIO)
-#include "app/fm.h"
+#include "fm.h"
 #endif
-#include "app/scanner.h"
+#include "scanner.h"
 #include "audio.h"
 #include "bsp/dp32g030/gpio.h"
 #include "driver/bk1080.h"
@@ -87,12 +87,12 @@ void ACTION_Scan(bool bRestart) {
     if (gCurrentFunction != FUNCTION_RECEIVE &&
         gCurrentFunction != FUNCTION_MONITOR &&
         gCurrentFunction != FUNCTION_TRANSMIT) {
-      uint16_t Frequency;
-
+      
       GUI_SelectNextDisplay(DISPLAY_FM);
       if (gFM_ScanState != FM_SCAN_OFF) {
         FM_PlayAndUpdate();
       } else {
+        uint16_t Frequency;
         if (bRestart) {
           gFM_AutoScan = true;
           gFM_ChannelPosition = 0;

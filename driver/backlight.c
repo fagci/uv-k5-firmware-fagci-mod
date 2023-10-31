@@ -15,9 +15,9 @@
  */
 
 #include "backlight.h"
-#include "bsp/dp32g030/gpio.h"
-#include "driver/gpio.h"
-#include "settings.h"
+#include "../bsp/dp32g030/gpio.h"
+#include "../driver/gpio.h"
+#include "../settings.h"
 
 uint8_t gBacklightCountdown;
 

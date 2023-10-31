@@ -14,26 +14,26 @@
  *     limitations under the License.
  */
 
-#include "ui/welcome.h"
-#include "driver/eeprom.h"
-#include "driver/st7565.h"
-#include "external/printf/printf.h"
-#include "helper/battery.h"
-#include "settings.h"
-#include "ui/helper.h"
-#include "version.h"
+#include "welcome.h"
+#include "../driver/eeprom.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
+#include "../helper/battery.h"
+#include "../settings.h"
+#include "helper.h"
+#include "../version.h"
 #include <string.h>
 
 void UI_DisplayWelcome(void) {
-  char WelcomeString0[16];
-  char WelcomeString1[16];
-
   memset(gStatusLine, 0, sizeof(gStatusLine));
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
   if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_FULL_SCREEN) {
     ST7565_FillScreen(0xFF);
   } else {
+    char WelcomeString0[16];
+    char WelcomeString1[16];
+
     memset(WelcomeString0, 0, sizeof(WelcomeString0));
     memset(WelcomeString1, 0, sizeof(WelcomeString1));
     if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE) {

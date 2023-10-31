@@ -17,7 +17,7 @@
 #include "finput.h"
 #include <string.h>
 #if !defined(ENABLE_OVERLAY)
-#include "ARMCM0.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #endif
 #include "../audio.h"
 #include "../board.h"

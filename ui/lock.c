@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-#include "ARMCM0.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include <string.h>
 #if defined(ENABLE_UART)
 #include "../app/uart.h"

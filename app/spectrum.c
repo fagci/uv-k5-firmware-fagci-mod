@@ -477,9 +477,9 @@ static void SelectNearestPreset(bool inc) {
 
 static void UpdateScanStep(bool inc) {
   if (inc && settings.scanStepIndex < STEP_100_0kHz) {
-    settings.scanStepIndex++;
+    ++settings.scanStepIndex;
   } else if (!inc && settings.scanStepIndex > 0) {
-    settings.scanStepIndex--;
+    --settings.scanStepIndex;
   } else {
     return;
   }
@@ -530,7 +530,7 @@ static void ToggleModulation() {
   if (settings.modulationType == MOD_RAW) {
     settings.modulationType = MOD_FM;
   } else {
-    settings.modulationType++;
+    ++settings.modulationType;
   }
   BK4819_SetModulation(settings.modulationType);
   redrawScreen = true;
@@ -540,7 +540,7 @@ static void ToggleListeningBW() {
   if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
     settings.listenBw = BK4819_FILTER_BW_WIDE;
   } else {
-    settings.listenBw++;
+    ++settings.listenBw;
   }
 
 #ifdef ENABLE_ALL_REGISTERS
@@ -562,7 +562,7 @@ static void ToggleStepsCount() {
   if (settings.stepsCount == STEPS_128) {
     settings.stepsCount = STEPS_16;
   } else {
-    settings.stepsCount--;
+    --settings.stepsCount;
   }
   settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
@@ -1133,17 +1133,16 @@ static void RenderStill() {
     uint8_t hiddenMenuLen = ARRAY_SIZE(hiddenRegisterSpecs);
     uint8_t offset = Clamp(hiddenMenuState - 2, 1, hiddenMenuLen - 5);
     for (int i = 0; i < 5; ++i) {
-      RegisterSpec s = hiddenRegisterSpecs[i + offset];
+      RegisterSpec rs = hiddenRegisterSpecs[i + offset];
       bool isCurrent = hiddenMenuState == i + offset;
-      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", s.num, s.name,
-              BK4819_GetRegValue(s));
+      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", rs.num, rs.name,
+              BK4819_GetRegValue(rs));
       UI_PrintStringSmallest(String, 0, i * 6 + 26, false, true);
     }
   } else {
 #endif
     const uint8_t PAD_LEFT = 4;
     const uint8_t CELL_WIDTH = 30;
-    uint8_t offset = PAD_LEFT;
     uint8_t row = 3;
 
     for (int i = 0, idx = 1; idx < ARRAY_SIZE(registerSpecs); ++i, ++idx) {
@@ -1151,18 +1150,18 @@ static void RenderStill() {
         row += 2;
         i = 0;
       }
-      offset = PAD_LEFT + i * CELL_WIDTH;
+      const uint8_t offset = PAD_LEFT + i * CELL_WIDTH;
       if (menuState == idx) {
         for (int j = 0; j < CELL_WIDTH; ++j) {
           gFrameBuffer[row][j + offset] = 0xFF;
           gFrameBuffer[row + 1][j + offset] = 0xFF;
         }
       }
-      RegisterSpec s = registerSpecs[idx];
-      sprintf(String, "%s", s.name);
+      RegisterSpec rs = registerSpecs[idx];
+      sprintf(String, "%s", rs.name);
       UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
                              menuState != idx);
-      sprintf(String, "%u", BK4819_GetRegValue(s));
+      sprintf(String, "%u", BK4819_GetRegValue(rs));
       UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                              menuState != idx);
     }
@@ -1361,9 +1360,8 @@ static void Tick() {
 }
 
 static void AutomaticPresetChoose(uint32_t f) {
-  const FreqPreset *p;
   for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-    p = &freqPresets[i];
+    const FreqPreset *p = &freqPresets[i];
     if (f >= p->fStart && f <= p->fEnd) {
       ApplyPreset(*p);
     }

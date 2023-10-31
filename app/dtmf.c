@@ -18,17 +18,17 @@
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
-#include "app/scanner.h"
-#include "bsp/dp32g030/gpio.h"
-#include "driver/bk4819.h"
-#include "driver/eeprom.h"
-#include "driver/gpio.h"
-#include "driver/system.h"
+#include "scanner.h"
+#include "../bsp/dp32g030/gpio.h"
+#include "../driver/bk4819.h"
+#include "../driver/eeprom.h"
+#include "../driver/gpio.h"
+#include "../driver/system.h"
 #include "dtmf.h"
-#include "external/printf/printf.h"
-#include "misc.h"
-#include "settings.h"
-#include "ui/ui.h"
+#include "../external/printf/printf.h"
+#include "../misc.h"
+#include "../settings.h"
+#include "../ui/ui.h"
 
 char gDTMF_String[15];
 char gDTMF_InputBox[15];
@@ -192,7 +192,6 @@ void DTMF_HandleRequest(void)
 	}
 
 	if (gDTMF_WriteIndex >= 9) {
-		Offset = gDTMF_WriteIndex - 9;
         return;
 	}
 

@@ -60,7 +60,6 @@ void OOK_TxSequence(OOK_t *ook_struct) {
   uint8_t symbol_pos = 0;
   uint8_t b = 0;
   uint8_t *ptr_to_ook_sequence = ook_struct->sequence_ptr;
-  bool symbol;
 
   OOK_HardwareTxOn(); // send initial mark for sequence transmission
   SYSTICK_DelayUs(ook_struct->sync_pulse_us);
@@ -72,7 +71,7 @@ void OOK_TxSequence(OOK_t *ook_struct) {
     }
 
     // sending msb first
-    symbol = (b & 0x80) ? true : false;
+    bool symbol = (b & 0x80) ? true : false;
     OOK_EncodeSymbol(ook_struct, symbol);
     b <<= 1;
   }

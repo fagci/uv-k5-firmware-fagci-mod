@@ -14,17 +14,17 @@
  *     limitations under the License.
  */
 
-#include "app/action.h"
-#include "app/app.h"
+#include "action.h"
+#include "app.h"
 #include "finput.h"
 #include <string.h>
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
-#include "app/generic.h"
-#include "app/main.h"
-#include "app/scanner.h"
-#include "app/spectrum.h"
+#include "generic.h"
+#include "main.h"
+#include "scanner.h"
+#include "spectrum.h"
 #include "audio.h"
 #include "dtmf.h"
 #include "frequencies.h"

@@ -724,13 +724,11 @@ uint16_t BK4819_GetRSSI(void) {
 }
 
 bool BK4819_GetFrequencyScanResult(uint32_t *pFrequency) {
-  uint16_t High, Low;
-  bool Finished;
-
-  High = BK4819_ReadRegister(BK4819_REG_0D);
-  Finished = (High & 0x8000) == 0;
+  uint16_t High = BK4819_ReadRegister(BK4819_REG_0D);
+  bool Finished = (High & 0x8000) == 0;
+  
   if (Finished) {
-    Low = BK4819_ReadRegister(BK4819_REG_0E);
+    uint16_t Low = BK4819_ReadRegister(BK4819_REG_0E);
     *pFrequency = (uint32_t)((High & 0x7FF) << 16) | Low;
   }
 

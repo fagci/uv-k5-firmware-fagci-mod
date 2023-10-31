@@ -186,7 +186,7 @@ void UI_DisplayMenu(void) {
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
   uint8_t offset = Clamp(gMenuCursor - 2, 0, gMenuListCount - 6);
-  for (int i = 0; i < 6; ++i) {
+  for (i = 0; i < 6; ++i) {
     const char *s = MenuList[i + offset];
     bool isCurrent = gMenuCursor == i + offset;
     if (isCurrent) {

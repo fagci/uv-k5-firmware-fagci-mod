@@ -15,7 +15,7 @@
  */
 
 #include <string.h>
-#include "ui/inputbox.h"
+#include "inputbox.h"
 
 char gInputBox[8];
 uint8_t gInputBoxIndex;

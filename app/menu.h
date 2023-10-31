@@ -17,7 +17,7 @@
 #ifndef APP_MENU_H
 #define APP_MENU_H
 
-#include "driver/keyboard.h"
+#include "../driver/keyboard.h"
 
 int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax);
 void MENU_AcceptSetting(void);
