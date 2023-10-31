@@ -480,7 +480,7 @@ void UI_DisplayMenu(void) {
 
     NUMBER_ToDigits((uint8_t)gSubMenuSelection, String);
     Offset = (gMenuCursor == MENU_D_LIST) ? 2 : 3;
-    UI_DisplaySmallDigits(Offset, String + (8 - Offset), 105, 0);
+    UI_DisplaySmallDigits(Offset, String + (9 - Offset), 105, 0);
   }
 
   if (gMenuCursor == MENU_SLIST1 || gMenuCursor == MENU_SLIST2) {

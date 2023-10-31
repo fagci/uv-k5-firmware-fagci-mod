@@ -3,7 +3,9 @@
 
 #include "../driver/st7565.h"
 #include "../external/printf/printf.h"
-#include "../ui/helper.h"
+#include "../frequencies.h"
+#include "../misc.h"
+#include "helper.h"
 #include <string.h>
 
 void UI_DisplayContextMenu();
