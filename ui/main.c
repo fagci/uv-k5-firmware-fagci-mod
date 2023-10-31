@@ -50,14 +50,14 @@ void UI_DisplayMain(void) {
     uint8_t Line = i * 4;
     uint8_t lineSubY = (Line + 2) * 8;
 
-    uint8_t Channel = gEeprom.TX_CHANNEL;
+    uint8_t Channel = gEeprom.TX_VFO;
     bool bIsSameVfo = !!(Channel == i);
     VFO_Info_t vfoInfo = gEeprom.VfoInfo[i];
     uint8_t screenCH = gEeprom.ScreenChannel[i];
     uint8_t *pLine0 = gFrameBuffer[Line];
 
     if (gEeprom.DUAL_WATCH != DUAL_WATCH_OFF && gRxVfoIsActive) {
-      Channel = gEeprom.RX_CHANNEL;
+      Channel = gEeprom.RX_VFO;
     }
 
     if (Channel != i) {
@@ -136,9 +136,9 @@ void UI_DisplayMain(void) {
 
     if (gCurrentFunction == FUNCTION_TRANSMIT) {
       if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-        Channel = gEeprom.RX_CHANNEL;
+        Channel = gEeprom.RX_VFO;
       } else {
-        Channel = gEeprom.TX_CHANNEL;
+        Channel = gEeprom.TX_VFO;
       }
       if (Channel == i) {
         SomeValue = 1;
@@ -148,13 +148,13 @@ void UI_DisplayMain(void) {
       SomeValue = 2;
       if ((gCurrentFunction == FUNCTION_RECEIVE ||
            gCurrentFunction == FUNCTION_MONITOR) &&
-          gEeprom.RX_CHANNEL == i) {
+          gEeprom.RX_VFO == i) {
         UI_PrintStringSmallBold("RX", 0, 0, Line + 1);
       }
     }
 
     if (IS_MR_CHANNEL(screenCH)) {
-      if (gInputBoxIndex == 0 || gEeprom.TX_CHANNEL != i) {
+      if (gInputBoxIndex == 0 || gEeprom.TX_VFO != i) {
         sprintf(String, "M%03d", screenCH + 1);
       } else {
         sprintf(String, "M---");
@@ -184,7 +184,7 @@ void UI_DisplayMain(void) {
       UI_PrintString(String, 31, 111, i * 4, Width, true);
     } else {
       if (freqInputIndex && IS_FREQ_CHANNEL(screenCH) &&
-          gEeprom.TX_CHANNEL == i) {
+          gEeprom.TX_VFO == i) {
         UI_PrintString(freqInputString, 24, 127, i * 4, 8, true);
       } else {
         uint32_t frequency = vfoInfo.pRX->Frequency;
@@ -192,9 +192,9 @@ void UI_DisplayMain(void) {
 
         if (gCurrentFunction == FUNCTION_TRANSMIT) {
           if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-            Channel = gEeprom.RX_CHANNEL;
+            Channel = gEeprom.RX_VFO;
           } else {
-            Channel = gEeprom.TX_CHANNEL;
+            Channel = gEeprom.TX_VFO;
           }
           if (Channel == i) {
             frequency = vfoInfo.pTX->Frequency;

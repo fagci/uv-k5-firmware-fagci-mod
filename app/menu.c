@@ -186,7 +186,7 @@ void MENU_AcceptSetting(void) {
   case MENU_SQL:
     gEeprom.SQUELCH_LEVEL = gSubMenuSelection;
     gRequestSaveSettings = true;
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     return;
 
   case MENU_STEP:
@@ -276,7 +276,7 @@ void MENU_AcceptSetting(void) {
 #ifndef ENABLE_KEEPNAMEONSAVE
     gEeprom.MrChannel[0] = gSubMenuSelection;
 #else
-    gEeprom.MrChannel[gEeprom.TX_CHANNEL] = gSubMenuSelection;
+    gEeprom.MrChannel[gEeprom.TX_VFO] = gSubMenuSelection;
 #endif
     return;
 
@@ -348,14 +348,14 @@ void MENU_AcceptSetting(void) {
   case MENU_S_ADD1:
     gTxVfo->SCANLIST1_PARTICIPATION = gSubMenuSelection;
     SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true);
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     gFlagResetVfos = true;
     return;
 
   case MENU_S_ADD2:
     gTxVfo->SCANLIST2_PARTICIPATION = gSubMenuSelection;
     SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true);
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     gFlagResetVfos = true;
     return;
 
@@ -618,7 +618,7 @@ void MENU_ShowCurrentSetting(void) {
 #ifndef ENABLE_KEEPNAMEONSAVE
     gSubMenuSelection = gEeprom.MrChannel[0];
 #else
-    gSubMenuSelection = gEeprom.MrChannel[gEeprom.TX_CHANNEL];
+    gSubMenuSelection = gEeprom.MrChannel[gEeprom.TX_VFO];
 #endif
     break;
 
@@ -752,7 +752,7 @@ void MENU_ShowCurrentSetting(void) {
         RADIO_FindNextChannel(gEeprom.MrChannel[0], 1, false, 1);
 #else
     gSubMenuSelection = RADIO_FindNextChannel(
-        gEeprom.MrChannel[gEeprom.TX_CHANNEL], 1, false, 1);
+        gEeprom.MrChannel[gEeprom.TX_VFO], 1, false, 1);
 #endif
     break;
 

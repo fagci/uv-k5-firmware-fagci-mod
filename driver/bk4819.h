@@ -80,7 +80,7 @@ void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh,
 
 void BK4819_SetAF(BK4819_AF_Type_t AF);
 void BK4819_RX_TurnOn(void);
-void BK4819_PickRXFilterPathBasedOnFrequency(uint32_t Frequency);
+void BK4819_SelectFilter(uint32_t Frequency);
 void BK4819_DisableScramble(void);
 void BK4819_EnableScramble(uint8_t Type);
 void BK4819_DisableVox(void);
@@ -99,7 +99,7 @@ void BK4819_PrepareTransmit(void);
 void BK4819_TxOn_Beep(void);
 void BK4819_ExitSubAu(void);
 
-void BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable(void);
+void BK4819_EnableRX(void);
 
 void BK4819_EnterDTMF_TX(bool bLocalLoopback);
 void BK4819_ExitDTMF_TX(bool bKeep);

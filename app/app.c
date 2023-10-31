@@ -133,11 +133,12 @@ static void APP_HandleIncoming(void) {
   DTMF_HandleRequest();
 
   if (gScanState == SCAN_OFF && gCssScanMode == CSS_SCAN_MODE_OFF &&
-      gRxVfo->DTMF_DECODING_ENABLE && gDTMF_CallState == DTMF_CALL_STATE_NONE &&
-      gRxReceptionMode == RX_MODE_DETECTED) {
-    gDualWatchCountdown = 500;
-    gScheduleDualWatch = false;
-    gRxReceptionMode = RX_MODE_LISTENING;
+      gRxVfo->DTMF_DECODING_ENABLE && gDTMF_CallState == DTMF_CALL_STATE_NONE) {
+    if (gRxReceptionMode == RX_MODE_DETECTED) {
+      gDualWatchCountdown = 500;
+      gScheduleDualWatch = false;
+      gRxReceptionMode = RX_MODE_LISTENING;
+    }
     return;
   }
 
@@ -295,7 +296,7 @@ static void APP_HandleFunction(void) {
 }
 
 void APP_StartListening(FUNCTION_Type_t Function, const bool resetAmFix) {
-  const unsigned int chan = gEeprom.RX_CHANNEL;
+  const unsigned int chan = gEeprom.RX_VFO;
   //	const unsigned int chan = gRxVfo->channelSave;
 
 #ifdef ENABLE_FMRADIO
@@ -477,9 +478,9 @@ static void MR_NextChannel(void) {
 
 Skip:
   if (PreviousCh != gNextMrChannel) {
-    gEeprom.MrChannel[gEeprom.RX_CHANNEL] = gNextMrChannel;
-    gEeprom.ScreenChannel[gEeprom.RX_CHANNEL] = gNextMrChannel;
-    RADIO_ConfigureChannel(gEeprom.RX_CHANNEL, 2);
+    gEeprom.MrChannel[gEeprom.RX_VFO] = gNextMrChannel;
+    gEeprom.ScreenChannel[gEeprom.RX_VFO] = gNextMrChannel;
+    RADIO_ConfigureChannel(gEeprom.RX_VFO, 2);
     RADIO_SetupRegisters(true);
     gUpdateDisplay = true;
   }
@@ -494,8 +495,8 @@ Skip:
 }
 
 static void DUALWATCH_Alternate(void) {
-  gEeprom.RX_CHANNEL = gEeprom.RX_CHANNEL == 0;
-  gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_CHANNEL];
+  gEeprom.RX_VFO = gEeprom.RX_CHANNEL == 0;
+  gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_VFO];
   RADIO_SetupRegisters(false);
   gDualWatchCountdown = 10;
 }
@@ -762,7 +763,7 @@ void APP_Update(void) {
 
   if (gBatterySaveCountdownExpired && gCurrentFunction == FUNCTION_POWER_SAVE) {
     if (gRxIdleMode) {
-      BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable();
+      BK4819_EnableRX();
       if (gEeprom.VOX_SWITCH) {
         BK4819_EnableVox(gEeprom.VOX1_THRESHOLD, gEeprom.VOX0_THRESHOLD);
       }
@@ -780,7 +781,7 @@ void APP_Update(void) {
       gRxIdleMode = true;
       BK4819_DisableVox();
       BK4819_Sleep();
-      BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, false);
+      BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, false);
       // Authentic device checked removed
     } else {
       DUALWATCH_Alternate();
@@ -895,7 +896,7 @@ void APP_TimeSlice10ms(void) {
 
 #ifdef ENABLE_AM_FIX
   if (gRxVfo->ModulationType == MOD_AM)
-    AM_fix_10ms(gEeprom.RX_CHANNEL);
+    AM_fix_10ms(gEeprom.RX_VFO);
 #endif
 
   if (gCurrentFunction != FUNCTION_POWER_SAVE || !gRxIdleMode) {
@@ -1322,10 +1323,10 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
     }
 #endif
     if (gFlagSaveChannel) {
-      SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_CHANNEL, gTxVfo,
+      SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_VFO, gTxVfo,
                            gFlagSaveChannel);
       gFlagSaveChannel = false;
-      RADIO_ConfigureChannel(gEeprom.TX_CHANNEL, 1);
+      RADIO_ConfigureChannel(gEeprom.TX_VFO, 1);
       RADIO_SetupRegisters(true);
       GUI_SelectNextDisplay(DISPLAY_MAIN);
     }
@@ -1568,10 +1569,10 @@ Skip:
   }
   if (gRequestSaveChannel) {
     if (!bKeyHeld) {
-      SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_CHANNEL, gTxVfo,
+      SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_VFO, gTxVfo,
                            gRequestSaveChannel);
       if (gScreenToDisplay != DISPLAY_SCANNER) {
-        gVfoConfigureMode = VFO_CONFIGURE_1;
+        gVfoConfigureMode = VFO_CONFIGURE;
       }
     } else {
       gFlagSaveChannel = gRequestSaveChannel;
@@ -1582,18 +1583,18 @@ Skip:
     gRequestSaveChannel = 0;
   }
 
-  if (gVfoConfigureMode != VFO_CONFIGURE_0) {
+  if (gVfoConfigureMode != VFO_CONFIGURE_NONE) {
     if (gFlagResetVfos) {
       RADIO_ConfigureChannel(0, gVfoConfigureMode);
       RADIO_ConfigureChannel(1, gVfoConfigureMode);
     } else {
-      RADIO_ConfigureChannel(gEeprom.TX_CHANNEL, gVfoConfigureMode);
+      RADIO_ConfigureChannel(gEeprom.TX_VFO, gVfoConfigureMode);
     }
     if (gRequestDisplayScreen == DISPLAY_INVALID) {
       gRequestDisplayScreen = DISPLAY_MAIN;
     }
     gFlagReconfigureVfos = true;
-    gVfoConfigureMode = VFO_CONFIGURE_0;
+    gVfoConfigureMode = VFO_CONFIGURE_NONE;
     gFlagResetVfos = false;
   }
 

@@ -195,13 +195,13 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 
 		if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
 			Channel = gScanChannel;
-			gEeprom.MrChannel[gEeprom.TX_CHANNEL] = Channel;
+			gEeprom.MrChannel[gEeprom.TX_VFO] = Channel;
 		} else {
 			Channel = gTxVfo->Band + FREQ_CHANNEL_FIRST;
-			gEeprom.FreqChannel[gEeprom.TX_CHANNEL] = Channel;
+			gEeprom.FreqChannel[gEeprom.TX_VFO] = Channel;
 		}
 		gTxVfo->CHANNEL_SAVE = Channel;
-		gEeprom.ScreenChannel[gEeprom.TX_CHANNEL] = Channel;
+		gEeprom.ScreenChannel[gEeprom.TX_VFO] = Channel;
 		gRequestDisplayScreen = DISPLAY_SCANNER;
 		gRequestSaveChannel = 2;
 		gScannerEditState = 0;
@@ -300,12 +300,12 @@ void SCANNER_Start(void)
 		gScanCssState = SCAN_CSS_STATE_SCANNING;
 		gScanFrequency = gRxVfo->pRX->Frequency;
 		gStepSetting = gRxVfo->STEP_SETTING;
-		BK4819_PickRXFilterPathBasedOnFrequency(gScanFrequency);
+		BK4819_SelectFilter(gScanFrequency);
 		BK4819_SetScanFrequency(gScanFrequency);
 	} else {
 		gScanCssState = SCAN_CSS_STATE_OFF;
 		gScanFrequency = 0xFFFFFFFF;
-		BK4819_PickRXFilterPathBasedOnFrequency(0xFFFFFFFF);
+		BK4819_SelectFilter(0xFFFFFFFF);
 		BK4819_EnableFrequencyScan();
 	}
 	gScanDelay = 21;

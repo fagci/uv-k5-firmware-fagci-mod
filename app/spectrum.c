@@ -314,7 +314,7 @@ static void ToggleTX(bool on) {
     ToggleRX(false);
   }
 
-  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, on);
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, on);
 
   if (on) {
     ToggleAudio(false);
@@ -349,8 +349,8 @@ static void ToggleTX(bool on) {
 
     SetF(fMeasure, true);
   }
-  BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, !on);
-  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, on);
+  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, !on);
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, on);
 }
 
 // Scan info
@@ -1376,7 +1376,7 @@ void APP_RunSpectrum() {
   // AM_fix_init();
 
   // TX here coz it always? set to active VFO
-  VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+  VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_VFO];
   initialFreq = vfo.pRX->Frequency;
   currentFreq = initialFreq;
   settings.scanStepIndex = gStepSettingToIndex[vfo.STEP_SETTING];
