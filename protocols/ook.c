@@ -18,27 +18,27 @@
 
 void OOK_BeginTx(void) {
   RADIO_enableTX(false);
-  BK4819_SetupPowerAmplifier(g_current_vfo->txp_calculated_setting,
-                             g_current_vfo->p_tx->frequency);
-  BK4819_set_GPIO_pin(BK4819_GPIO1_PIN29_PA_ENABLE, true); // PA on
-  BK4819_set_GPIO_pin(BK4819_GPIO5_PIN1_RED, true); // turn the RED LED on
+  BK4819_SetupPowerAmplifier(gCurrentVfo->TXP_CalculatedSetting,
+                             gCurrentVfo->pTX->Frequency);
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, true); // PA on
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true); // turn the RED LED on
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);
 }
 
 void OOK_EndTx(void) {
   RADIO_disableTX(false);
   BK4819_SetupPowerAmplifier(0, 0);
-  BK4819_set_GPIO_pin(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
-  BK4819_set_GPIO_pin(BK4819_GPIO5_PIN1_RED, false); // turn the RED LED off
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false); // turn the RED LED off
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_FLASHLIGHT);
 }
 
 void OOK_HardwareTxOn(void) {
-  BK4819_set_GPIO_pin(BK4819_GPIO1_PIN29_PA_ENABLE, true); // PA on
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, true); // PA on
 }
 
 void OOK_HardwareTxOff(void) {
-  BK4819_set_GPIO_pin(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
 }
 
 void OOK_EncodeSymbol(OOK_t *ook_struct, bool symbol) {

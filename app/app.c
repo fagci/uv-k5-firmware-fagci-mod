@@ -495,7 +495,7 @@ Skip:
 }
 
 static void DUALWATCH_Alternate(void) {
-  gEeprom.RX_VFO = gEeprom.RX_CHANNEL == 0;
+  gEeprom.RX_VFO = gEeprom.RX_VFO == 0;
   gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_VFO];
   RADIO_SetupRegisters(false);
   gDualWatchCountdown = 10;

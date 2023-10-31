@@ -131,7 +131,7 @@ void SETTINGS_SaveSettings(void)
 	State[0] = 0xFF;
 	State[1] = gEeprom.ROGER;
 	State[2] = gEeprom.REPEATER_TAIL_TONE_ELIMINATION;
-	State[3] = gEeprom.TX_CHANNEL;
+	State[3] = gEeprom.TX_VFO;
 
 	EEPROM_WriteBuffer(0x0EA8, State);
 

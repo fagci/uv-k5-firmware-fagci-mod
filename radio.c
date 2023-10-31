@@ -425,33 +425,33 @@ static void RADIO_SelectCurrentVfo(void) {
   if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
     gCurrentVfo = gRxVfo;
   } else {
-    gCurrentVfo = &gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+    gCurrentVfo = &gEeprom.VfoInfo[gEeprom.TX_VFO];
   }
 }
 
 void RADIO_SelectVfos(void) {
   if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_B) {
-    gEeprom.TX_CHANNEL = 1;
+    gEeprom.TX_VFO = 1;
   } else if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_CHAN_A) {
-    gEeprom.TX_CHANNEL = 0;
+    gEeprom.TX_VFO = 0;
   } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_B) {
-    gEeprom.TX_CHANNEL = 1;
+    gEeprom.TX_VFO = 1;
   } else if (gEeprom.DUAL_WATCH == DUAL_WATCH_CHAN_A) {
-    gEeprom.TX_CHANNEL = 0;
+    gEeprom.TX_VFO = 0;
   }
 
-  gTxVfo = &gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+  gTxVfo = &gEeprom.VfoInfo[gEeprom.TX_VFO];
   if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-    gEeprom.RX_CHANNEL = gEeprom.TX_CHANNEL;
+    gEeprom.RX_VFO = gEeprom.TX_VFO;
   } else {
-    if (gEeprom.TX_CHANNEL == 0) {
-      gEeprom.RX_CHANNEL = 1;
+    if (gEeprom.TX_VFO == 0) {
+      gEeprom.RX_VFO = 1;
     } else {
-      gEeprom.RX_CHANNEL = 0;
+      gEeprom.RX_VFO = 0;
     }
   }
 
-  gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_CHANNEL];
+  gRxVfo = &gEeprom.VfoInfo[gEeprom.RX_VFO];
   RADIO_SelectCurrentVfo();
 }
 
@@ -471,9 +471,9 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   }
   BK4819_SetFilterBandwidth(Bandwidth);
 
-  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, false);
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
   BK4819_SetupPowerAmplifier(0, 0);
-  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, false);
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
 
   while (1) {
     Status = BK4819_ReadRegister(BK4819_REG_0C);
@@ -491,8 +491,8 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
       gRxVfo->SquelchOpenRSSIThresh, gRxVfo->SquelchCloseRSSIThresh,
       gRxVfo->SquelchOpenNoiseThresh, gRxVfo->SquelchCloseNoiseThresh,
       gRxVfo->SquelchCloseGlitchThresh, gRxVfo->SquelchOpenGlitchThresh);
-  BK4819_PickRXFilterPathBasedOnFrequency(Frequency);
-  BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, true);
+  BK4819_SelectFilter(Frequency);
+  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, true);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
 
   InterruptMask = 0 | BK4819_REG_3F_SQUELCH_FOUND | BK4819_REG_3F_SQUELCH_LOST;
@@ -580,7 +580,7 @@ void RADIO_SetTxParameters(void) {
 
   gEnableSpeaker = false;
 
-  BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, false);
+  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, false);
   Bandwidth = gCurrentVfo->CHANNEL_BANDWIDTH;
   if (Bandwidth != BK4819_FILTER_BW_WIDE) {
     Bandwidth = BK4819_FILTER_BW_NARROW;
@@ -590,8 +590,8 @@ void RADIO_SetTxParameters(void) {
   BK4819_PrepareTransmit();
   SYSTEM_DelayMs(10);
 
-  BK4819_PickRXFilterPathBasedOnFrequency(gCurrentVfo->pTX->Frequency);
-  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, true);
+  BK4819_SelectFilter(gCurrentVfo->pTX->Frequency);
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, true);
   SYSTEM_DelayMs(5);
 
   BK4819_SetupPowerAmplifier(gCurrentVfo->TXP_CalculatedSetting,
@@ -628,9 +628,9 @@ void RADIO_SetVfoState(VfoState_t State) {
       uint8_t Channel;
 
       if (gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) {
-        Channel = gEeprom.RX_CHANNEL;
+        Channel = gEeprom.RX_VFO;
       } else {
-        Channel = gEeprom.TX_CHANNEL;
+        Channel = gEeprom.TX_VFO;
       }
       VfoState[Channel] = State;
     }
@@ -646,8 +646,8 @@ void RADIO_PrepareTX(void) {
     gDualWatchCountdown = 360;
     gScheduleDualWatch = false;
     if (!gRxVfoIsActive) {
-      gEeprom.RX_CHANNEL = gEeprom.TX_CHANNEL;
-      gRxVfo = &gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+      gEeprom.RX_VFO = gEeprom.TX_VFO;
+      gRxVfo = &gEeprom.VfoInfo[gEeprom.TX_VFO];
     }
     gRxVfoIsActive = true;
   }
