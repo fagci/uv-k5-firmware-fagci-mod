@@ -10,3 +10,4 @@ sed -i 's/\bVFO_CONFIGURE_1\b/VFO_CONFIGURE/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/\bRX_CHANNEL\b/RX_VFO/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/\bTX_CHANNEL\b/TX_VFO/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/bDoScan/bEnable/' ./**/*.{c,h} ./*.{c,h}
+sed -i 's/\bRADIO_SetTxParameters\b/RADIO_enableTX/' ./**/*.{c,h} ./*.{c,h}

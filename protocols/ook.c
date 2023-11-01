@@ -17,7 +17,7 @@
 #include "ook.h"
 
 void OOK_BeginTx(void) {
-  RADIO_enableTX(false);
+  RADIO_enableTX();
   BK4819_SetupPowerAmplifier(gCurrentVfo->TXP_CalculatedSetting,
                              gCurrentVfo->pTX->Frequency);
   BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, true); // PA on
@@ -26,7 +26,7 @@ void OOK_BeginTx(void) {
 }
 
 void OOK_EndTx(void) {
-  RADIO_disableTX(false);
+  RADIO_disableTX();
   BK4819_SetupPowerAmplifier(0, 0);
   BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
   BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false); // turn the RED LED off

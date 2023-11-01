@@ -573,7 +573,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   }
 }
 
-void RADIO_SetTxParameters(void) {
+void RADIO_enableTX(void) {
   BK4819_FilterBandwidth_t Bandwidth;
 
   GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
@@ -588,15 +588,15 @@ void RADIO_SetTxParameters(void) {
   BK4819_SetFilterBandwidth(Bandwidth);
   BK4819_SetFrequency(gCurrentVfo->pTX->Frequency);
   BK4819_PrepareTransmit();
-  SYSTEM_DelayMs(10);
+  // SYSTEM_DelayMs(10);
 
   BK4819_SelectFilter(gCurrentVfo->pTX->Frequency);
   BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, true);
-  SYSTEM_DelayMs(5);
+  // SYSTEM_DelayMs(5);
 
   BK4819_SetupPowerAmplifier(gCurrentVfo->TXP_CalculatedSetting,
                              gCurrentVfo->pTX->Frequency);
-  SYSTEM_DelayMs(10);
+  // SYSTEM_DelayMs(10);
 
   switch (gCurrentVfo->pTX->CodeType) {
   case CODE_TYPE_CONTINUOUS_TONE:
@@ -611,6 +611,13 @@ void RADIO_SetTxParameters(void) {
     BK4819_ExitSubAu();
     break;
   }
+}
+
+void RADIO_disableTX(void)
+{
+	BK4819_SetupPowerAmplifier(0, 0);                            //
+	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);    // PA off
+	BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);           // LED off
 }
 
 void RADIO_SetVfoState(VfoState_t State) {

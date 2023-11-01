@@ -21,16 +21,16 @@
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
-#include "generic.h"
-#include "main.h"
-#include "scanner.h"
-#include "spectrum.h"
 #include "audio.h"
 #include "dtmf.h"
 #include "frequencies.h"
+#include "generic.h"
+#include "main.h"
 #include "misc.h"
 #include "radio.h"
+#include "scanner.h"
 #include "settings.h"
+#include "spectrum.h"
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 
@@ -167,8 +167,8 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
         gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
         break;
       }
-      Channel = RADIO_FindNextChannel(gEeprom.MrChannel[gEeprom.TX_VFO], 1,
-                                      false, 0);
+      Channel =
+          RADIO_FindNextChannel(gEeprom.MrChannel[gEeprom.TX_VFO], 1, false, 0);
       if (Channel != 0xFF) {
         gEeprom.ScreenChannel[Vfo] = Channel;
         gRequestSaveVFO = true;
@@ -268,20 +268,22 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
       return;
     } else {
 
-      gRequestDisplayScreen = DISPLAY_CONTEXT_MENU;
+      // SHORT PRESS
+      gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
+      if (gInputBoxIndex) {
+        gInputBoxIndex = 0;
+        gRequestDisplayScreen = DISPLAY_MAIN;
+      } else {
+        gFlagRefreshSetting = true;
+        gRequestDisplayScreen = DISPLAY_MENU;
+      }
       return;
     }
   }
 
   if (bKeyHeld && bKeyPressed) {
-    gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-    if (gInputBoxIndex) {
-      gInputBoxIndex = 0;
-      gRequestDisplayScreen = DISPLAY_MAIN;
-    } else {
-      gFlagRefreshSetting = true;
-      gRequestDisplayScreen = DISPLAY_MENU;
-    }
+    // LONG PRESS
+    gRequestDisplayScreen = DISPLAY_CONTEXT_MENU;
     return;
   }
 }

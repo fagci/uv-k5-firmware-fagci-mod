@@ -48,7 +48,7 @@ void AIRCOPY_SendMessage(void)
 	if (++gAirCopyBlockNumber >= 0x78) {
 		gAircopyState = AIRCOPY_COMPLETE;
 	}
-	RADIO_SetTxParameters();
+	RADIO_enableTX();
 	BK4819_SendFSKData(g_FSK_Buffer);
 	BK4819_SetupPowerAmplifier(0, 0);
 	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);

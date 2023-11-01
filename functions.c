@@ -130,7 +130,7 @@ void FUNCTION_Select(FUNCTION_Type_t Function) {
 #endif
 
     GUI_DisplayScreen();
-    RADIO_SetTxParameters();
+    RADIO_enableTX();
     BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
 
     DTMF_Reply();
