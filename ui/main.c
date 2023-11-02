@@ -33,7 +33,7 @@
 #include "../ui/ui.h"
 #include <string.h>
 
-void displayVfoStatus(uint8_t vfoNum, bool isTx) {
+static void displayVfoStatus(uint8_t vfoNum, bool isTx) {
   VFO_Info_t vfo = gEeprom.VfoInfo[vfoNum];
   uint8_t lineSubY = vfoNum == 0 ? 16 : 48;
   if (vfo.ModulationType == MOD_FM) {
@@ -60,7 +60,7 @@ void displayVfoStatus(uint8_t vfoNum, bool isTx) {
   }
 }
 
-void displayDtmf(uint8_t vfoNum) {
+static void displayDtmf(uint8_t vfoNum) {
   char String[16];
   char Contact[16];
 
@@ -112,7 +112,7 @@ void displayDtmf(uint8_t vfoNum) {
   UI_PrintString(String, 2, 127, 2 + (vfoNum * 3), 8, false);
 }
 
-void displayVfo(uint8_t vfoNum) {
+static void displayVfo(uint8_t vfoNum) {
   char String[16];
   bool filled = false;
   uint8_t Line = vfoNum * 4;
