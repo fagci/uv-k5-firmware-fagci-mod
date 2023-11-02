@@ -30,6 +30,7 @@
 #include "../driver/st7565.h"
 #include "../driver/system.h"
 #include "../driver/systick.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include "../external/printf/printf.h"
 #include "../font.h"
 #include "../frequencies.h"
@@ -40,7 +41,6 @@
 #include "../settings.h"
 #include "../ui/battery.h"
 #include "../ui/helper.h"
-#include "ARMCM0.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -358,4 +358,3 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
 void APP_RunSpectrum(void);
 
 #endif /* ifndef SPECTRUM_H */
-

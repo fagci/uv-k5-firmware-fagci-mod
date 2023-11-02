@@ -21,18 +21,18 @@
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
-#include "audio.h"
+#include "../audio.h"
+#include "../frequencies.h"
+#include "../misc.h"
+#include "../radio.h"
+#include "../settings.h"
+#include "../ui/inputbox.h"
+#include "../ui/ui.h"
 #include "dtmf.h"
-#include "frequencies.h"
 #include "generic.h"
 #include "main.h"
-#include "misc.h"
-#include "radio.h"
 #include "scanner.h"
-#include "settings.h"
 #include "spectrum.h"
-#include "ui/inputbox.h"
-#include "ui/ui.h"
 
 static void SwitchActiveVFO() {
   uint8_t Vfo = gEeprom.TX_VFO;

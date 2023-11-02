@@ -32,9 +32,9 @@
 #include "inputbox.h"
 #include "main.h"
 #include "menu.h"
+#include "ook.h"
 #include "scanner.h"
 #include "split.h"
-#include "ook.h"
 
 GUI_DisplayType_t gScreenToDisplay;
 GUI_DisplayType_t gRequestDisplayScreen = DISPLAY_INVALID;
@@ -54,6 +54,9 @@ void UI_DisplayApp(void) {
     break;
   case APP_OOK:
     UI_DisplayOOK();
+    break;
+  case APP_SCANNER:
+    UI_DisplayScanner();
     break;
   default:
     break;
@@ -79,9 +82,6 @@ void GUI_DisplayScreen(void) {
     break;
   case DISPLAY_APP_MENU:
     UI_DisplayAppMenu();
-    break;
-  case DISPLAY_SCANNER:
-    UI_DisplayScanner();
     break;
 #if defined(ENABLE_AIRCOPY)
   case DISPLAY_AIRCOPY:

@@ -26,7 +26,6 @@ typedef enum GUI_DisplayType_t {
   DISPLAY_FM = 0x01U,
 #endif
   DISPLAY_MENU = 0x02U,
-  DISPLAY_SCANNER = 0x03U,
 #if defined(ENABLE_AIRCOPY)
   DISPLAY_AIRCOPY = 0x04U,
 #endif
@@ -39,6 +38,7 @@ typedef enum GUI_AppType_t {
   APP_NONE,
   APP_SPLIT,
   APP_OOK,
+  APP_SCANNER,
 } GUI_AppType_t;
 
 extern GUI_DisplayType_t gScreenToDisplay;

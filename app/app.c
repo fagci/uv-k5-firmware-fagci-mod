@@ -503,7 +503,7 @@ static void DUALWATCH_Alternate(void) {
 }
 
 void APP_CheckRadioInterrupts(void) {
-  if (gScreenToDisplay == DISPLAY_SCANNER) {
+  if (gAppToDisplay == APP_SCANNER) {
     return;
   }
 
@@ -593,7 +593,7 @@ void APP_EndTransmission(void) {
       RADIO_EnableCxCSS();
     } else {
       BK4819_ExitSubAu();
-			SYSTEM_DelayMs(200);
+      SYSTEM_DelayMs(200);
     }
   }
 
@@ -700,8 +700,7 @@ void APP_Update(void) {
     gScheduleScanListen = false;
   }
 
-  if (gScreenToDisplay != DISPLAY_SCANNER &&
-      gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
+  if (gAppToDisplay != APP_SCANNER && gEeprom.DUAL_WATCH != DUAL_WATCH_OFF) {
     if (gScheduleDualWatch) {
       if (gScanState == SCAN_OFF && gCssScanMode == CSS_SCAN_MODE_OFF) {
         if (!gPttIsPressed
@@ -946,7 +945,7 @@ void APP_TimeSlice10ms(void) {
     }
   }
 #endif
-  if (gScreenToDisplay == DISPLAY_SCANNER) {
+  if (gAppToDisplay == APP_SCANNER) {
     uint32_t Result;
     int32_t Delta;
     BK4819_CssScanResult_t ScanResult;
@@ -1615,7 +1614,7 @@ Skip:
   }
   if (gFlagStartScan) {
     SCANNER_Start();
-    gRequestDisplayScreen = DISPLAY_SCANNER;
+    gAppToDisplay = APP_SCANNER;
     gFlagStartScan = false;
   }
   if (gFlagPrepareTX) {
