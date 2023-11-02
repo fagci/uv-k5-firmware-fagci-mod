@@ -26,7 +26,6 @@
 
 void UI_DisplayScanner(void) {
   char String[16];
-  uint8_t Start;
 
   UI_ClearAppScreen();
 
@@ -37,7 +36,7 @@ void UI_DisplayScanner(void) {
   } else {
     sprintf(String, "FREQ:**.*****");
   }
-  UI_PrintStringSmall(String, 2, 127, 4);
+  UI_PrintStringSmall(String, 0, 0, 4);
   memset(String, 0, sizeof(String));
 
   if (gScanCssState < SCAN_CSS_STATE_FOUND || !gScanUseCssResult) {
@@ -48,12 +47,11 @@ void UI_DisplayScanner(void) {
   } else {
     sprintf(String, "DCS:D%03oN", DCS_Options[gScanCssResultCode]);
   }
-  UI_PrintStringSmall(String, 2, 127, 5);
+  UI_PrintStringSmall(String, 0, 0, 5);
   memset(String, 0, sizeof(String));
 
   if (gScannerEditState == 2) {
     strcpy(String, "SAVE?");
-    Start = 0;
   } else {
     if (gScannerEditState == 1) {
       strcpy(String, "SAVE:");
@@ -68,9 +66,8 @@ void UI_DisplayScanner(void) {
         strcpy(String, "SCAN FAIL.");
       }
     }
-    Start = 2;
   }
 
-  UI_PrintStringSmall(String, Start, 127, 6);
+  UI_PrintStringSmall(String, 0, 0, 6);
   ST7565_BlitFullScreen();
 }

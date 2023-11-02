@@ -120,7 +120,8 @@ OBJS += ui/ui.o
 OBJS += ui/welcome.o
 
 OBJS += ui/split.o
-OBJS += ui/ook.o
+
+OBJS += apps/ook.o
 
 OBJS += version.o
 

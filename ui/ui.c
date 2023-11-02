@@ -32,7 +32,7 @@
 #include "inputbox.h"
 #include "main.h"
 #include "menu.h"
-#include "ook.h"
+#include "../apps/ook.h"
 #include "scanner.h"
 #include "split.h"
 
@@ -53,7 +53,7 @@ void UI_DisplayApp(void) {
     // UI_DisplaySplit();
     break;
   case APP_OOK:
-    UI_DisplayOOK();
+    OOK_render();
     break;
   case APP_SCANNER:
     UI_DisplayScanner();

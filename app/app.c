@@ -69,6 +69,8 @@
 #include "ui/status.h"
 #include "ui/ui.h"
 
+#include "../apps/ook.h"
+
 // original QS front end register settings
 const uint8_t origLnaShort = 3; //   0dB
 const uint8_t origLna = 2;      // -14dB
@@ -875,6 +877,10 @@ void APP_TimeSlice10ms(void) {
   }
 #endif
 
+  if (gAppToDisplay == APP_OOK) {
+    OOK_update();
+  }
+
   // once every 150ms
   if (gScreenToDisplay == DISPLAY_MAIN && !gKeypadLocked &&
       (gFlashLightBlinkCounter & 15U) == 0) {
@@ -1074,6 +1080,10 @@ void APP_TimeSlice500ms(void) {
     return;
   }
 #endif
+
+  if (gAppToDisplay == APP_OOK) {
+    gUpdateDisplay = true;
+  }
 
   if (gReducedService) {
     BOARD_ADC_GetBatteryInfo(&gBatteryCurrentVoltage, &gBatteryCurrent);

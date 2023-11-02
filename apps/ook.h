@@ -2,9 +2,11 @@
 #define UI_OOK_H
 
 #include "../driver/st7565.h"
-#include "helper.h"
+#include "../external/printf/printf.h"
+#include "../ui/helper.h"
 #include <string.h>
 
-void UI_DisplayOOK(void);
+void OOK_update(void);
+void OOK_render(void);
 
 #endif /* end of include guard: OOK_H */
