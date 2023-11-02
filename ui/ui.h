@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum GUI_DisplayType_t {
+typedef enum GUI_DisplayType_t {
   DISPLAY_MAIN = 0x00U,
 #if defined(ENABLE_FMRADIO)
   DISPLAY_FM = 0x01U,
@@ -31,13 +31,19 @@ enum GUI_DisplayType_t {
   DISPLAY_AIRCOPY = 0x04U,
 #endif
   DISPLAY_CONTEXT_MENU = 0x05U,
+  DISPLAY_APP_MENU = 0x06U,
   DISPLAY_INVALID = 0xFFU,
-};
+} GUI_DisplayType_t;
 
-typedef enum GUI_DisplayType_t GUI_DisplayType_t;
+typedef enum GUI_AppType_t {
+  APP_NONE,
+  APP_SPLIT,
+  APP_OOK,
+} GUI_AppType_t;
 
 extern GUI_DisplayType_t gScreenToDisplay;
 extern GUI_DisplayType_t gRequestDisplayScreen;
+extern GUI_AppType_t gAppToDisplay;
 
 extern uint8_t gAskForConfirmation;
 extern bool gAskToSave;

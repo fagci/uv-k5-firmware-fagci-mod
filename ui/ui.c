@@ -26,24 +26,45 @@
 #if defined(ENABLE_AIRCOPY)
 #include "aircopy.h"
 #endif
+#include "appmenu.h"
+#include "contextmenu.h"
 #include "fmradio.h"
 #include "inputbox.h"
 #include "main.h"
 #include "menu.h"
-#include "contextmenu.h"
 #include "scanner.h"
+#include "split.h"
+#include "ook.h"
 
 GUI_DisplayType_t gScreenToDisplay;
 GUI_DisplayType_t gRequestDisplayScreen = DISPLAY_INVALID;
+GUI_AppType_t gAppToDisplay = APP_SPLIT;
 
 uint8_t gAskForConfirmation;
 bool gAskToSave;
 bool gAskToDelete;
 
+void UI_DisplayApp(void) {
+  switch (gAppToDisplay) {
+  case APP_NONE:
+    // TODO: maybe more vfo info
+    break;
+  case APP_SPLIT:
+    UI_DisplaySplit();
+    break;
+  case APP_OOK:
+    UI_DisplayOOK();
+    break;
+  default:
+    break;
+  }
+}
+
 void GUI_DisplayScreen(void) {
   switch (gScreenToDisplay) {
   case DISPLAY_MAIN:
     UI_DisplayMain();
+    UI_DisplayApp();
     break;
 #if defined(ENABLE_FMRADIO)
   case DISPLAY_FM:
@@ -55,6 +76,9 @@ void GUI_DisplayScreen(void) {
     break;
   case DISPLAY_CONTEXT_MENU:
     UI_DisplayContextMenu();
+    break;
+  case DISPLAY_APP_MENU:
+    UI_DisplayAppMenu();
     break;
   case DISPLAY_SCANNER:
     UI_DisplayScanner();

@@ -57,6 +57,7 @@ OBJS += driver/systick.o
 ifeq ($(ENABLE_UART),1)
 OBJS += driver/uart.o
 endif
+OBJS += protocols/ook.o
 
 # Main
 OBJS += app/action.o
@@ -75,6 +76,7 @@ endif
 OBJS += app/generic.o
 OBJS += app/main.o
 OBJS += app/menu.o
+OBJS += app/appmenu.o
 OBJS += app/contextmenu.o
 OBJS += app/scanner.o
 ifeq ($(ENABLE_SPECTRUM), 1)
@@ -109,12 +111,17 @@ OBJS += ui/inputbox.o
 OBJS += ui/lock.o
 OBJS += ui/main.o
 OBJS += ui/menu.o
+OBJS += ui/appmenu.o
 OBJS += ui/contextmenu.o
 OBJS += ui/rssi.o
 OBJS += ui/scanner.o
 OBJS += ui/status.o
 OBJS += ui/ui.o
 OBJS += ui/welcome.o
+
+OBJS += ui/split.o
+OBJS += ui/ook.o
+
 OBJS += version.o
 
 OBJS += main.o

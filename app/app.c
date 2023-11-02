@@ -27,6 +27,7 @@
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
 #endif
+#include "appmenu.h"
 #include "contextmenu.h"
 #include "generic.h"
 #include "main.h"
@@ -1497,6 +1498,9 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
         break;
       case DISPLAY_CONTEXT_MENU:
         CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+      case DISPLAY_APP_MENU:
+        APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
         break;
       case DISPLAY_SCANNER:
         SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);

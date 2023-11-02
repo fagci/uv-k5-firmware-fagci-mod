@@ -613,11 +613,11 @@ void RADIO_enableTX(void) {
   }
 }
 
-void RADIO_disableTX(void)
-{
-	BK4819_SetupPowerAmplifier(0, 0);                            //
-	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);    // PA off
-	BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);           // LED off
+void RADIO_disableTX(void) {
+  BK4819_SetupPowerAmplifier(0, 0);                          //
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false); // PA off
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);        // LED off
+  RADIO_SetupRegisters(true);
 }
 
 void RADIO_SetVfoState(VfoState_t State) {
@@ -660,9 +660,7 @@ void RADIO_PrepareTX(void) {
   }
   RADIO_SelectCurrentVfo();
 #if defined(ENABLE_TX1750)
-  if (gAlarmState == ALARM_STATE_OFF
-      || gAlarmState == ALARM_STATE_TX1750
-  ) {
+  if (gAlarmState == ALARM_STATE_OFF || gAlarmState == ALARM_STATE_TX1750) {
 #else
   if (1) {
 #endif
