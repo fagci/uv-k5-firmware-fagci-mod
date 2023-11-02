@@ -210,7 +210,7 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 			State8[0] = pVFO->ConfigRX.Code;
 			State8[1] = pVFO->ConfigTX.Code;
 			State8[2] = (pVFO->ConfigTX.CodeType << 4) | pVFO->ConfigRX.CodeType;
-			State8[3] = (pVFO->AM_CHANNEL_MODE << 4) | pVFO->FREQUENCY_DEVIATION_SETTING;
+			State8[3] = (pVFO->AM_CHANNEL_MODE << 4) | pVFO->OFFSET_DIR;
 			State8[4] = 0
 				| (pVFO->BUSY_CHANNEL_LOCK << 4)
 				| (pVFO->OUTPUT_POWER << 2)

@@ -213,7 +213,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
     if (Tmp > 2) {
       Tmp = 0;
     }
-    gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = Tmp;
+    gEeprom.VfoInfo[VFO].OFFSET_DIR = Tmp;
     gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE = (Data[3] >> 4) & 0b111;
 
     Tmp = Data[6];
@@ -319,7 +319,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
   }
 
   if (Frequency >= 10800000 && Frequency <= 13599990) {
-    gEeprom.VfoInfo[VFO].FREQUENCY_DEVIATION_SETTING = FREQUENCY_DEVIATION_OFF;
+    gEeprom.VfoInfo[VFO].OFFSET_DIR = FREQUENCY_DEVIATION_OFF;
   } else if (!IS_MR_CHANNEL(Channel)) {
     Frequency =
         FREQUENCY_FloorToStep(gEeprom.VfoInfo[VFO].FREQUENCY_OF_DEVIATION,
@@ -402,7 +402,7 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo) {
 }
 
 uint32_t GetOffsetedF(VFO_Info_t *pInfo, uint32_t f) {
-  switch (pInfo->FREQUENCY_DEVIATION_SETTING) {
+  switch (pInfo->OFFSET_DIR) {
   case FREQUENCY_DEVIATION_OFF:
     break;
   case FREQUENCY_DEVIATION_ADD:

@@ -246,7 +246,7 @@ void MENU_AcceptSetting(void) {
     return;
 
   case MENU_SFT_D:
-    gTxVfo->FREQUENCY_DEVIATION_SETTING = gSubMenuSelection;
+    gTxVfo->OFFSET_DIR = gSubMenuSelection;
     gRequestSaveChannel = 1;
     return;
 
@@ -595,7 +595,7 @@ void MENU_ShowCurrentSetting(void) {
     break;
 
   case MENU_SFT_D:
-    gSubMenuSelection = gTxVfo->FREQUENCY_DEVIATION_SETTING;
+    gSubMenuSelection = gTxVfo->OFFSET_DIR;
     break;
 
   case MENU_OFFSET:

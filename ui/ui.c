@@ -50,7 +50,7 @@ void UI_DisplayApp(void) {
     // TODO: maybe more vfo info
     break;
   case APP_SPLIT:
-    UI_DisplaySplit();
+    // UI_DisplaySplit();
     break;
   case APP_OOK:
     UI_DisplayOOK();

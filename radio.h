@@ -105,7 +105,7 @@ typedef struct VFO_Info_t {
   uint32_t FREQUENCY_OF_DEVIATION;
   uint16_t StepFrequency;
   uint8_t CHANNEL_SAVE;
-  uint8_t FREQUENCY_DEVIATION_SETTING;
+  uint8_t OFFSET_DIR;
   uint8_t SquelchOpenRSSIThresh;
   uint8_t SquelchOpenNoiseThresh;
   uint8_t SquelchCloseGlitchThresh;
