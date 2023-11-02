@@ -109,7 +109,7 @@ void ACTION_Scan(bool bRestart) {
     }
   } else
 #endif
-      if (gScreenToDisplay != DISPLAY_SCANNER) {
+      if (gAppToDisplay != APP_SCANNER) {
     RADIO_SelectVfos();
     if (IS_NOT_NOAA_CHANNEL(gRxVfo->CHANNEL_SAVE)) {
       GUI_SelectNextDisplay(DISPLAY_MAIN);

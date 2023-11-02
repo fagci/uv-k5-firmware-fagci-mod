@@ -38,5 +38,6 @@ void PutPixelStatus(uint8_t x, uint8_t y, bool fill);
 void DrawHLine(int sy, int ey, int nx, bool fill);
 void UI_PrintStringSmallest(const char *pString, uint8_t x, uint8_t y,
                             bool statusbar, bool fill);
+void UI_ClearAppScreen();
 
 #endif

@@ -12,4 +12,5 @@ sed -i 's/\bTX_CHANNEL\b/TX_VFO/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/bDoScan/bEnable/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/\bRADIO_SetTxParameters\b/RADIO_enableTX/' ./**/*.{c,h} ./*.{c,h}
 sed -i 's/\bFREQUENCY_DEVIATION_SETTING\b/OFFSET_DIR/' ./**/*.{c,h} ./*.{c,h}
-sed -i 's/\bgScreenToDisplay ([!]\=) DISPLAY_SCANNER\b/gAppToDisplay \1 APP_SCANNER/' ./**/*.{c,h} ./*.{c,h}
+sed -r -i 's/gScreenToDisplay ([^ ]+) DISPLAY_SCANNER/gAppToDisplay \1 APP_SCANNER/' ./**/*.{c,h} ./*.{c,h}
+sed -r -i 's/gRequestDisplayScreen = DISPLAY_SCANNER/gAppToDisplay = APP_SCANNER/' ./**/*.{c,h} ./*.{c,h}

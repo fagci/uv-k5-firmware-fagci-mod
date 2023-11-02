@@ -51,7 +51,7 @@ static void SCANNER_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
 			gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 			INPUTBOX_Append(Key);
-			gRequestDisplayScreen = DISPLAY_SCANNER;
+			gAppToDisplay = APP_SCANNER;
 			if (gInputBoxIndex < 3) {
 				return;
 			}
@@ -86,14 +86,14 @@ static void SCANNER_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 			if (gInputBoxIndex) {
 				gInputBoxIndex--;
 				gInputBox[gInputBoxIndex] = 10;
-				gRequestDisplayScreen = DISPLAY_SCANNER;
+				gAppToDisplay = APP_SCANNER;
 				break;
 			}
 			// Fallthrough
 
 		case 2:
 			gScannerEditState = 0;
-			gRequestDisplayScreen = DISPLAY_SCANNER;
+			gAppToDisplay = APP_SCANNER;
 			break;
 		}
 	}
@@ -164,13 +164,13 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 			gScannerEditState = 2;
 		}
 		gScanCssState = SCAN_CSS_STATE_FOUND;
-		gRequestDisplayScreen = DISPLAY_SCANNER;
+		gAppToDisplay = APP_SCANNER;
 		break;
 
 	case 1:
 		if (gInputBoxIndex == 0) {
 			gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-			gRequestDisplayScreen = DISPLAY_SCANNER;
+			gAppToDisplay = APP_SCANNER;
 			gScannerEditState = 2;
 		}
 		break;
@@ -202,7 +202,7 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 		}
 		gTxVfo->CHANNEL_SAVE = Channel;
 		gEeprom.ScreenChannel[gEeprom.TX_VFO] = Channel;
-		gRequestDisplayScreen = DISPLAY_SCANNER;
+		gAppToDisplay = APP_SCANNER;
 		gRequestSaveChannel = 2;
 		gScannerEditState = 0;
 		break;
@@ -238,7 +238,7 @@ static void SCANNER_Key_UP_DOWN(bool bKeyPressed, bool pKeyHeld, int8_t Directio
 	if (gScannerEditState == 1) {
 		gScanChannel = NUMBER_AddWithWraparound(gScanChannel, Direction, 0, 199);
 		gShowChPrefix = RADIO_CheckValidChannel(gScanChannel, false, 0);
-		gRequestDisplayScreen = DISPLAY_SCANNER;
+		gAppToDisplay = APP_SCANNER;
 	} else {
 		gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
 	}

@@ -674,7 +674,7 @@ void APP_Update(void) {
   }
 #endif
 
-  if (gScreenToDisplay != DISPLAY_SCANNER && gScanState != SCAN_OFF &&
+  if (gAppToDisplay != APP_SCANNER && gScanState != SCAN_OFF &&
       gScheduleScanListen && !gPttIsPressed) {
     if (IS_FREQ_CHANNEL(gNextMrChannel)) {
       if (gCurrentFunction == FUNCTION_INCOMING) {
@@ -988,7 +988,7 @@ void APP_TimeSlice10ms(void) {
         gScanUseCssResult = false;
         gScanProgressIndicator = 0;
         gScanCssState = SCAN_CSS_STATE_SCANNING;
-        GUI_SelectNextDisplay(DISPLAY_SCANNER);
+        gAppToDisplay = APP_SCANNER;
       }
       gScanDelay = 21;
       break;
@@ -1033,7 +1033,7 @@ void APP_TimeSlice10ms(void) {
         gScanDelay = 21;
         break;
       }
-      GUI_SelectNextDisplay(DISPLAY_SCANNER);
+      gAppToDisplay = APP_SCANNER;
       break;
     default:
       break;
@@ -1116,7 +1116,7 @@ void APP_TimeSlice500ms(void) {
 #if defined(ENABLE_AIRCOPY)
           && gScreenToDisplay != DISPLAY_AIRCOPY
 #endif
-          && (gScreenToDisplay != DISPLAY_SCANNER ||
+          && (gAppToDisplay != APP_SCANNER ||
               (gScanCssState >= SCAN_CSS_STATE_FOUND))) {
         if (gEeprom.AUTO_KEYPAD_LOCK && gKeyLockCountdown && !gDTMF_InputMode) {
           gKeyLockCountdown--;
@@ -1132,7 +1132,7 @@ void APP_TimeSlice500ms(void) {
                 gScreenToDisplay == DISPLAY_MENU) {
               AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
             }
-            if (gScreenToDisplay == DISPLAY_SCANNER) {
+            if (gAppToDisplay == APP_SCANNER) {
               BK4819_StopScan();
               RADIO_ConfigureChannel(0, 2);
               RADIO_ConfigureChannel(1, 2);
@@ -1153,7 +1153,7 @@ void APP_TimeSlice500ms(void) {
             else
 #endif
 #if defined(ENABLE_NOSCANTIMEOUT)
-                if (gScreenToDisplay != DISPLAY_SCANNER)
+                if (gAppToDisplay != APP_SCANNER)
 #endif
               GUI_SelectNextDisplay(DISPLAY_MAIN);
           }
@@ -1200,7 +1200,7 @@ void APP_TimeSlice500ms(void) {
     }
   }
 
-  if (gScreenToDisplay == DISPLAY_SCANNER && gScannerEditState == 0 &&
+  if (gAppToDisplay == APP_SCANNER && gScannerEditState == 0 &&
       gScanCssState < SCAN_CSS_STATE_FOUND) {
     gScanProgressIndicator++;
 #ifndef ENABLE_NOSCANTIMEOUT
@@ -1483,36 +1483,39 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 #endif
       }
     } else if (Key != KEY_SIDE1 && Key != KEY_SIDE2) {
-      switch (gScreenToDisplay) {
-      case DISPLAY_MAIN:
-        MAIN_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-#if defined(ENABLE_FMRADIO)
-      case DISPLAY_FM:
-        FM_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-#endif
-      case DISPLAY_MENU:
-        MENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-      case DISPLAY_CONTEXT_MENU:
-        CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-      case DISPLAY_APP_MENU:
-        APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-      case DISPLAY_SCANNER:
+      switch (gAppToDisplay) {
+      case APP_SCANNER:
         SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);
         break;
-#if defined(ENABLE_AIRCOPY)
-      case DISPLAY_AIRCOPY:
-        AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-#endif
       default:
-        break;
+        switch (gScreenToDisplay) {
+        case DISPLAY_MAIN:
+          MAIN_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+#if defined(ENABLE_FMRADIO)
+        case DISPLAY_FM:
+          FM_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+#endif
+        case DISPLAY_MENU:
+          MENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+        case DISPLAY_CONTEXT_MENU:
+          CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+        case DISPLAY_APP_MENU:
+          APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+#if defined(ENABLE_AIRCOPY)
+        case DISPLAY_AIRCOPY:
+          AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+          break;
+#endif
+        default:
+          break;
+        }
       }
-    } else if (gScreenToDisplay != DISPLAY_SCANNER
+    } else if (gAppToDisplay != APP_SCANNER
 #if defined(ENABLE_AIRCOPY)
                && gScreenToDisplay != DISPLAY_AIRCOPY
 #endif
@@ -1569,7 +1572,7 @@ Skip:
     if (!bKeyHeld) {
       SETTINGS_SaveChannel(gTxVfo->CHANNEL_SAVE, gEeprom.TX_VFO, gTxVfo,
                            gRequestSaveChannel);
-      if (gScreenToDisplay != DISPLAY_SCANNER) {
+      if (gAppToDisplay != APP_SCANNER) {
         gVfoConfigureMode = VFO_CONFIGURE;
       }
     } else {

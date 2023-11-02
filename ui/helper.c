@@ -231,3 +231,9 @@ void UI_PrintStringSmallest(const char *pString, uint8_t x, uint8_t y,
     x += 4;
   }
 }
+
+void UI_ClearAppScreen() {
+  for (uint8_t line = 4; line < 7; line++) {
+    memset(gFrameBuffer[line], 0, LCD_WIDTH);
+  }
+}
