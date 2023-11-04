@@ -39,7 +39,10 @@ typedef enum GUI_AppType_t {
   APP_SPLIT,
   APP_OOK,
   APP_SCANNER,
+  APP_SCANLIST,
 } GUI_AppType_t;
+
+extern const char *appsNames[5];
 
 extern GUI_DisplayType_t gScreenToDisplay;
 extern GUI_DisplayType_t gRequestDisplayScreen;

@@ -26,19 +26,24 @@
 #if defined(ENABLE_AIRCOPY)
 #include "aircopy.h"
 #endif
+#include "../apps/ook.h"
+#include "../apps/scanlist.h"
 #include "appmenu.h"
 #include "contextmenu.h"
 #include "fmradio.h"
 #include "inputbox.h"
 #include "main.h"
 #include "menu.h"
-#include "../apps/ook.h"
 #include "scanner.h"
 #include "split.h"
 
 GUI_DisplayType_t gScreenToDisplay;
 GUI_DisplayType_t gRequestDisplayScreen = DISPLAY_INVALID;
 GUI_AppType_t gAppToDisplay = APP_SPLIT;
+
+const char *appsNames[5] = {
+    "", "Split", "OOK", "Scanner", "Scanlist",
+};
 
 uint8_t gAskForConfirmation;
 bool gAskToSave;
@@ -54,6 +59,9 @@ void UI_DisplayApp(void) {
     break;
   case APP_OOK:
     OOK_render();
+    break;
+  case APP_SCANLIST:
+    SCANLIST_render();
     break;
   case APP_SCANNER:
     UI_DisplayScanner();

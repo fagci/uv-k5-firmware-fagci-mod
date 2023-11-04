@@ -70,6 +70,7 @@
 #include "ui/ui.h"
 
 #include "../apps/ook.h"
+#include "../apps/scanlist.h"
 
 // original QS front end register settings
 const uint8_t origLnaShort = 3; //   0dB
@@ -433,7 +434,7 @@ static void FREQ_NextChannel(void) {
   RADIO_SetupRegisters(true);
   gUpdateDisplay = true;
 #ifdef ENABLE_FASTER_CHANNEL_SCAN
-  ScanPauseDelayIn10msec = 8; // 90ms
+  ScanPauseDelayIn10msec = 2; // 20ms
 #else
   ScanPauseDelayIn10msec = 10;
 #endif
@@ -487,7 +488,7 @@ Skip:
     RADIO_SetupRegisters(true);
     gUpdateDisplay = true;
   }
-  ScanPauseDelayIn10msec = 20;
+  ScanPauseDelayIn10msec = 5; // was 20
   bScanKeepFrequency = false;
   if (bEnabled) {
     gCurrentScanList++;
@@ -877,8 +878,14 @@ void APP_TimeSlice10ms(void) {
   }
 #endif
 
-  if (gAppToDisplay == APP_OOK) {
+  switch (gAppToDisplay) {
+  case APP_OOK:
     OOK_update();
+    break;
+  case APP_SCANLIST:
+    SCANLIST_update();
+  default:
+    break;
   }
 
   // once every 150ms
@@ -1295,7 +1302,7 @@ void CHANNEL_Next(bool bBackup, int8_t Direction) {
     }
     FREQ_NextChannel();
   }
-  ScanPauseDelayIn10msec = 50;
+  ScanPauseDelayIn10msec = 2; // was 50
   gScheduleScanListen = false;
   gRxReceptionMode = RX_MODE_NONE;
   gScanPauseMode = false;
@@ -1496,6 +1503,12 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       switch (gAppToDisplay) {
       case APP_SCANNER:
         SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+      case APP_SCANLIST:
+        SCANLIST_key(Key, bKeyPressed, bKeyHeld);
+        break;
+      case APP_OOK:
+        OOK_key(Key, bKeyPressed, bKeyHeld);
         break;
       default:
         switch (gScreenToDisplay) {

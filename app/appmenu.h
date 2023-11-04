@@ -3,6 +3,7 @@
 
 #include "../driver/keyboard.h"
 #include "../ui/ui.h"
+#include "../misc.h"
 
 void APPMENU_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 

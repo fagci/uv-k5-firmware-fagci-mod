@@ -30,8 +30,8 @@ int ConvertDomain(int aValue, int aMin, int aMax, int bMin, int bMax) {
 uint8_t DBm2S(int dbm) {
   uint8_t i = 0;
   dbm *= -1;
-  for (i = 0; i < ARRAY_SIZE(U8RssiMap); i++) {
-    if (dbm >= U8RssiMap[i]) {
+  for (i = 0; i < ARRAY_SIZE(rssi2sVHF); i++) {
+    if (dbm >= rssi2sVHF[i]) {
       return i;
     }
   }

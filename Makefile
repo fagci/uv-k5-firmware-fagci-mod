@@ -57,7 +57,7 @@ OBJS += driver/systick.o
 ifeq ($(ENABLE_UART),1)
 OBJS += driver/uart.o
 endif
-OBJS += protocols/ook.o
+# OBJS += protocols/ook.o
 
 # Main
 OBJS += app/action.o
@@ -122,6 +122,7 @@ OBJS += ui/welcome.o
 OBJS += ui/split.o
 
 OBJS += apps/ook.o
+OBJS += apps/scanlist.o
 
 OBJS += version.o
 

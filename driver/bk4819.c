@@ -321,19 +321,7 @@ void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh,
                          uint8_t SquelchOpenGlitchThresh) {
   BK4819_WriteRegister(BK4819_REG_70, 0);
   BK4819_WriteRegister(BK4819_REG_4D, 0xA000 | SquelchCloseGlitchThresh);
-  // 0x6f = 0110 1111 meaning the default sql delays from the datasheet are used
-  // (101 and 111)
-  BK4819_WriteRegister(BK4819_REG_4E, // 01 101 11 1 00000000
-#ifdef ENABLE_FASTER_CHANNEL_SCAN
-                                      // faster (but twitchier)
-                       (1u << 14) |     //  1 ???
-                           (1u << 11) | // *5  squelch = open  delay .. 0 ~ 7
-                           (1u << 9) |  // *3  squelch = close delay .. 0 ~ 3
-                           SquelchOpenGlitchThresh); //  0 ~ 255
-#else
-                                      // original (*)
-                       0x6F00 | SquelchOpenGlitchThresh);
-#endif
+  BK4819_WriteRegister(BK4819_REG_4E, 0x6F00 | SquelchOpenGlitchThresh);
   BK4819_WriteRegister(BK4819_REG_4F,
                        (SquelchCloseNoiseThresh << 8) | SquelchOpenNoiseThresh);
   BK4819_WriteRegister(BK4819_REG_78,
