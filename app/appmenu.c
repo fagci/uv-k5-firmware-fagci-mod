@@ -15,7 +15,10 @@ void APPMENU_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   case KEY_7:
   case KEY_8:
   case KEY_9:
-    if (index < ARRAY_SIZE(appsNames)) {
+    if (index < ARRAY_SIZE(apps)) {
+      if (apps[index].init) {
+        apps[index].init();
+      }
       gAppToDisplay = index;
       gRequestDisplayScreen = DISPLAY_MAIN;
     }

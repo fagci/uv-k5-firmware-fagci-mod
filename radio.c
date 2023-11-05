@@ -43,6 +43,7 @@ DCS_CodeType_t gSelectedCodeType;
 uint8_t gSelectedCode;
 
 STEP_Setting_t gStepSetting;
+UpconverterTypes gUpconverter;
 
 VfoState_t VfoState[2];
 
@@ -329,11 +330,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
   RADIO_ApplyOffset(pRadio);
   memset(gEeprom.VfoInfo[VFO].Name, 0, sizeof(gEeprom.VfoInfo[VFO].Name));
   if (IS_MR_CHANNEL(Channel)) {
-    // 16 bytes allocated but only 12 used
-    EEPROM_ReadBuffer(0x0F50 + (Channel * 0x10), gEeprom.VfoInfo[VFO].Name + 0,
-                      8);
-    EEPROM_ReadBuffer(0x0F58 + (Channel * 0x10), gEeprom.VfoInfo[VFO].Name + 8,
-                      2);
+    GetChannelName(Channel, gEeprom.VfoInfo[VFO].Name);
   }
 
   if (!gEeprom.VfoInfo[VFO].FrequencyReverse) {

@@ -16,6 +16,7 @@
 
 #include "frequencies.h"
 #include "misc.h"
+#include "radio.h"
 #include "settings.h"
 
 const struct FrequencyBandInfo FrequencyBandTable[7] = {
@@ -33,6 +34,8 @@ const uint16_t StepFrequencyTable[12] = {
 
     250, 500, 625, 833, 1000, 1250, 2500, 10000,
 };
+
+const uint32_t upConverterValues[] = {0, 5000000, 12500000};
 
 FREQUENCY_Band_t FREQUENCY_GetBand(uint32_t Frequency) {
   for (int i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {
@@ -86,6 +89,10 @@ uint32_t FREQUENCY_FloorToStep(uint32_t Upper, uint32_t Step, uint32_t Lower) {
 }
 
 bool IsTXAllowed(uint32_t Frequency) {
+  if (gUpconverter) {
+    return false;
+  }
+
   if (gSetting_ALL_TX == 2) {
     return false;
   }
@@ -128,3 +135,6 @@ bool FREQUENCY_Check(VFO_Info_t *pInfo) {
 
   return IsTXAllowed(pInfo->pTX->Frequency);
 }
+
+uint32_t GetScreenF(uint32_t f) { return f - upConverterValues[gUpconverter]; }
+uint32_t GetTuneF(uint32_t f) { return f + upConverterValues[gUpconverter]; }

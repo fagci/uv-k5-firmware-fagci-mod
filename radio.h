@@ -62,6 +62,12 @@ enum STEP_Setting_t {
   STEP_100_0kHz,
 };
 
+typedef enum UpconverterTypes {
+    UPCONVERTER_OFF,
+    UPCONVERTER_50M,
+    UPCONVERTER_125M,
+} UpconverterTypes;
+
 extern const char *modulationTypeOptions[5];
 extern const char *vfoStateNames[];
 extern const char *powerNames[];
@@ -138,6 +144,7 @@ extern DCS_CodeType_t gSelectedCodeType;
 extern uint8_t gSelectedCode;
 
 extern STEP_Setting_t gStepSetting;
+extern UpconverterTypes gUpconverter;
 
 extern VfoState_t VfoState[2];
 

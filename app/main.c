@@ -54,7 +54,7 @@ static void SwitchActiveVFO() {
 }
 
 static void MAIN_ApplyFreq() {
-  uint32_t Frequency = tempFreq;
+  uint32_t Frequency = GetTuneF(tempFreq);
   uint8_t Vfo = gEeprom.TX_VFO;
 
   for (uint8_t i = 0; i < ARRAY_SIZE(FrequencyBandTable); i++) {

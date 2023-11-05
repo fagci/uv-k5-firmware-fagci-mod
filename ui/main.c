@@ -22,6 +22,7 @@
 #include "../driver/bk4819.h"
 #include "../driver/st7565.h"
 #include "../external/printf/printf.h"
+#include "../frequencies.h"
 #include "../functions.h"
 #include "../helper/measurements.h"
 #include "../misc.h"
@@ -204,24 +205,14 @@ static void displayVfo(uint8_t vfoNum) {
     }
 
     if (IS_MR_CHANNEL(screenCH)) {
-      const uint8_t ATTR = gMR_ChannelAttributes[screenCH];
-      const uint8_t chPos = Line + 2;
-      if (ATTR & MR_CH_SCANLIST1) {
-        gFrameBuffer[chPos][117] = 0b000010001;
-        gFrameBuffer[chPos][118] = 0b000011111;
-        gFrameBuffer[chPos][119] = 0b000010001;
-      }
-      if (ATTR & MR_CH_SCANLIST2) {
-        gFrameBuffer[chPos][122] = 0b00010001;
-        gFrameBuffer[chPos][123] = 0b00011111;
-        gFrameBuffer[chPos][124] = 0b00010001;
-        gFrameBuffer[chPos][125] = 0b00011111;
-        gFrameBuffer[chPos][126] = 0b00010001;
-      }
+      UI_DrawScanListFlag(gFrameBuffer[Line + 2],
+                          gMR_ChannelAttributes[screenCH]);
     }
 
-    bool noChannelName = vfoInfo.Name[0] < 32 || vfoInfo.Name[0] > 127;
+    bool noChannelName = UI_NoChannelName(vfoInfo.Name);
     sprintf(String, "CH-%03u", screenCH + 1);
+
+    frequency = GetScreenF(frequency);
 
     if (!IS_MR_CHANNEL(screenCH) ||
         gEeprom.CHANNEL_DISPLAY_MODE == MDF_FREQUENCY) {

@@ -69,7 +69,7 @@
 #include "ui/status.h"
 #include "ui/ui.h"
 
-#include "../apps/ook.h"
+#include "../apps/abscanner.h"
 #include "../apps/scanlist.h"
 
 // original QS front end register settings
@@ -434,7 +434,7 @@ static void FREQ_NextChannel(void) {
   RADIO_SetupRegisters(true);
   gUpdateDisplay = true;
 #ifdef ENABLE_FASTER_CHANNEL_SCAN
-  ScanPauseDelayIn10msec = 2; // 20ms
+  ScanPauseDelayIn10msec = 9;
 #else
   ScanPauseDelayIn10msec = 10;
 #endif
@@ -488,7 +488,11 @@ Skip:
     RADIO_SetupRegisters(true);
     gUpdateDisplay = true;
   }
-  ScanPauseDelayIn10msec = 5; // was 20
+#ifdef ENABLE_FASTER_CHANNEL_SCAN
+  ScanPauseDelayIn10msec = 10;
+#else
+  ScanPauseDelayIn10msec = 20;
+#endif
   bScanKeepFrequency = false;
   if (bEnabled) {
     gCurrentScanList++;
@@ -878,14 +882,10 @@ void APP_TimeSlice10ms(void) {
   }
 #endif
 
-  switch (gAppToDisplay) {
-  case APP_OOK:
-    OOK_update();
-    break;
-  case APP_SCANLIST:
-    SCANLIST_update();
-  default:
-    break;
+  if (gAppToDisplay) {
+    if (apps[gAppToDisplay].update) {
+      apps[gAppToDisplay].update();
+    }
   }
 
   // once every 150ms
@@ -1087,10 +1087,6 @@ void APP_TimeSlice500ms(void) {
     return;
   }
 #endif
-
-  if (gAppToDisplay == APP_OOK) {
-    gUpdateDisplay = true;
-  }
 
   if (gReducedService) {
     BOARD_ADC_GetBatteryInfo(&gBatteryCurrentVoltage, &gBatteryCurrent);
@@ -1302,7 +1298,7 @@ void CHANNEL_Next(bool bBackup, int8_t Direction) {
     }
     FREQ_NextChannel();
   }
-  ScanPauseDelayIn10msec = 2; // was 50
+  ScanPauseDelayIn10msec = 50; // was 50
   gScheduleScanListen = false;
   gRxReceptionMode = RX_MODE_NONE;
   gScanPauseMode = false;
@@ -1500,43 +1496,39 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
 #endif
       }
     } else if (Key != KEY_SIDE1 && Key != KEY_SIDE2) {
-      switch (gAppToDisplay) {
-      case APP_SCANNER:
-        SCANNER_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-      case APP_SCANLIST:
-        SCANLIST_key(Key, bKeyPressed, bKeyHeld);
-        break;
-      case APP_OOK:
-        OOK_key(Key, bKeyPressed, bKeyHeld);
-        break;
-      default:
-        switch (gScreenToDisplay) {
-        case DISPLAY_MAIN:
-          MAIN_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-#if defined(ENABLE_FMRADIO)
-        case DISPLAY_FM:
-          FM_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-#endif
-        case DISPLAY_MENU:
-          MENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-        case DISPLAY_CONTEXT_MENU:
-          CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-        case DISPLAY_APP_MENU:
-          APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-#if defined(ENABLE_AIRCOPY)
-        case DISPLAY_AIRCOPY:
-          AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-          break;
-#endif
-        default:
-          break;
+      if (gAppToDisplay) {
+        if (apps[gAppToDisplay].key) {
+          apps[gAppToDisplay].key(Key, bKeyPressed, bKeyHeld);
         }
+        if (gAppToDisplay != APP_SPLIT && gAppToDisplay != APP_SCANNER) {
+          return;
+        }
+      }
+      switch (gScreenToDisplay) {
+      case DISPLAY_MAIN:
+        MAIN_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+#if defined(ENABLE_FMRADIO)
+      case DISPLAY_FM:
+        FM_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+#endif
+      case DISPLAY_MENU:
+        MENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+      case DISPLAY_CONTEXT_MENU:
+        CONTEXTMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+      case DISPLAY_APP_MENU:
+        APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+#if defined(ENABLE_AIRCOPY)
+      case DISPLAY_AIRCOPY:
+        AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
+        break;
+#endif
+      default:
+        break;
       }
     } else if (gAppToDisplay != APP_SCANNER
 #if defined(ENABLE_AIRCOPY)

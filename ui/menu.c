@@ -87,6 +87,7 @@ static const char MenuList[][8] = {
 // 0x30
     "ChDele",
     "Reset",
+    "Upconv",
     "Tx 350",
     "F Lock",
     "Tx 200",
@@ -171,6 +172,7 @@ const char gSubMenuBacklight[8][7] = {"OFF",   "5 sec", "10 sec", "20 sec",
 
 static const char *defaultEnableDisable[3] = {"DEFAULT", "ENABLE", "DISABLE"};
 static const char *offOn[3] = {"OFF", "ON"};
+static const char *upconverterFreqNames[3] = {"OFF", "50M", "125M"};
 
 bool gIsInSubMenu;
 
@@ -427,6 +429,10 @@ void UI_DisplayMenu(void) {
 
   case MENU_RESET:
     strcpy(String, gSubMenu_RESET[gSubMenuSelection]);
+    break;
+
+  case MENU_UPCONVERTER:
+    strcpy(String, upconverterFreqNames[gSubMenuSelection]);
     break;
 
   case MENU_F_LOCK:

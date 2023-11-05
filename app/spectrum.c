@@ -440,7 +440,7 @@ static void UpdateRssiTriggerLevel(bool inc) {
 }
 
 static void ApplyPreset(FreqPreset p) {
-  currentFreq = p.fStart;
+  currentFreq = GetTuneF(p.fStart);
   settings.scanStepIndex = p.stepSizeIndex;
   settings.listenBw = p.listenBW;
   settings.modulationType = p.modulationType;
@@ -454,11 +454,12 @@ static void ApplyPreset(FreqPreset p) {
 
 static void SelectNearestPreset(bool inc) {
   FreqPreset p;
+  uint32_t f = GetScreenF(currentFreq);
   const uint8_t SZ = ARRAY_SIZE(freqPresets);
   if (inc) {
     for (uint8_t i = 0; i < SZ; ++i) {
       p = freqPresets[i];
-      if (currentFreq < p.fStart) {
+      if (f < p.fStart) {
         ApplyPreset(p);
         return;
       }
@@ -466,7 +467,7 @@ static void SelectNearestPreset(bool inc) {
   } else {
     for (int i = SZ - 1; i >= 0; --i) {
       p = freqPresets[i];
-      if (currentFreq > p.fEnd) {
+      if (f > p.fEnd) {
         ApplyPreset(p);
         return;
       }
@@ -627,9 +628,9 @@ static void DrawStatus() {
     } else {
 #endif
       const FreqPreset *p = NULL;
+      uint32_t f = GetScreenF(currentFreq);
       for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-        if (currentFreq >= freqPresets[i].fStart &&
-            currentFreq < freqPresets[i].fEnd) {
+        if (f >= freqPresets[i].fStart && f < freqPresets[i].fEnd) {
           p = &freqPresets[i];
         }
       }
@@ -687,18 +688,21 @@ static void DrawNums() {
   }
 
   if (IsCenterMode()) {
-    sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
-            currentFreq % 100000, settings.frequencyChangeStep / 100,
+    uint32_t cf = GetScreenF(currentFreq);
+    sprintf(String, "%u.%05u \xB1%u.%02uk", cf / 100000, cf % 100000,
+            settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
     UI_PrintStringSmallest(String, 36, 49, false, true);
   } else {
-    sprintf(String, "%u.%05u", GetFStart() / 100000, GetFStart() % 100000);
+    uint32_t fs = GetScreenF(GetFStart());
+    uint32_t fe = GetScreenF(GetFEnd());
+    sprintf(String, "%u.%05u", fs / 100000, fs % 100000);
     UI_PrintStringSmallest(String, 0, 49, false, true);
 
     sprintf(String, "\xB1%uk", settings.frequencyChangeStep / 100);
     UI_PrintStringSmallest(String, 52, 49, false, true);
 
-    sprintf(String, "%u.%05u", GetFEnd() / 100000, GetFEnd() % 100000);
+    sprintf(String, "%u.%05u", fe / 100000, fe % 100000);
     UI_PrintStringSmallest(String, 93, 49, false, true);
   }
 }
@@ -921,6 +925,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
     redrawScreen = true;
     break;
   case KEY_MENU:
+    tempFreq = GetTuneF(tempFreq);
     if (tempFreq < F_MIN || tempFreq > F_MAX) {
       break;
     }
@@ -1080,12 +1085,12 @@ static void RenderSpectrum() {
   DrawArrow(peak.i << settings.stepsCount);
   DrawSpectrum();
   DrawRssiTriggerLevel();
-  DrawF(peak.f);
+  DrawF(GetScreenF(peak.f));
   DrawNums();
 }
 
 static void RenderStill() {
-  DrawF(fMeasure);
+  DrawF(GetScreenF(fMeasure));
 
   const uint8_t METER_PAD_LEFT = 3;
   uint8_t *ln = gFrameBuffer[2];
@@ -1360,6 +1365,7 @@ static void Tick() {
 }
 
 static void AutomaticPresetChoose(uint32_t f) {
+  f = GetScreenF(f);
   for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
     const FreqPreset *p = &freqPresets[i];
     if (f >= p->fStart && f <= p->fEnd) {

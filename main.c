@@ -38,6 +38,7 @@
 #include "radio.h"
 #include "settings.h"
 #include "ui/lock.h"
+#include "ui/menu.h"
 #include "ui/welcome.h"
 #include "version.h"
 
@@ -102,7 +103,7 @@ void Main(void) {
     UI_DisplayWelcome();
     BACKLIGHT_TurnOn();
     SYSTEM_DelayMs(1000);
-    gMenuListCount = 49;
+    gMenuListCount = MENU_ITEMS_COUNT - 6;
 
     BootMode = BOOT_GetMode();
     if (gEeprom.POWER_ON_PASSWORD < 1000000) {

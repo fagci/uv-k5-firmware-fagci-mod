@@ -27,6 +27,7 @@
 #include "../driver/keyboard.h"
 #include "../frequencies.h"
 #include "../misc.h"
+#include "../radio.h"
 #include "../settings.h"
 #include "app/dtmf.h"
 #include "app/generic.h"
@@ -84,6 +85,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_PONMSG:
   case MENU_ROGER:
   case MENU_ALL_TX:
+  case MENU_UPCONVERTER:
     *pMin = 0;
     *pMax = 2;
     break;
@@ -442,6 +444,10 @@ void MENU_AcceptSetting(void) {
     BOARD_FactoryReset(gSubMenuSelection);
     return;
 
+  case MENU_UPCONVERTER:
+    gUpconverter = gSubMenuSelection;
+    return;
+
   case MENU_350TX:
     gSetting_350TX = gSubMenuSelection;
     break;
@@ -562,6 +568,10 @@ void MENU_ShowCurrentSetting(void) {
 
   case MENU_RESET:
     gSubMenuSelection = 0;
+    break;
+
+  case MENU_UPCONVERTER:
+    gSubMenuSelection = gUpconverter;
     break;
 
   case MENU_R_CTCS:
@@ -751,8 +761,8 @@ void MENU_ShowCurrentSetting(void) {
     gSubMenuSelection =
         RADIO_FindNextChannel(gEeprom.MrChannel[0], 1, false, 1);
 #else
-    gSubMenuSelection = RADIO_FindNextChannel(
-        gEeprom.MrChannel[gEeprom.TX_VFO], 1, false, 1);
+    gSubMenuSelection =
+        RADIO_FindNextChannel(gEeprom.MrChannel[gEeprom.TX_VFO], 1, false, 1);
 #endif
     break;
 

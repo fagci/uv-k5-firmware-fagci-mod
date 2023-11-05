@@ -21,12 +21,11 @@
 #include "app/fm.h"
 #endif
 #include "../app/scanner.h"
-#include "../driver/keyboard.h"
 #include "../misc.h"
 #if defined(ENABLE_AIRCOPY)
 #include "aircopy.h"
 #endif
-#include "../apps/ook.h"
+#include "../apps/abscanner.h"
 #include "../apps/scanlist.h"
 #include "appmenu.h"
 #include "contextmenu.h"
@@ -41,8 +40,13 @@ GUI_DisplayType_t gScreenToDisplay;
 GUI_DisplayType_t gRequestDisplayScreen = DISPLAY_INVALID;
 GUI_AppType_t gAppToDisplay = APP_SPLIT;
 
-const char *appsNames[5] = {
-    "", "Split", "OOK", "Scanner", "Scanlist",
+const App apps[4] = {
+    {""},
+    {"Split"},
+    {"Scanner"},
+    {"Scanlist", NULL, SCANLIST_update, SCANLIST_render, SCANLIST_key},
+    /* {"A to B scanner", ABSCANNER_init, ABSCANNER_update, ABSCANNER_render,
+     ABSCANNER_key}, */
 };
 
 uint8_t gAskForConfirmation;
@@ -50,24 +54,10 @@ bool gAskToSave;
 bool gAskToDelete;
 
 void UI_DisplayApp(void) {
-  switch (gAppToDisplay) {
-  case APP_NONE:
-    // TODO: maybe more vfo info
-    break;
-  case APP_SPLIT:
-    // UI_DisplaySplit();
-    break;
-  case APP_OOK:
-    OOK_render();
-    break;
-  case APP_SCANLIST:
-    SCANLIST_render();
-    break;
-  case APP_SCANNER:
-    UI_DisplayScanner();
-    break;
-  default:
-    break;
+  if (gAppToDisplay) {
+    if (apps[gAppToDisplay].render) {
+      apps[gAppToDisplay].render();
+    }
   }
 }
 
