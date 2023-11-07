@@ -794,7 +794,7 @@ void APP_Update(void) {
   }
 }
 
-#define KEY_HOLD_TIME 50
+#define KEY_HOLD_TIME 30
 
 void APP_CheckKeys(void) {
   KEY_Code_t Key;
@@ -852,7 +852,7 @@ void APP_CheckKeys(void) {
     // NOTE: Here keys to process hold start
     if (Key == KEY_STAR || Key == KEY_F || Key == KEY_SIDE2 ||
         Key == KEY_SIDE1 || Key == KEY_UP || Key == KEY_DOWN ||
-        Key == KEY_MENU) {
+        Key == KEY_MENU || (Key >= KEY_0 && Key <= KEY_9)) {
       gKeyBeingHeld = true;
       APP_ProcessKey(Key, true, true);
     }

@@ -64,7 +64,9 @@ void UI_DisplayApp(void) {
 void GUI_DisplayScreen(void) {
   switch (gScreenToDisplay) {
   case DISPLAY_MAIN:
-    UI_DisplayMain();
+    if (gAppToDisplay != APP_SCANLIST) {
+      UI_DisplayMain();
+    }
     UI_DisplayApp();
     break;
 #if defined(ENABLE_FMRADIO)
