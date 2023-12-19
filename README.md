@@ -1,3 +1,10 @@
+
+# Fork of https://github.com/fagci/uv-k5-firmware-fagci-mod/
+- Reimplementing frequency spectrum presets (with 3-9 keys or another key)
+- Battery percentage indicator
+- More spacing on the left of the frequency dot (2. looks like 2 with a fused longer tail)
+- Possibly removing features not needed for my use case to add encoded messaging
+#
 # Open reimplementation of the Quan Sheng UV K5 v2.1.27 firmware
 
 This repository is a preservation project of the UV K5 v2.1.27 firmware.
