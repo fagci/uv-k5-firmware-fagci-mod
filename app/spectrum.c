@@ -84,9 +84,7 @@ static MovingAverage mov = {{128}, {}, 255, 128, 0, 0};
 static const uint8_t MOV_N = ARRAY_SIZE(mov.buf);
 
 uint8_t menuState = 0;
-#ifdef ENABLE_ALL_REGISTERS
 uint8_t hiddenMenuState = 0;
-#endif
 
 uint16_t listenT = 0;
 
@@ -288,9 +286,7 @@ static void ToggleRX(bool on) {
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
 #endif
   } else {
-#ifndef ENABLE_ALL_REGISTERS
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-#endif
   }
 }
 
@@ -544,9 +540,7 @@ static void ToggleListeningBW() {
     ++settings.listenBw;
   }
 
-#ifdef ENABLE_ALL_REGISTERS
   BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-#endif
   redrawScreen = true;
 }
 
@@ -620,13 +614,11 @@ static void DrawStatus() {
 
   if (currentState == SPECTRUM) {
 
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       RegisterSpec s = hiddenRegisterSpecs[hiddenMenuState];
       sprintf(String, "%x %s: %u", s.num, s.name, BK4819_GetRegValue(s));
       UI_PrintStringSmallest(String, 0, 0, true, true);
     } else {
-#endif
       const FreqPreset *p = NULL;
       uint32_t f = GetScreenF(currentFreq);
       for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
@@ -657,14 +649,12 @@ static void DrawF(uint32_t f) {
     return;
   }
 
-#ifdef ENABLE_ALL_REGISTERS
   if (currentState == SPECTRUM) {
     sprintf(String, "R%03u S%03u A%03u", scanInfo.rssi,
             BK4819_GetRegValue((RegisterSpec){"snr_out", 0x61, 8, 0xFF, 1}),
             BK4819_GetRegValue((RegisterSpec){"agc_rssi", 0x62, 8, 0xFF, 1}));
     UI_PrintStringSmallest(String, 36, 8, false, true);
   }
-#endif
 
   sprintf(String, "%u.%05u", f / 100000, f % 100000);
 
@@ -768,18 +758,18 @@ static void DeInitSpectrum() {
 static void OnKeyDown(uint8_t key) {
   switch (key) {
   case KEY_3:
-    if (0)
+   // if (0)
       SelectNearestPreset(true);
-    settings.delayUS += 100;
+    /*settings.delayUS += 100;
     SYSTEM_DelayMs(100);
-    redrawStatus = true;
+    redrawStatus = true;*/
     break;
   case KEY_9:
-    if (0)
+   // if (0)
       SelectNearestPreset(false);
-    settings.delayUS -= 100;
+    /*settings.delayUS -= 100;
     SYSTEM_DelayMs(100);
-    redrawStatus = true;
+    redrawStatus = true;*/
     break;
   case KEY_1:
     UpdateScanStep(true);
@@ -802,7 +792,6 @@ static void OnKeyDown(uint8_t key) {
     UpdateFreqChangeStep(true);
     break;
   case KEY_8:
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       if (hiddenMenuState == ARRAY_SIZE(hiddenRegisterSpecs) - 1) {
         hiddenMenuState = 1;
@@ -812,7 +801,6 @@ static void OnKeyDown(uint8_t key) {
       redrawStatus = true;
       break;
     }
-#endif
     UpdateFreqChangeStep(false);
     break;
   case KEY_UP:
@@ -826,13 +814,11 @@ static void OnKeyDown(uint8_t key) {
     UpdateCurrentFreq(true);
     break;
   case KEY_DOWN:
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], false);
       redrawStatus = true;
       break;
     }
-#endif
     UpdateCurrentFreq(false);
     break;
   case KEY_SIDE1:
@@ -875,19 +861,15 @@ static void OnKeyDown(uint8_t key) {
     settings.rssiTriggerLevel = 120;
     break;
   case KEY_MENU:
-#ifdef ENABLE_ALL_REGISTERS
     hiddenMenuState = 1;
     redrawStatus = true;
-#endif
     break;
   case KEY_EXIT:
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       hiddenMenuState = 0;
       redrawStatus = true;
       break;
     }
-#endif
     if (menuState) {
       menuState = 0;
       redrawScreen = true;
@@ -975,12 +957,10 @@ void OnKeyDownStill(KEY_Code_t key) {
       UpdateRegMenuValue(registerSpecs[menuState], true);
       break;
     }
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       UpdateRegMenuValue(hiddenRegisterSpecs[hiddenMenuState], true);
       break;
     }
-#endif
     UpdateCurrentFreqStill(true);
     break;
   case KEY_DOWN:
@@ -1047,13 +1027,11 @@ void OnKeyDownStill(KEY_Code_t key) {
       redrawScreen = true;
       break;
     }
-#ifdef ENABLE_ALL_REGISTERS
     if (hiddenMenuState) {
       hiddenMenuState = 0;
       redrawScreen = true;
       break;
     }
-#endif
     SetState(SPECTRUM);
     monitorMode = false;
     RelaunchScan();
@@ -1170,9 +1148,7 @@ static void RenderStill() {
       UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                              menuState != idx);
     }
-#ifdef ENABLE_ALL_REGISTERS
   }
-#endif
 }
 
 static void Render() {
@@ -1293,18 +1269,12 @@ static void UpdateListening() {
   redrawScreen = true;
 
   if (currentState == SPECTRUM) {
-#ifndef ENABLE_ALL_REGISTERS
     BK4819_WriteRegister(0x43, GetBWRegValueForScan());
-#endif
     Measure();
-#ifndef ENABLE_ALL_REGISTERS
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-#endif
   } else {
     Measure();
-#ifndef ENABLE_ALL_REGISTERS
     BK4819_WriteRegister(0x43, GetBWRegValueForListen());
-#endif
   }
 
   peak.rssi = scanInfo.rssi;

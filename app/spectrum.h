@@ -182,7 +182,6 @@ static const FreqPreset freqPresets[] = {
      BK4819_FILTER_BW_WIDE},
 };
 
-#ifdef ENABLE_ALL_REGISTERS
 static const RegisterSpec hiddenRegisterSpecs[] = {
     {},
     /* {"tail", 0x0c, 12, 0b11, 0},
@@ -363,7 +362,6 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
             */
 
 };
-#endif
 
 void APP_RunSpectrum(void);
 
