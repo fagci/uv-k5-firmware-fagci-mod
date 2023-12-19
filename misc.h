@@ -22,6 +22,18 @@
 
 #define ARRAY_SIZE(a)    (sizeof(a) / sizeof(a[0]))
 
+#ifndef MAX
+	#define MAX(a, b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+#endif
+
+#ifndef MIN
+	#define MIN(a, b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#endif
+
+#ifndef SWAP
+	#define SWAP(a, b) ({ __typeof__ (a) _c = (a);  a = b; b = _c; })
+#endif
+
 #define IS_MR_CHANNEL(x) ((x) <= MR_CHANNEL_LAST)
 #define IS_FREQ_CHANNEL(x) ((x) >= FREQ_CHANNEL_FIRST && (x) <= FREQ_CHANNEL_LAST)
 #define IS_NOT_NOAA_CHANNEL(x) ((x) <= FREQ_CHANNEL_LAST)

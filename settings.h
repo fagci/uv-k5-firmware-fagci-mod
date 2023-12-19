@@ -17,7 +17,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "radio.h"
+#include <helper/battery.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -110,6 +114,7 @@ typedef struct {
   uint8_t field7_0xa;
   uint8_t field8_0xb;
   uint32_t POWER_ON_PASSWORD;
+  BATTERY_Type_t		  BATTERY_TYPE;
   uint8_t SQUELCH_LEVEL;
   uint8_t TX_TIMEOUT_TIMER;
   bool KEY_LOCK;

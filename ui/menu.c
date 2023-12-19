@@ -87,6 +87,7 @@ static const char MenuList[][8] = {
 // 0x30
     "ChDele",
     "Reset",
+    "BatTyp", // battery type 1600/2200mAh
     "Upconv",
     "Tx 350",
     "F Lock",
@@ -117,6 +118,13 @@ static const char gSubMenu_CHAN[3][7] = {
     "OFF",
     "CHAN_A",
     "CHAN_B",
+};
+
+
+const char gSubMenu_BATTYP[][9] =
+{
+	"1600mAh",
+	"2200mAh"
 };
 
 static const char gSubMenu_VOICE[3][4] = {
@@ -431,7 +439,9 @@ void UI_DisplayMenu(void) {
   case MENU_RESET:
     strcpy(String, gSubMenu_RESET[gSubMenuSelection]);
     break;
-
+case MENU_BATTYP:
+			strcpy(String, gSubMenu_BATTYP[gSubMenuSelection]);
+			break;	
   case MENU_UPCONVERTER:
     strcpy(String, upconverterFreqNames[gSubMenuSelection]);
     break;

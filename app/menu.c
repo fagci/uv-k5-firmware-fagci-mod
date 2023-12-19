@@ -122,6 +122,10 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     *pMin = 0;
     *pMax = 1;
     break;
+   case MENU_BATTYP:
+		*pMin = 0;
+		*pMax = 1;
+		break;
   case MENU_AM:
     *pMin = 0;
     *pMax = ARRAY_SIZE(modulationTypeOptions) - 1;
@@ -473,7 +477,9 @@ void MENU_AcceptSetting(void) {
     gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
     gFlagResetVfos = true;
     return;
-
+  case MENU_BATTYP:
+			gEeprom.BATTERY_TYPE = gSubMenuSelection;
+			break;
   case MENU_SCREN:
     gSetting_ScrambleEnable = gSubMenuSelection;
     gRequestSaveSettings = true;
@@ -788,7 +794,9 @@ void MENU_ShowCurrentSetting(void) {
   case MENU_ALL_TX:
     gSubMenuSelection = gSetting_ALL_TX;
     break;
-
+  case MENU_BATTYP:
+			gSubMenuSelection = gEeprom.BATTERY_TYPE;
+			break;	
   case MENU_SCREN:
     gSubMenuSelection = gSetting_ScrambleEnable;
     break;

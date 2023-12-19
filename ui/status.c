@@ -55,14 +55,15 @@ void UI_DisplayStatus(void) {
 #endif
 
   char String[32];
-  sprintf(String, "%s %s %s %s %s %s %s",
+  sprintf(String, "%s %s %s %s %s %s %s %u%%",
           isPowerSave ? "S" : " ", //
           isKeyLock ? "L" : " ",   //
           isFPressed ? "F" : " ",  //
           isVox ? "VOX" : "   ",   //
           isWx ? "WX" : "  ",      //
           isDw ? "DW" : "  ",      //
-          isFm ? "FM" : "  "       //
+          isFm ? "FM" : "  ",       //
+          BATTERY_VoltsToPercent(gBatteryVoltageAverage)
   );
   UI_PrintStringSmallest(String, 0, 0, true, true);
 

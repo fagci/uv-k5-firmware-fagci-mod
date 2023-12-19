@@ -36,6 +36,19 @@ extern volatile uint16_t gBatterySave;
 
 extern uint16_t gBatteryCheckCounter;
 
+extern bool              gLowBatteryConfirmed;
+extern uint16_t          gBatteryCheckCounter;
+
+extern volatile uint16_t gPowerSave_10ms;
+
+typedef enum {
+    BATTERY_TYPE_1600_MAH,
+    BATTERY_TYPE_2200_MAH,
+    BATTERY_TYPE_UNKNOWN
+} BATTERY_Type_t;
+
+
+unsigned int BATTERY_VoltsToPercent(unsigned int voltage_10mV);
 void BATTERY_GetReadings(bool bDisplayBatteryLevel);
 
 #endif
