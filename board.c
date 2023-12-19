@@ -509,9 +509,6 @@ void BOARD_Init(void)
 #if defined(ENABLE_FMRADIO)
 	BK1080_Init(0, false);
 #endif
-#if defined(ENABLE_AIRCOPY) || defined(ENABLE_UART)
-	CRC_Init();
-#endif
 }
 
 void BOARD_EEPROM_Init(void)

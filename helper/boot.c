@@ -15,7 +15,6 @@
  */
 
 #include "helper/boot.h"
-#include "app/aircopy.h"
 #include "bsp/dp32g030/gpio.h"
 #include "driver/bk4819.h"
 #include "driver/gpio.h"
@@ -45,11 +44,6 @@ BOOT_Mode_t BOOT_GetMode(void) {
     if (Keys[0] == KEY_SIDE1) {
       return BOOT_MODE_F_LOCK;
     }
-#if defined(ENABLE_AIRCOPY)
-    if (Keys[0] == KEY_SIDE2) {
-      return BOOT_MODE_AIRCOPY;
-    }
-#endif
   }
 
   return BOOT_MODE_NORMAL;
@@ -62,29 +56,6 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode) {
     GUI_SelectNextDisplay(DISPLAY_MENU);
     gMenuListCount = MENU_ITEMS_COUNT;
     gF_LOCK = true;
-#if defined(ENABLE_AIRCOPY)
-  } else if (Mode == BOOT_MODE_AIRCOPY) {
-    gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
-    gEeprom.BATTERY_SAVE = 0;
-    gEeprom.VOX_SWITCH = false;
-    gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
-    gEeprom.AUTO_KEYPAD_LOCK = false;
-    gEeprom.KEY_1_SHORT_PRESS_ACTION = 0;
-    gEeprom.KEY_1_LONG_PRESS_ACTION = 0;
-    gEeprom.KEY_2_SHORT_PRESS_ACTION = 0;
-    gEeprom.KEY_2_LONG_PRESS_ACTION = 0;
-
-    RADIO_InitInfo(gRxVfo, 205, 5, 41002500);
-    gRxVfo->CHANNEL_BANDWIDTH = BANDWIDTH_NARROW;
-    gRxVfo->OUTPUT_POWER = 0;
-    RADIO_ConfigureSquelchAndOutputPower(gRxVfo);
-    gCurrentVfo = gRxVfo;
-    RADIO_SetupRegisters(true);
-    BK4819_SetupAircopy();
-    BK4819_ResetFSK();
-    gAircopyState = AIRCOPY_READY;
-    GUI_SelectNextDisplay(DISPLAY_AIRCOPY);
-#endif
   } else {
     GUI_SelectNextDisplay(DISPLAY_MAIN);
   }

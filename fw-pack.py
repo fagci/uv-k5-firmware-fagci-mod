@@ -25,7 +25,7 @@ if len(sys.argv[2]) > 10:
     print('Version suffix is too big!')
     sys.exit(1)
 
-version = b'*OSFW-' + bytes(sys.argv[2], 'ascii')
+version = b'*DOSFW-' + bytes(sys.argv[2], 'ascii')
 if len(version) < 16:
     version += b'\x00' * (16 - len(version))
 

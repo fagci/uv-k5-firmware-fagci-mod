@@ -476,30 +476,7 @@ void BK4819_TurnsOffTones_TurnsOnRX(void) {
           BK4819_REG_30_ENABLE_PLL_VCO | BK4819_REG_30_ENABLE_RX_DSP);
 }
 
-#if defined(ENABLE_AIRCOPY)
-void BK4819_SetupAircopy(void) {
-  BK4819_WriteRegister(BK4819_REG_70, 0x00E0); // Enable Tone2, tuning gain 48
-  BK4819_WriteRegister(BK4819_REG_72, 0x3065); // Tone2 baudrate 1200
-  BK4819_WriteRegister(
-      BK4819_REG_58,
-      0x00C1); // FSK Enable, FSK 1.2K RX Bandwidth, Preamble 0xAA or 0x55, RX
-               // Gain 0, RX Mode (FSK1.2K, FSK2.4K Rx and NOAA SAME Rx), TX
-               // Mode FSK 1.2K and FSK 2.4K Tx
-  BK4819_WriteRegister(
-      BK4819_REG_5C, 0x5665); // Enable CRC among other things we don't know yet
-  BK4819_WriteRegister(
-      BK4819_REG_5D, 0x4700); // FSK Data Length 72 Bytes (0xabcd + 2 byte
-                              // length + 64 byte payload + 2 byte CRC + 0xdcba)
-}
 
-void BK4819_ResetFSK(void) {
-  BK4819_WriteRegister(BK4819_REG_3F, 0x0000); // Disable interrupts
-  BK4819_WriteRegister(BK4819_REG_59,
-                       0x0068); // Sync length 4 bytes, 7 byte preamble
-  SYSTEM_DelayMs(30);
-  BK4819_Idle();
-}
-#endif
 
 void BK4819_Idle(void) { BK4819_WriteRegister(BK4819_REG_30, 0x0000); }
 
@@ -779,59 +756,6 @@ uint8_t BK4819_GetCDCSSCodeType(void) {
 uint8_t BK4819_GetCTCType(void) {
   return (BK4819_ReadRegister(BK4819_REG_0C) >> 10) & 3;
 }
-
-#if defined(ENABLE_AIRCOPY)
-void BK4819_SendFSKData(uint16_t *pData) {
-  uint8_t i;
-  uint8_t Timeout;
-
-  Timeout = 200;
-
-  SYSTEM_DelayMs(20);
-
-  BK4819_WriteRegister(BK4819_REG_3F, BK4819_REG_3F_FSK_TX_FINISHED);
-  BK4819_WriteRegister(BK4819_REG_59, 0x8068);
-  BK4819_WriteRegister(BK4819_REG_59, 0x0068);
-
-  for (i = 0; i < 36; i++) {
-    BK4819_WriteRegister(BK4819_REG_5F, pData[i]);
-  }
-
-  SYSTEM_DelayMs(20);
-
-  BK4819_WriteRegister(BK4819_REG_59, 0x2868);
-
-  while (Timeout) {
-    if (BK4819_ReadRegister(BK4819_REG_0C) & 1U) {
-      break;
-    }
-    SYSTEM_DelayMs(5);
-    Timeout--;
-  }
-
-  BK4819_WriteRegister(BK4819_REG_02, 0);
-  SYSTEM_DelayMs(20);
-  BK4819_ResetFSK();
-}
-
-void BK4819_PrepareFSKReceive(void) {
-  BK4819_ResetFSK();
-  BK4819_WriteRegister(BK4819_REG_02, 0);
-  BK4819_WriteRegister(BK4819_REG_3F, 0);
-  BK4819_RX_TurnOn();
-  BK4819_WriteRegister(BK4819_REG_3F, 0 | BK4819_REG_3F_FSK_RX_FINISHED |
-                                          BK4819_REG_3F_FSK_FIFO_ALMOST_FULL);
-  // Clear RX FIFO
-  // FSK Preamble Length 7 bytes
-  // FSK SyncLength Selection
-  BK4819_WriteRegister(BK4819_REG_59, 0x4068);
-  // Enable FSK Scramble
-  // Enable FSK RX
-  // FSK Preamble Length 7 bytes
-  // FSK SyncLength Selection
-  BK4819_WriteRegister(BK4819_REG_59, 0x3068);
-}
-#endif
 
 void BK4819_PlayRoger(void) {
   BK4819_EnterTxMute();

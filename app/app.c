@@ -16,9 +16,6 @@
 
 #include "action.h"
 #include <string.h>
-#if defined(ENABLE_AIRCOPY)
-#include "app/aircopy.h"
-#endif
 #if defined(ENABLE_AM_FIX)
 #include "am_fix.h"
 #endif
@@ -578,18 +575,6 @@ void APP_CheckRadioInterrupts(void) {
       g_SquelchLost = false;
       BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_GREEN, false);
     }
-#if defined(ENABLE_AIRCOPY)
-    if (Mask & BK4819_REG_02_FSK_FIFO_ALMOST_FULL &&
-        gScreenToDisplay == DISPLAY_AIRCOPY &&
-        gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 0) {
-      uint8_t i;
-
-      for (i = 0; i < 4; i++) {
-        g_FSK_Buffer[gFSKWriteIndex++] = BK4819_ReadRegister(BK4819_REG_5F);
-      }
-      AIRCOPY_StorePacket();
-    }
-#endif
   }
 }
 
@@ -798,12 +783,6 @@ void APP_Update(void) {
 
 void APP_CheckKeys(void) {
   KEY_Code_t Key;
-
-#if defined(ENABLE_AIRCOPY)
-  if (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState != AIRCOPY_READY) {
-    return;
-  }
-#endif
 
   if (gPttIsPressed) {
     if (GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT)) {
@@ -1053,19 +1032,6 @@ void APP_TimeSlice10ms(void) {
     }
   }
 
-#if defined(ENABLE_AIRCOPY)
-  if (gScreenToDisplay == DISPLAY_AIRCOPY &&
-      gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 1) {
-    if (gAircopySendCountdown) {
-      gAircopySendCountdown--;
-      if (gAircopySendCountdown == 0) {
-        AIRCOPY_SendMessage();
-        GUI_DisplayScreen();
-      }
-    }
-  }
-#endif
-
   APP_CheckKeys();
 }
 
@@ -1126,9 +1092,6 @@ void APP_TimeSlice500ms(void) {
         }
       }
       if (gScanState == SCAN_OFF
-#if defined(ENABLE_AIRCOPY)
-          && gScreenToDisplay != DISPLAY_AIRCOPY
-#endif
           && (gAppToDisplay != APP_SCANNER ||
               (gScanCssState >= SCAN_CSS_STATE_FOUND))) {
         if (gEeprom.AUTO_KEYPAD_LOCK && gKeyLockCountdown && !gDTMF_InputMode) {
@@ -1522,18 +1485,10 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
       case DISPLAY_APP_MENU:
         APPMENU_ProcessKeys(Key, bKeyPressed, bKeyHeld);
         break;
-#if defined(ENABLE_AIRCOPY)
-      case DISPLAY_AIRCOPY:
-        AIRCOPY_ProcessKeys(Key, bKeyPressed, bKeyHeld);
-        break;
-#endif
       default:
         break;
       }
     } else if (gAppToDisplay != APP_SCANNER
-#if defined(ENABLE_AIRCOPY)
-               && gScreenToDisplay != DISPLAY_AIRCOPY
-#endif
     ) {
       ACTION_Handle(Key, bKeyPressed, bKeyHeld);
     } else if (!bKeyHeld && bKeyPressed) {

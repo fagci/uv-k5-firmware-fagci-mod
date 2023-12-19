@@ -42,11 +42,6 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep) {
     return;
   }
 
-#if defined(ENABLE_AIRCOPY)
-  if (gScreenToDisplay == DISPLAY_AIRCOPY) {
-    return;
-  }
-#endif
   if (gCurrentFunction == FUNCTION_RECEIVE) {
     return;
   }
@@ -135,9 +130,6 @@ void AUDIO_PlayMelody(const Note *melody, uint8_t size) {
 
   if (gCurrentFunction == FUNCTION_RECEIVE ||
       gCurrentFunction == FUNCTION_MONITOR
-#if defined(ENABLE_AIRCOPY)
-      || gScreenToDisplay == DISPLAY_AIRCOPY
-#endif
   ) {
     return;
   }

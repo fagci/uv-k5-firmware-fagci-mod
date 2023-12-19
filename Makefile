@@ -1,6 +1,5 @@
 TARGET = firmware
 
-ENABLE_AIRCOPY := 0
 ENABLE_AM_FIX := 1
 ENABLE_FMRADIO := 0
 ENABLE_OVERLAY := 0
@@ -40,9 +39,6 @@ ifeq ($(ENABLE_FMRADIO),1)
 OBJS += driver/bk1080.o
 endif
 OBJS += driver/bk4819.o
-ifeq ($(filter $(ENABLE_AIRCOPY) $(ENABLE_UART),1),1)
-OBJS += driver/crc.o
-endif
 OBJS += driver/eeprom.o
 ifeq ($(ENABLE_OVERLAY),1)
 OBJS += driver/flash.o
@@ -63,9 +59,6 @@ endif
 OBJS += app/action.o
 ifeq ($(ENABLE_AM_FIX),1)
 OBJS += am_fix.o
-endif
-ifeq ($(ENABLE_AIRCOPY),1)
-OBJS += app/aircopy.o
 endif
 OBJS += app/app.o
 OBJS += app/dtmf.o
@@ -99,9 +92,6 @@ OBJS += misc.o
 OBJS += radio.o
 OBJS += scheduler.o
 OBJS += settings.o
-ifeq ($(ENABLE_AIRCOPY),1)
-OBJS += ui/aircopy.o
-endif
 OBJS += ui/battery.o
 ifeq ($(ENABLE_FMRADIO),1)
 OBJS += ui/fmradio.o
@@ -149,9 +139,6 @@ endif
 CFLAGS = -Os -Wall -Werror -mcpu=cortex-m0 -fno-builtin -fshort-enums -fno-delete-null-pointer-checks -std=c11 -MMD
 CFLAGS += -DPRINTF_INCLUDE_CONFIG_H
 CFLAGS += -DGIT_HASH=\"$(GIT_HASH)\"
-ifeq ($(ENABLE_AIRCOPY),1)
-CFLAGS += -DENABLE_AIRCOPY
-endif
 ifeq ($(ENABLE_AM_FIX),1)
 	CFLAGS  += -DENABLE_AM_FIX
 endif

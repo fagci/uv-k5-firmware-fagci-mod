@@ -22,9 +22,6 @@
 #endif
 #include "../app/scanner.h"
 #include "../misc.h"
-#if defined(ENABLE_AIRCOPY)
-#include "aircopy.h"
-#endif
 #include "../apps/abscanner.h"
 #include "../apps/scanlist.h"
 #include "appmenu.h"
@@ -83,11 +80,6 @@ void GUI_DisplayScreen(void) {
   case DISPLAY_APP_MENU:
     UI_DisplayAppMenu();
     break;
-#if defined(ENABLE_AIRCOPY)
-  case DISPLAY_AIRCOPY:
-    UI_DisplayAircopy();
-    break;
-#endif
   default:
     break;
   }
