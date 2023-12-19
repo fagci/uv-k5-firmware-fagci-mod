@@ -801,7 +801,6 @@ void BK4819_PlayRoger(bool mt)
 		const uint32_t tone1_Hz = 1540;
 		const uint32_t tone2_Hz = 1310;
 	#else
-		// motorola type
 		const uint32_t tone1_Hz = 500;
 		const uint32_t tone2_Hz = 700;
 	#endif

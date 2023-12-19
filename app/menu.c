@@ -77,8 +77,8 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     *pMax = 3;
     break;
   case MENU_ROGER:
-    *pMin: 0;
-    *pMin: 3;
+    *pMin = 0;
+    *pMax = 3;
     break;
   case MENU_TXP:
   case MENU_SFT_D:
