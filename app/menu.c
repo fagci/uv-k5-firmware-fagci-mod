@@ -76,6 +76,10 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     *pMin = 0;
     *pMax = 3;
     break;
+  case MENU_ROGER:
+    *pMin: 0;
+    *pMin: 3;
+    break;
   case MENU_TXP:
   case MENU_SFT_D:
   case MENU_TDR:
@@ -83,7 +87,6 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_VOICE:
   case MENU_SC_REV:
   case MENU_PONMSG:
-  case MENU_ROGER:
   case MENU_ALL_TX:
   case MENU_UPCONVERTER:
     *pMin = 0;

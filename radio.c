@@ -737,10 +737,10 @@ void RADIO_PrepareCssTX(void) {
 }
 
 void RADIO_SendEndOfTransmission(void) {
-  if (gEeprom.ROGER == ROGER_MODE_ROGER) {
-    BK4819_PlayRoger();
-  } else if (gEeprom.ROGER == ROGER_MODE_MDC) {
+  if (gEeprom.ROGER == ROGER_MODE_MDC) {
     BK4819_PlayRogerMDC();
+  } else {
+    BK4819_PlayRoger(gEeprom.ROGER == ROGER_MODE_MOTOTRBO);
   }
   if (gDTMF_CallState == DTMF_CALL_STATE_NONE &&
       (gCurrentVfo->DTMF_PTT_ID_TX_MODE == PTT_ID_EOT ||

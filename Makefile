@@ -39,6 +39,7 @@ ifeq ($(ENABLE_FMRADIO),1)
 OBJS += driver/bk1080.o
 endif
 OBJS += driver/bk4819.o
+OBJS += driver/crc.o
 OBJS += driver/eeprom.o
 ifeq ($(ENABLE_OVERLAY),1)
 OBJS += driver/flash.o

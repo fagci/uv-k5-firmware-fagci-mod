@@ -153,10 +153,11 @@ static const char gSubMenu_PONMSG[3][5] = {
     "VOL",
 };
 
-static const char gSubMenu_ROGER[3][6] = {
+static const char gSubMenu_ROGER[4] = {
     "OFF",
     "ROGER",
     "MDC",
+    "MOTOTRBO",
 };
 
 static const char gSubMenu_RESET[2][4] = {

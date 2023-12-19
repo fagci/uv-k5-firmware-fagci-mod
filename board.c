@@ -509,6 +509,7 @@ void BOARD_Init(void)
 #if defined(ENABLE_FMRADIO)
 	BK1080_Init(0, false);
 #endif
+	CRC_Init();
 }
 
 void BOARD_EEPROM_Init(void)
@@ -595,7 +596,7 @@ void BOARD_EEPROM_Init(void)
 
 	// 0EA8..0EAF
 	EEPROM_ReadBuffer(0x0EA8, Data, 8);
-	gEeprom.ROGER                          = (Data[1] <  3) ? Data[1] : ROGER_MODE_OFF;
+	gEeprom.ROGER                          = (Data[1] <  4) ? Data[1] : ROGER_MODE_OFF;
 	gEeprom.REPEATER_TAIL_TONE_ELIMINATION = (Data[2] < 11) ? Data[2] : 0;
 	gEeprom.TX_VFO                     = (Data[3] <  2) ? Data[3] : 0;
 

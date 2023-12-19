@@ -86,6 +86,7 @@ enum ROGER_Mode_t {
   ROGER_MODE_OFF,
   ROGER_MODE_ROGER,
   ROGER_MODE_MDC,
+  ROGER_MODE_MOTOTRBO,
 };
 
 typedef enum ROGER_Mode_t ROGER_Mode_t;
