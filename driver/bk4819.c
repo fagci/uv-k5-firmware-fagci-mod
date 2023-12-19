@@ -797,13 +797,8 @@ uint8_t BK4819_GetCTCType(void) {
 
 void BK4819_PlayRoger(bool mt)
 {
-	#if mt
-		const uint32_t tone1_Hz = 1540;
-		const uint32_t tone2_Hz = 1310;
-	#else
-		const uint32_t tone1_Hz = 500;
-		const uint32_t tone2_Hz = 700;
-	#endif
+	const uint32_t tone1_Hz = mt ? 1540 : 500;
+	const uint32_t tone2_Hz = mt ? 1310 : 700;
 	BK4819_EnterTxMute();
 	BK4819_SetAF(BK4819_AF_MUTE);
 //	BK4819_WriteRegister(BK4819_REG_70, BK4819_REG_70_ENABLE_TONE1 | (96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
