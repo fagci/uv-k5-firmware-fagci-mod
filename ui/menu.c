@@ -53,6 +53,7 @@ static const char MenuList[][8] = {
     "DualRx",
     "XBand",
     "Beep",
+    "LCDCtr",
     "TxTime",
     "Voice",
     "ScnRev",
@@ -312,7 +313,13 @@ void UI_DisplayMenu(void) {
   case MENU_ABR:
     strcpy(String, gSubMenuBacklight[gSubMenuSelection]);
     break;
-
+  case MENU_CONTRAST:				
+				sprintf(String, "%d", gSubMenuSelection);				
+				ST7565_SetContrast(gSubMenuSelection);
+				//else
+				//	ST7565_SetContrast(0);
+				//g_update_display = true;
+				break;
   case MENU_ALL_TX:
     strcpy(String, defaultEnableDisable[gSubMenuSelection]);
     break;

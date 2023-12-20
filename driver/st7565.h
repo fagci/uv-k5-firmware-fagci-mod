@@ -33,6 +33,8 @@ void ST7565_Init(void);
 void ST7565_Configure_GPIO_B11(void);
 void ST7565_SelectColumnAndLine(uint8_t Column, uint8_t Line);
 void ST7565_WriteByte(uint8_t Value);
+void ST7565_SetContrast(const uint8_t value);
+uint8_t ST7565_GetContrast(void);
 
 #endif
 

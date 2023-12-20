@@ -25,10 +25,15 @@
 
 uint8_t gStatusLine[128];
 uint8_t gFrameBuffer[7][128];
+uint8_t contrast = 31;  // 0 ~ 63
 
 void ST7565_DrawLine(uint8_t Column, uint8_t Line, uint16_t Size,
                      const uint8_t *pBitmap, bool bIsClearMode) {
   uint16_t i;
+
+// reset some of the displays settings to try and overcome the
+	// radios hardware problem - RF corrupting the display
+	ST7565_Init(false);
 
   SPI_ToggleMasterMode(&SPI0->CR, false);
   ST7565_SelectColumnAndLine(Column + 4U, Line);
@@ -126,7 +131,7 @@ void ST7565_Init(void) {
   ST7565_WriteByte(0xA4);
   ST7565_WriteByte(0x24);
   ST7565_WriteByte(0x81);
-  ST7565_WriteByte(0x1F); // contrast
+  ST7565_WriteByte(contrast); // contrast
   ST7565_WriteByte(0x2B);
   SYSTEM_DelayMs(1);
   ST7565_WriteByte(0x2E);
@@ -172,3 +177,13 @@ void ST7565_WriteByte(uint8_t Value) {
   }
   SPI0->WDR = Value;
 }
+
+void ST7565_SetContrast(const uint8_t value)
+	{
+		contrast = (value > 45) ? 45 : (value < 26) ? 26 : value;
+	}
+
+	uint8_t ST7565_GetContrast(void)
+	{
+		return contrast;
+	}

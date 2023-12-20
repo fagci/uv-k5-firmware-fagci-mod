@@ -23,6 +23,7 @@
 #include "../board.h"
 #include "../bsp/dp32g030/gpio.h"
 #include "../driver/backlight.h"
+#include "driver/st7565.h"
 #include "../driver/gpio.h"
 #include "../driver/keyboard.h"
 #include "../frequencies.h"
@@ -68,6 +69,10 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     *pMin = 0;
     *pMax = 6;
     break;
+    case MENU_CONTRAST:
+			*pMin = 1;
+			*pMax = 63;
+			break;	
   case MENU_F_LOCK:
     *pMin = 0;
     *pMax = 4;
@@ -660,7 +665,9 @@ void MENU_ShowCurrentSetting(void) {
   case MENU_TDR:
     gSubMenuSelection = gEeprom.DUAL_WATCH;
     break;
-
+case MENU_CONTRAST:
+			gSubMenuSelection = gEeprom.LCD_CONTRAST;
+			break;	
   case MENU_WX:
     gSubMenuSelection = gEeprom.CROSS_BAND_RX_TX;
     break;
@@ -760,7 +767,10 @@ void MENU_ShowCurrentSetting(void) {
   case MENU_ROGER:
     gSubMenuSelection = gEeprom.ROGER;
     break;
-
+ 		case MENU_CONTRAST:
+			gEeprom.LCD_CONTRAST = gSubMenuSelection;
+			ST7565_SetContrast(gEeprom.LCD_CONTRAST);
+			break;
   case MENU_AM:
     gSubMenuSelection = gTxVfo->AM_CHANNEL_MODE;
     break;

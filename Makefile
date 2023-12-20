@@ -4,6 +4,8 @@ ENABLE_AM_FIX := 1
 ENABLE_FMRADIO := 0
 ENABLE_OVERLAY := 0
 ENABLE_SPECTRUM := 1
+ENABLE_MESSENGER := 1
+ENABLE_DTMF_CALLING := 1
 ENABLE_SWD := 0
 ENABLE_TX1750 := 0
 ENABLE_UART := 1
@@ -76,6 +78,9 @@ OBJS += app/scanner.o
 ifeq ($(ENABLE_SPECTRUM), 1)
 OBJS += app/spectrum.o
 endif
+ifeq ($(ENABLE_MESSENGER),1)
+	OBJS += ui/messenger.o
+endif
 ifeq ($(ENABLE_UART),1)
 OBJS += app/uart.o
 endif
@@ -145,6 +150,9 @@ ifeq ($(ENABLE_AM_FIX),1)
 endif
 ifeq ($(ENABLE_FMRADIO),1)
 CFLAGS += -DENABLE_FMRADIO
+endif
+ifeq ($(ENABLE_CONTRAST),1)
+	CFLAGS  += -DENABLE_CONTRAST
 endif
 ifeq ($(ENABLE_OVERLAY),1)
 CFLAGS += -DENABLE_OVERLAY

@@ -122,6 +122,7 @@ typedef struct {
   uint8_t VOX_LEVEL;
   VOICE_Prompt_t VOICE_PROMPT;
   bool BEEP_CONTROL;
+  uint8_t LCD_CONTRAST;
   uint8_t CHANNEL_DISPLAY_MODE;
   bool TAIL_NOTE_ELIMINATION;
   bool VFO_OPEN;

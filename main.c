@@ -21,6 +21,7 @@
 #include "am_fix.h"
 #endif
 #include "board.h"
+#include "driver/st7565.h"
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/syscon.h"
 #include "driver/backlight.h"
@@ -78,6 +79,7 @@ void Main(void) {
   BK4819_Init();
   BOARD_ADC_GetBatteryInfo(&gBatteryCurrentVoltage, &gBatteryCurrent);
   BOARD_EEPROM_Init();
+  ST7565_SetContrast(gEeprom.LCD_CONTRAST);
   BOARD_EEPROM_LoadCalibration();
 
   RADIO_ConfigureChannel(0, 2);
