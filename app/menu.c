@@ -374,7 +374,7 @@ void MENU_AcceptSetting(void) {
     return;
 
   case MENU_STE:
-    gEeprom.TAIL_NOTE_ELIMINATION = gSubMenuSelection;
+    gEeprom.TAIL_TONE_ELIMINATION = gSubMenuSelection;
     break;
 
   case MENU_RP_STE:
@@ -467,7 +467,10 @@ void MENU_AcceptSetting(void) {
   case MENU_F_LOCK:
     gSetting_F_LOCK = gSubMenuSelection;
     break;
-
+case MENU_CONTRAST:
+			gEeprom.LCD_CONTRAST = gSubMenuSelection;
+			ST7565_SetContrast(gEeprom.LCD_CONTRAST);
+			break;
   case MENU_200TX:
     gSetting_200TX = gSubMenuSelection;
     break;
@@ -705,7 +708,7 @@ case MENU_CONTRAST:
     break;
 
   case MENU_STE:
-    gSubMenuSelection = gEeprom.TAIL_NOTE_ELIMINATION;
+    gSubMenuSelection = gEeprom.TAIL_TONE_ELIMINATION;
     break;
 
   case MENU_RP_STE:
@@ -767,10 +770,6 @@ case MENU_CONTRAST:
   case MENU_ROGER:
     gSubMenuSelection = gEeprom.ROGER;
     break;
- 		case MENU_CONTRAST:
-			gEeprom.LCD_CONTRAST = gSubMenuSelection;
-			ST7565_SetContrast(gEeprom.LCD_CONTRAST);
-			break;
   case MENU_AM:
     gSubMenuSelection = gTxVfo->AM_CHANNEL_MODE;
     break;

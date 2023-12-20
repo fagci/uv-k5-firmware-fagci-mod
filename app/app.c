@@ -237,7 +237,7 @@ static void APP_HandleReceive(void) {
   }
 
   if (!gEndOfRxDetectedMaybe && Mode == END_OF_RX_MODE_SKIP &&
-      gNextTimeslice40ms && gEeprom.TAIL_NOTE_ELIMINATION &&
+      gNextTimeslice40ms && gEeprom.TAIL_TONE_ELIMINATION &&
       (gCurrentCodeType == CODE_TYPE_DIGITAL ||
        gCurrentCodeType == CODE_TYPE_REVERSE_DIGITAL) &&
       BK4819_GetCTCType() == 1) {
@@ -264,7 +264,7 @@ Skip:
     }
     break;
   case END_OF_RX_MODE_TTE:
-    if (gEeprom.TAIL_NOTE_ELIMINATION) {
+    if (gEeprom.TAIL_TONE_ELIMINATION) {
       GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
       gTailNoteEliminationCountdown = 20;
       gFlagTteComplete = false;
@@ -581,7 +581,7 @@ void APP_CheckRadioInterrupts(void) {
 void APP_EndTransmission(void) {
   RADIO_SendEndOfTransmission();
   if (gCurrentVfo->pTX->CodeType != CODE_TYPE_OFF) { // CTCSS/DCS is enabled
-    if (gEeprom.TAIL_NOTE_ELIMINATION) {
+    if (gEeprom.TAIL_TONE_ELIMINATION) {
       RADIO_EnableCxCSS();
     } else {
       BK4819_ExitSubAu();

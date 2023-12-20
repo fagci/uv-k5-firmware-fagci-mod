@@ -31,9 +31,9 @@ void ST7565_DrawLine(uint8_t Column, uint8_t Line, uint16_t Size,
                      const uint8_t *pBitmap, bool bIsClearMode) {
   uint16_t i;
 
-// reset some of the displays settings to try and overcome the
+/* reset some of the displays settings to try and overcome the
 	// radios hardware problem - RF corrupting the display
-	ST7565_Init(false);
+	ST7565_Init(false);*/
 
   SPI_ToggleMasterMode(&SPI0->CR, false);
   ST7565_SelectColumnAndLine(Column + 4U, Line);
