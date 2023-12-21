@@ -18,7 +18,7 @@ OBFUSCATION = [
     ]
 
 def obfuscate(fw):
-    return bytes([a^b for a, b in zip(fw, cycle(OBFUSCATION))])
+    return bytes(a^b for a, b in zip(fw, cycle(OBFUSCATION)))
 
 plain = open(sys.argv[1], 'rb').read()
 if len(sys.argv[2]) > 10:
