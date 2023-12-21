@@ -32,61 +32,9 @@
 
 char gDTMF_String[15];
 char gDTMF_InputBox[15];
-char gDTMF_Received[16];
-bool gIsDtmfContactValid;
-char gDTMF_ID[4];
-char gDTMF_Caller[4];
-char gDTMF_Callee[4];
-DTMF_State_t gDTMF_State;
-bool gDTMF_DecodeRing;
-uint8_t gDTMF_DecodeRingCountdown;
-uint8_t gDTMFChosenContact;
-uint8_t gDTMF_WriteIndex;
 uint8_t gDTMF_PreviousIndex;
-uint8_t gDTMF_AUTO_RESET_TIME;
-uint8_t gDTMF_InputIndex;
-bool gDTMF_InputMode;
-uint8_t gDTMF_RecvTimeout;
-DTMF_CallState_t gDTMF_CallState;
-DTMF_ReplyState_t gDTMF_ReplyState;
-DTMF_CallMode_t gDTMF_CallMode;
-bool gDTMF_IsTx;
-uint8_t gDTMF_TxStopCountdown;
-bool gDTMF_IsGroupCall;
-
-bool DTMF_GetContact(uint8_t Index, char *pContact)
-{
-	EEPROM_ReadBuffer(0x1C00 + (Index * 0x10), pContact, 16);
-	if (pContact[0] < ' ' || pContact[0] > 0x7E) {
-		return false;
-	}
-
-	return true;
-}
-
-bool DTMF_FindContact(const char *pContact, char *pResult)
-{
-	char Contact [16];
-	uint8_t i, j;
-
-	for (i = 0; i < 16; i++) {
-		if (!DTMF_GetContact(i, Contact)) {
-			return false;
-		}
-		for (j = 0; j < 3; j++) {
-			if (pContact[j] != Contact[j + 8]) {
-				break;
-			}
-		}
-		if (j == 3) {
-			memcpy(pResult, Contact, 8);
-			pResult[8] = 0;
-			return true;
-		}
-	}
-
-	return false;
-}
+uint8_t InputIndex;
+bool InputMode;
 
 char DTMF_GetCharacter(uint8_t Code)
 {
@@ -112,56 +60,16 @@ char DTMF_GetCharacter(uint8_t Code)
 	return 0xFF;
 }
 
-bool DTMF_CompareMessage(const char *pMsg, const char *pTemplate, uint8_t Size, bool bCheckGroup)
-{
-	uint8_t i;
-
-	for (i = 0; i < Size; i++) {
-		if (pMsg[i] != pTemplate[i]) {
-			if (!bCheckGroup) {
-				return false;
-			}
-			gDTMF_IsGroupCall = true;
-		}
-	}
-
-	return true;
-}
-
-bool DTMF_CheckGroupCall(const char *pMsg, uint32_t Size)
-{
-	uint32_t i;
-
-	for (i = 0; i < Size; i++) {
-		if (pMsg[i] == 7) {
-			break;
-		}
-	}
-	if (i != Size) {
-		return true;
-	}
-
-	return false;
-}
-
 void DTMF_Append(char Code)
 {
-	if (gDTMF_InputIndex == 0) {
+	if (InputIndex == 0) {
 		memset(gDTMF_InputBox, '-', sizeof(gDTMF_InputBox));
 		gDTMF_InputBox[14] = 0;
-	} else if (gDTMF_InputIndex >= sizeof(gDTMF_InputBox)) {
+	} else if (InputIndex >= sizeof(gDTMF_InputBox)) {
 		return;
 	}
-	gDTMF_InputBox[gDTMF_InputIndex++] = Code;
+	gDTMF_InputBox[InputIndex++] = Code;
 }
 
-void DTMF_HandleRequest(void)
-{
 
-}
-
-void DTMF_Reply(void)
-{
-
-}
 

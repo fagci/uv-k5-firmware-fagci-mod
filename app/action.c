@@ -163,20 +163,20 @@ void ACTION_Handle(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
   uint8_t Short;
   uint8_t Long;
 
-  if (gScreenToDisplay == DISPLAY_MAIN && gDTMF_InputMode) {
+  if (gScreenToDisplay == DISPLAY_MAIN && InputMode) {
     if (Key == KEY_SIDE1 && !bKeyHeld && bKeyPressed) {
       gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-      if (gDTMF_InputIndex) {
-        gDTMF_InputIndex--;
-        gDTMF_InputBox[gDTMF_InputIndex] = '-';
-        if (gDTMF_InputIndex) {
+      if (InputIndex) {
+        InputIndex--;
+        gDTMF_InputBox[InputIndex] = '-';
+        if (InputIndex) {
           gPttWasReleased = true;
           gRequestDisplayScreen = DISPLAY_MAIN;
           return;
         }
       }
       gRequestDisplayScreen = DISPLAY_MAIN;
-      gDTMF_InputMode = false;
+      InputMode = false;
     }
     gPttWasReleased = true;
     return;

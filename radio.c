@@ -283,13 +283,7 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
       gEeprom.VfoInfo[VFO].OUTPUT_POWER = (Data[4] >> 2) & 0x03;
       gEeprom.VfoInfo[VFO].BUSY_CHANNEL_LOCK = !!(Data[4] & 0x10);
     }
-    if (Data[5] == 0xFF) {
-      gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = false;
-      gEeprom.VfoInfo[VFO].DTMF_PTT_ID_TX_MODE = 0;
-    } else {
-      gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = !!(Data[5] & 1);
-      gEeprom.VfoInfo[VFO].DTMF_PTT_ID_TX_MODE = (Data[5] >> 0x01) & 0x03;
-    }
+ 
 
     struct {
       uint32_t Frequency;
@@ -344,7 +338,6 @@ void RADIO_ConfigureChannel(uint8_t VFO, uint32_t Arg) {
   if (gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE) {
     gEeprom.VfoInfo[VFO].ModulationType = gEeprom.VfoInfo[VFO].AM_CHANNEL_MODE;
     gEeprom.VfoInfo[VFO].SCRAMBLING_TYPE = 0;
-    gEeprom.VfoInfo[VFO].DTMF_DECODING_ENABLE = false;
     gEeprom.VfoInfo[VFO].ConfigRX.CodeType = CODE_TYPE_OFF;
     gEeprom.VfoInfo[VFO].ConfigTX.CodeType = CODE_TYPE_OFF;
   } else {
@@ -553,12 +546,7 @@ void RADIO_SetupRegisters(bool bSwitchToFunction0) {
   } else {
     BK4819_DisableVox();
   }
-  if (gRxVfo->ModulationType || !gRxVfo->DTMF_DECODING_ENABLE) {
-    BK4819_DisableDTMF();
-  } else {
-    BK4819_EnableDTMF();
-    InterruptMask |= BK4819_REG_3F_DTMF_5TONE_FOUND;
-  }
+
   BK4819_WriteRegister(BK4819_REG_3F, InterruptMask);
   BK4819_WriteRegister(0x40, (BK4819_ReadRegister(0x40) & ~(0b11111111111)) |
                                  0b10110101010);
@@ -682,21 +670,10 @@ void RADIO_PrepareTX(void) {
     gAlarmState = ALARM_STATE_OFF;
 #endif
     AUDIO_PlayBeep(BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL);
-    gDTMF_ReplyState = DTMF_REPLY_NONE;
     return;
   }
 
 Skip:
-  if (gDTMF_ReplyState == DTMF_REPLY_ANI) {
-    if (gDTMF_CallMode == DTMF_CALL_MODE_DTMF) {
-      gDTMF_IsTx = true;
-      gDTMF_CallState = DTMF_CALL_STATE_NONE;
-      gDTMF_TxStopCountdown = 6;
-    } else {
-      gDTMF_CallState = DTMF_CALL_STATE_CALL_OUT;
-      gDTMF_IsTx = false;
-    }
-  }
   FUNCTION_Select(FUNCTION_TRANSMIT);
 #if defined(ENABLE_TX1750)
   if (gAlarmState == ALARM_STATE_OFF) {
@@ -710,7 +687,6 @@ Skip:
   gTxTimeoutReached = false;
   gFlagEndTransmission = false;
   gRTTECountdown = 0;
-  gDTMF_ReplyState = DTMF_REPLY_NONE;
 }
 
 void RADIO_EnableCxCSS(void) {
@@ -742,12 +718,4 @@ void RADIO_SendEndOfTransmission(void) {
   } else {
     BK4819_PlayRoger(gEeprom.ROGER == ROGER_MODE_MOTOTRBO);
   }
-  if (gDTMF_CallState == DTMF_CALL_STATE_NONE &&
-      (gCurrentVfo->DTMF_PTT_ID_TX_MODE == PTT_ID_EOT ||
-       gCurrentVfo->DTMF_PTT_ID_TX_MODE == PTT_ID_BOTH)) {
-   
-    GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-    gEnableSpeaker = false;
-  }
-  BK4819_ExitDTMF_TX(true);
 }

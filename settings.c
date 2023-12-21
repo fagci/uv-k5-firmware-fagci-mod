@@ -134,7 +134,7 @@ void SETTINGS_SaveSettings(void) {
   EEPROM_WriteBuffer(0x0EA8, State);
 
   memset(State, 0xFF, sizeof(State));
-  
+
   State[0] = gEeprom.SCAN_LIST_DEFAULT;
   State[1] = gEeprom.SCAN_LIST_ENABLED[0];
   State[2] = gEeprom.SCANLIST_PRIORITY_CH1[0];
@@ -195,7 +195,7 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO,
       State8[4] = 0 | (pVFO->BUSY_CHANNEL_LOCK << 4) |
                   (pVFO->OUTPUT_POWER << 2) | (pVFO->CHANNEL_BANDWIDTH << 1) |
                   (pVFO->FrequencyReverse << 0);
-      State8[5] = (pVFO->DTMF_PTT_ID_TX_MODE << 1) | pVFO->DTMF_DECODING_ENABLE;
+                  
       State8[6] = pVFO->STEP_SETTING;
       State8[7] = pVFO->SCRAMBLING_TYPE;
 

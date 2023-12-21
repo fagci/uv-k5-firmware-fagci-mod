@@ -37,8 +37,7 @@ __inline uint16_t scale_freq(const uint16_t freq)
 	return (((uint32_t)freq * 1353245u) + (1u << 16)) >> 17;   // with rounding
 }
 
-const uint8_t DTMF_COEFFS[] = {111, 107, 103, 98, 80,  71,  58,  44,
-                               65,  55,  37,  23, 228, 203, 181, 159};
+
 
 void BK4819_Init(void) {
   GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_BK4819_SCN);
@@ -53,10 +52,6 @@ void BK4819_Init(void) {
   BK4819_WriteRegister(BK4819_REG_19, 0x1041);
   BK4819_WriteRegister(BK4819_REG_7D, 0xE94F);
   BK4819_WriteRegister(BK4819_REG_48, 0xB3A8);
-
-  for (uint8_t i = 0; i < ARRAY_SIZE(DTMF_COEFFS); ++i) {
-    BK4819_WriteRegister(0x09, (i << 12) | DTMF_COEFFS[i]);
-  }
 
   BK4819_WriteRegister(BK4819_REG_1F, 0x5454);
   BK4819_WriteRegister(BK4819_REG_3E, 0xA037);
@@ -426,17 +421,6 @@ void BK4819_DisableVox(void) {
   BK4819_WriteRegister(BK4819_REG_31, Value & 0xFFFB);
 }
 
-void BK4819_DisableDTMF(void) { BK4819_WriteRegister(BK4819_REG_24, 0); }
-
-void BK4819_EnableDTMF(void) {
-  BK4819_WriteRegister(BK4819_REG_21, 0x06D8);
-  BK4819_WriteRegister(BK4819_REG_24,
-                       0 | (1U << BK4819_REG_24_SHIFT_UNKNOWN_15) |
-                           (24 << BK4819_REG_24_SHIFT_THRESHOLD) |
-                           (1U << BK4819_REG_24_SHIFT_UNKNOWN_6) |
-                           BK4819_REG_24_ENABLE | BK4819_REG_24_SELECT_DTMF |
-                           (14U << BK4819_REG_24_SHIFT_MAX_SYMBOLS));
-}
 
 void BK4819_PlayTone(uint16_t Frequency, bool bTuningGainSwitch) {
   uint16_t ToneConfig;
@@ -545,33 +529,6 @@ void BK4819_EnableRX(void) {
   }
 }
 
-void BK4819_EnterDTMF_TX(bool bLocalLoopback) {
-  BK4819_EnableDTMF();
-  BK4819_EnterTxMute();
-  if (bLocalLoopback) {
-    BK4819_SetAF(BK4819_AF_BEEP);
-  } else {
-    BK4819_SetAF(BK4819_AF_MUTE);
-  }
-  BK4819_WriteRegister(BK4819_REG_70,
-                       0 | BK4819_REG_70_MASK_ENABLE_TONE1 |
-                           (83 << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN) |
-                           BK4819_REG_70_MASK_ENABLE_TONE2 |
-                           (83 << BK4819_REG_70_SHIFT_TONE2_TUNING_GAIN));
-
-  BK4819_EnableTXLink();
-}
-
-void BK4819_ExitDTMF_TX(bool bKeep) {
-  BK4819_EnterTxMute();
-  BK4819_SetAF(BK4819_AF_MUTE);
-  BK4819_WriteRegister(BK4819_REG_70, 0x0000);
-  BK4819_DisableDTMF();
-  BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);
-  if (!bKeep) {
-    BK4819_ExitTxMute();
-  }
-}
 
 void BK4819_EnableTXLink(void) {
   BK4819_WriteRegister(
@@ -583,98 +540,6 @@ void BK4819_EnableTXLink(void) {
           BK4819_REG_30_ENABLE_TX_DSP | BK4819_REG_30_DISABLE_RX_DSP);
 }
 
-void BK4819_PlayDTMF(char Code) {
-  switch (Code) {
-  case '0':
-    BK4819_WriteRegister(BK4819_REG_71, 0x25F3);
-    BK4819_WriteRegister(BK4819_REG_72, 0x35E1);
-    break;
-  case '1':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1C1C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x30C2);
-    break;
-  case '2':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1C1C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x35E1);
-    break;
-  case '3':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1C1C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x3B91);
-    break;
-  case '4':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1F0E);
-    BK4819_WriteRegister(BK4819_REG_72, 0x30C2);
-    break;
-  case '5':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1F0E);
-    BK4819_WriteRegister(BK4819_REG_72, 0x35E1);
-    break;
-  case '6':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1F0E);
-    BK4819_WriteRegister(BK4819_REG_72, 0x3B91);
-    break;
-  case '7':
-    BK4819_WriteRegister(BK4819_REG_71, 0x225C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x30C2);
-    break;
-  case '8':
-    BK4819_WriteRegister(BK4819_REG_71, 0x225c);
-    BK4819_WriteRegister(BK4819_REG_72, 0x35E1);
-    break;
-  case '9':
-    BK4819_WriteRegister(BK4819_REG_71, 0x225C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x3B91);
-    break;
-  case 'A':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1C1C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x41DC);
-    break;
-  case 'B':
-    BK4819_WriteRegister(BK4819_REG_71, 0x1F0E);
-    BK4819_WriteRegister(BK4819_REG_72, 0x41DC);
-    break;
-  case 'C':
-    BK4819_WriteRegister(BK4819_REG_71, 0x225C);
-    BK4819_WriteRegister(BK4819_REG_72, 0x41DC);
-    break;
-  case 'D':
-    BK4819_WriteRegister(BK4819_REG_71, 0x25F3);
-    BK4819_WriteRegister(BK4819_REG_72, 0x41DC);
-    break;
-  case '*':
-    BK4819_WriteRegister(BK4819_REG_71, 0x25F3);
-    BK4819_WriteRegister(BK4819_REG_72, 0x30C2);
-    break;
-  case '#':
-    BK4819_WriteRegister(BK4819_REG_71, 0x25F3);
-    BK4819_WriteRegister(BK4819_REG_72, 0x3B91);
-    break;
-  }
-}
-
-void BK4819_PlayDTMFString(const char *pString, bool bDelayFirst,
-                           uint16_t FirstCodePersistTime,
-                           uint16_t HashCodePersistTime,
-                           uint16_t CodePersistTime,
-                           uint16_t CodeInternalTime) {
-  uint8_t i;
-  uint16_t Delay;
-
-  for (i = 0; pString[i]; i++) {
-    BK4819_PlayDTMF(pString[i]);
-    BK4819_ExitTxMute();
-    if (bDelayFirst && i == 0) {
-      Delay = FirstCodePersistTime;
-    } else if (pString[i] == '*' || pString[i] == '#') {
-      Delay = HashCodePersistTime;
-    } else {
-      Delay = CodePersistTime;
-    }
-    SYSTEM_DelayMs(Delay);
-    BK4819_EnterTxMute();
-    SYSTEM_DelayMs(CodeInternalTime);
-  }
-}
 
 void BK4819_TransmitTone(bool bLocalLoopback, uint32_t Frequency) {
   BK4819_EnterTxMute();
@@ -783,9 +648,6 @@ void BK4819_StopScan(void) {
   BK4819_Disable();
 }
 
-uint8_t BK4819_GetDTMF_5TONE_Code(void) {
-  return (BK4819_ReadRegister(BK4819_REG_0B) >> 8) & 0x0F;
-}
 
 uint8_t BK4819_GetCDCSSCodeType(void) {
   return (BK4819_ReadRegister(BK4819_REG_0C) >> 14) & 3;
@@ -863,16 +725,7 @@ void BK4819_GetVoxAmp(uint16_t *pResult) {
   *pResult = BK4819_ReadRegister(BK4819_REG_64) & 0x7FFF;
 }
 
-void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code) {
-  BK4819_EnableDTMF();
-  BK4819_EnterTxMute();
-  BK4819_SetAF(bLocalLoopback ? BK4819_AF_BEEP : BK4819_AF_MUTE);
-  BK4819_WriteRegister(BK4819_REG_70, 0xD3D3);
-  BK4819_EnableTXLink();
-  SYSTEM_DelayMs(50);
-  BK4819_PlayDTMF(Code);
-  BK4819_ExitTxMute();
-}
+
 
 void BK4819_ToggleAFBit(bool on) {
   uint16_t reg = BK4819_ReadRegister(BK4819_REG_47);

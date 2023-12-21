@@ -318,7 +318,6 @@ void SCANNER_Start(void) {
   gScanCssResultType = 0xFF;
   gScanHitCount = 0;
   gScanUseCssResult = false;
-  gDTMF_RequestPending = false;
   g_CxCSS_TAIL_Found = false;
   g_CDCSS_Lost = false;
   gCDCSSCodeType = 0;

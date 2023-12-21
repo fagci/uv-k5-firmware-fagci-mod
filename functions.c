@@ -50,9 +50,6 @@ void FUNCTION_Init(void) {
   } else {
     gCurrentCodeType = CODE_TYPE_CONTINUOUS_TONE;
   }
-  gDTMF_RequestPending = false;
-  gDTMF_WriteIndex = 0;
-  memset(gDTMF_Received, 0, sizeof(gDTMF_Received));
   g_CxCSS_TAIL_Found = false;
   g_CDCSS_Lost = false;
   g_CTCSS_Lost = false;
@@ -86,9 +83,6 @@ void FUNCTION_Select(FUNCTION_Type_t Function) {
 
   switch (Function) {
   case FUNCTION_FOREGROUND:
-    if (gDTMF_ReplyState != DTMF_REPLY_NONE) {
-      RADIO_PrepareCssTX();
-    }
     if (PreviousFunction == FUNCTION_TRANSMIT) {
       gVFO_RSSI_Level[0] = 0;
       gVFO_RSSI_Level[1] = 0;
@@ -128,8 +122,6 @@ void FUNCTION_Select(FUNCTION_Type_t Function) {
     GUI_DisplayScreen();
     RADIO_enableTX();
     BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
-
-    DTMF_Reply();
 
 #if defined(ENABLE_TX1750)
     if (gAlarmState != ALARM_STATE_OFF) {

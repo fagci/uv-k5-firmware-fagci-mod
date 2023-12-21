@@ -396,27 +396,6 @@ void MENU_AcceptSetting(void) {
     gEeprom.SCAN_LIST_DEFAULT = gSubMenuSelection - 1;
     break;
 
-  case MENU_PTT_ID:
-    gTxVfo->DTMF_PTT_ID_TX_MODE = gSubMenuSelection;
-    gRequestSaveChannel = 1;
-    return;
-
-  case MENU_D_DCD:
-    gTxVfo->DTMF_DECODING_ENABLE = gSubMenuSelection;
-    gRequestSaveChannel = 1;
-    return;
-
-  case MENU_D_LIST:
-    gDTMFChosenContact = gSubMenuSelection - 1;
-    if (gIsDtmfContactValid) {
-      GUI_SelectNextDisplay(DISPLAY_MAIN);
-      gDTMF_InputMode = true;
-      gDTMF_InputIndex = 3;
-      memcpy(gDTMF_InputBox, gDTMF_ID, 4);
-      gRequestDisplayScreen = DISPLAY_INVALID;
-    }
-    return;
-
   case MENU_PONMSG:
     gEeprom.POWER_ON_DISPLAY_MODE = gSubMenuSelection;
     break;
@@ -719,18 +698,6 @@ case MENU_CONTRAST:
     gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 1);
     break;
 
-
-  case MENU_PTT_ID:
-    gSubMenuSelection = gTxVfo->DTMF_PTT_ID_TX_MODE;
-    break;
-
-  case MENU_D_DCD:
-    gSubMenuSelection = gTxVfo->DTMF_DECODING_ENABLE;
-    break;
-
-  case MENU_D_LIST:
-    gSubMenuSelection = gDTMFChosenContact + 1;
-    break;
 
   case MENU_PONMSG:
     gSubMenuSelection = gEeprom.POWER_ON_DISPLAY_MODE;
