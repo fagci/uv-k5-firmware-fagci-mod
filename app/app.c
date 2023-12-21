@@ -1431,16 +1431,7 @@ static void APP_ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) {
               }
             }
           } else {
-            if (gEeprom.DTMF_SIDE_TONE) {
-              GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-              gEnableSpeaker = true;
-            }
             BK4819_DisableScramble();
-            if (Code == 0xFE) {
-              BK4819_TransmitTone(gEeprom.DTMF_SIDE_TONE, 1750);
-            } else {
-              BK4819_PlayDTMFEx(gEeprom.DTMF_SIDE_TONE, Code);
-            }
           }
         }
       } else if (!bKeyHeld && bKeyPressed) {

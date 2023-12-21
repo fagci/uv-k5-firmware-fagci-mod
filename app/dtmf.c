@@ -118,7 +118,7 @@ bool DTMF_CompareMessage(const char *pMsg, const char *pTemplate, uint8_t Size, 
 
 	for (i = 0; i < Size; i++) {
 		if (pMsg[i] != pTemplate[i]) {
-			if (!bCheckGroup || pMsg[i] != gEeprom.DTMF_GROUP_CALL_CODE) {
+			if (!bCheckGroup) {
 				return false;
 			}
 			gDTMF_IsGroupCall = true;
@@ -133,7 +133,7 @@ bool DTMF_CheckGroupCall(const char *pMsg, uint32_t Size)
 	uint32_t i;
 
 	for (i = 0; i < Size; i++) {
-		if (pMsg[i] == gEeprom.DTMF_GROUP_CALL_CODE) {
+		if (pMsg[i] == 7) {
 			break;
 		}
 	}
@@ -157,139 +157,11 @@ void DTMF_Append(char Code)
 
 void DTMF_HandleRequest(void)
 {
-	char String[20];
-	uint8_t Offset;
 
-	if (!gDTMF_RequestPending) {
-		return;
-	}
-
-	gDTMF_RequestPending = false;
-
-	if (gScanState != SCAN_OFF || gCssScanMode != CSS_SCAN_MODE_OFF) {
-		return;
-	}
-
-	if (gDTMF_WriteIndex >= 9) {
-        return;
-	}
-
-	if (gDTMF_WriteIndex >= 2) {
-		if (DTMF_CompareMessage(gDTMF_Received + (gDTMF_WriteIndex - 2), "AB", 2, true)) {
-			gDTMF_State = DTMF_STATE_TX_SUCC;
-			gUpdateDisplay = true;
-			return;
-		}
-	}
-
-	if (gDTMF_CallState == DTMF_CALL_STATE_CALL_OUT && gDTMF_CallMode == DTMF_CALL_MODE_NOT_GROUP && gDTMF_WriteIndex >= 9) {
-		Offset = gDTMF_WriteIndex - 9;
-		sprintf(String, "%s%c%s", gDTMF_String, gEeprom.DTMF_SEPARATE_CODE, "AAAAA");
-		if (DTMF_CompareMessage(gDTMF_Received + Offset, String, 9, false)) {
-			gDTMF_State = DTMF_STATE_CALL_OUT_RSP;
-			gUpdateDisplay = true;
-		}
-	}
-
-	if (gDTMF_CallState != DTMF_CALL_STATE_NONE) {
-		return;
-	}
-
-	if (gDTMF_WriteIndex >= 7) {
-		Offset = gDTMF_WriteIndex - 7;
-		sprintf(String, "%s%c", gEeprom.ANI_DTMF_ID, gEeprom.DTMF_SEPARATE_CODE);
-		gDTMF_IsGroupCall = false;
-		if (DTMF_CompareMessage(gDTMF_Received + Offset, String, 4, true)) {
-			gDTMF_CallState = DTMF_CALL_STATE_RECEIVED;
-			memcpy(gDTMF_Callee, gDTMF_Received + Offset, 3);
-			memcpy(gDTMF_Caller, gDTMF_Received + Offset + 4, 3);
-
-			gUpdateDisplay = true;
-
-			switch (gEeprom.DTMF_DECODE_RESPONSE) {
-			case 3:
-				gDTMF_DecodeRing = true;
-				gDTMF_DecodeRingCountdown = 20;
-				// Fallthrough
-			case 2:
-				gDTMF_ReplyState = DTMF_REPLY_AAAAA;
-				break;
-			case 1:
-				gDTMF_DecodeRing = true;
-				gDTMF_DecodeRingCountdown = 20;
-				break;
-			default:
-				gDTMF_DecodeRing = false;
-				gDTMF_ReplyState = DTMF_REPLY_NONE;
-				break;
-			}
-
-			if (gDTMF_IsGroupCall) {
-				gDTMF_ReplyState = DTMF_REPLY_NONE;
-			}
-		}
-	}
 }
 
 void DTMF_Reply(void)
 {
-	char String[20];
-	const char *pString;
-	uint16_t Delay;
 
-	switch (gDTMF_ReplyState) {
-	case DTMF_REPLY_ANI:
-		if (gDTMF_CallMode == DTMF_CALL_MODE_DTMF) {
-			pString = gDTMF_String;
-		} else {
-			sprintf(String, "%s%c%s", gDTMF_String, gEeprom.DTMF_SEPARATE_CODE, gEeprom.ANI_DTMF_ID);
-			pString = String;
-		}
-		break;
-
-	case DTMF_REPLY_AB:
-		pString = "AB";
-		break;
-
-	case DTMF_REPLY_AAAAA:
-		sprintf(String, "%s%c%s", gEeprom.ANI_DTMF_ID, gEeprom.DTMF_SEPARATE_CODE, "AAAAA");
-		pString = String;
-		break;
-
-	default:
-		if (gDTMF_CallState != DTMF_CALL_STATE_NONE || (gCurrentVfo->DTMF_PTT_ID_TX_MODE != PTT_ID_BOT && gCurrentVfo->DTMF_PTT_ID_TX_MODE != PTT_ID_BOTH)) {
-			gDTMF_ReplyState = DTMF_REPLY_NONE;
-			return;
-		}
-		pString = gEeprom.DTMF_UP_CODE;
-		break;
-	}
-
-	gDTMF_ReplyState = DTMF_REPLY_NONE;
-	Delay = gEeprom.DTMF_PRELOAD_TIME;
-	if (gEeprom.DTMF_SIDE_TONE) {
-		GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-		gEnableSpeaker = true;
-		Delay = gEeprom.DTMF_PRELOAD_TIME;
-		if (gEeprom.DTMF_PRELOAD_TIME < 60) {
-			Delay = 60;
-		}
-	}
-	SYSTEM_DelayMs(Delay);
-
-	BK4819_EnterDTMF_TX(gEeprom.DTMF_SIDE_TONE);
-
-	BK4819_PlayDTMFString(
-		pString,
-		1,
-		gEeprom.DTMF_FIRST_CODE_PERSIST_TIME,
-		gEeprom.DTMF_HASH_CODE_PERSIST_TIME,
-		gEeprom.DTMF_CODE_PERSIST_TIME,
-		gEeprom.DTMF_CODE_INTERVAL_TIME);
-
-	GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-
-	gEnableSpeaker = false;
-	BK4819_ExitDTMF_TX(false);
 }
 

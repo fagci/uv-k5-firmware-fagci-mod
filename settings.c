@@ -133,25 +133,8 @@ void SETTINGS_SaveSettings(void) {
 
   EEPROM_WriteBuffer(0x0EA8, State);
 
-  State[0] = gEeprom.DTMF_SIDE_TONE;
-  State[1] = gEeprom.DTMF_SEPARATE_CODE;
-  State[2] = gEeprom.DTMF_GROUP_CALL_CODE;
-  State[3] = gEeprom.DTMF_DECODE_RESPONSE;
-  State[4] = gEeprom.DTMF_AUTO_RESET_TIME;
-  State[5] = gEeprom.DTMF_PRELOAD_TIME / 10U;
-  State[6] = gEeprom.DTMF_FIRST_CODE_PERSIST_TIME / 10U;
-  State[7] = gEeprom.DTMF_HASH_CODE_PERSIST_TIME / 10U;
-
-  EEPROM_WriteBuffer(0x0ED0, State);
-
   memset(State, 0xFF, sizeof(State));
-
-  State[0] = gEeprom.DTMF_CODE_PERSIST_TIME / 10U;
-  State[1] = gEeprom.DTMF_CODE_INTERVAL_TIME / 10U;
-  State[2] = gEeprom.PERMIT_REMOTE_KILL;
-
-  EEPROM_WriteBuffer(0x0ED8, State);
-
+  
   State[0] = gEeprom.SCAN_LIST_DEFAULT;
   State[1] = gEeprom.SCAN_LIST_ENABLED[0];
   State[2] = gEeprom.SCANLIST_PRIORITY_CH1[0];

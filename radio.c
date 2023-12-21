@@ -745,16 +745,7 @@ void RADIO_SendEndOfTransmission(void) {
   if (gDTMF_CallState == DTMF_CALL_STATE_NONE &&
       (gCurrentVfo->DTMF_PTT_ID_TX_MODE == PTT_ID_EOT ||
        gCurrentVfo->DTMF_PTT_ID_TX_MODE == PTT_ID_BOTH)) {
-    if (gEeprom.DTMF_SIDE_TONE) {
-      GPIO_SetBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
-      gEnableSpeaker = true;
-      SYSTEM_DelayMs(60);
-    }
-    BK4819_EnterDTMF_TX(gEeprom.DTMF_SIDE_TONE);
-    BK4819_PlayDTMFString(
-        gEeprom.DTMF_DOWN_CODE, 0, gEeprom.DTMF_FIRST_CODE_PERSIST_TIME,
-        gEeprom.DTMF_HASH_CODE_PERSIST_TIME, gEeprom.DTMF_CODE_PERSIST_TIME,
-        gEeprom.DTMF_CODE_INTERVAL_TIME);
+   
     GPIO_ClearBit(&GPIOC->DATA, GPIOC_PIN_AUDIO_PATH);
     gEnableSpeaker = false;
   }

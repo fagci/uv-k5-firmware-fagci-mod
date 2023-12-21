@@ -396,22 +396,6 @@ void MENU_AcceptSetting(void) {
     gEeprom.SCAN_LIST_DEFAULT = gSubMenuSelection - 1;
     break;
 
-  case MENU_D_ST:
-    gEeprom.DTMF_SIDE_TONE = gSubMenuSelection;
-    break;
-
-  case MENU_D_RSP:
-    gEeprom.DTMF_DECODE_RESPONSE = gSubMenuSelection;
-    break;
-
-  case MENU_D_HOLD:
-    gEeprom.DTMF_AUTO_RESET_TIME = gSubMenuSelection;
-    break;
-
-  case MENU_D_PRE:
-    gEeprom.DTMF_PRELOAD_TIME = gSubMenuSelection * 10;
-    break;
-
   case MENU_PTT_ID:
     gTxVfo->DTMF_PTT_ID_TX_MODE = gSubMenuSelection;
     gRequestSaveChannel = 1;
@@ -735,21 +719,6 @@ case MENU_CONTRAST:
     gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 1);
     break;
 
-  case MENU_D_ST:
-    gSubMenuSelection = gEeprom.DTMF_SIDE_TONE;
-    break;
-
-  case MENU_D_RSP:
-    gSubMenuSelection = gEeprom.DTMF_DECODE_RESPONSE;
-    break;
-
-  case MENU_D_HOLD:
-    gSubMenuSelection = gEeprom.DTMF_AUTO_RESET_TIME;
-    break;
-
-  case MENU_D_PRE:
-    gSubMenuSelection = gEeprom.DTMF_PRELOAD_TIME / 10;
-    break;
 
   case MENU_PTT_ID:
     gSubMenuSelection = gTxVfo->DTMF_PTT_ID_TX_MODE;

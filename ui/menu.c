@@ -395,14 +395,6 @@ void UI_DisplayMenu(void) {
     strcpy(String, gEeprom.ANI_DTMF_ID);
     break;
 
-  case MENU_UPCODE:
-    strcpy(String, gEeprom.DTMF_UP_CODE);
-    break;
-
-  case MENU_DWCODE:
-    strcpy(String, gEeprom.DTMF_DOWN_CODE);
-    break;
-
   case MENU_D_RSP:
     strcpy(String, gSubMenu_D_RSP[gSubMenuSelection]);
     break;
@@ -480,16 +472,7 @@ case MENU_BATTYP:
     UI_PrintString("SCAN", 50, 127, 4, 8, true);
   }
 
-  if (gMenuCursor == MENU_UPCODE) {
-    if (strlen(gEeprom.DTMF_UP_CODE) > 8) {
-      UI_PrintString(gEeprom.DTMF_UP_CODE + 8, 50, 127, 4, 8, true);
-    }
-  }
-  if (gMenuCursor == MENU_DWCODE) {
-    if (strlen(gEeprom.DTMF_DOWN_CODE) > 8) {
-      UI_PrintString(gEeprom.DTMF_DOWN_CODE + 8, 50, 127, 4, 8, true);
-    }
-  }
+ 
   if (gMenuCursor == MENU_D_LIST && gIsDtmfContactValid) {
     Contact[11] = 0;
     memcpy(&gDTMF_ID, Contact + 8, 4);

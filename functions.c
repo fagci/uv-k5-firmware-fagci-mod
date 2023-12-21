@@ -100,10 +100,6 @@ void FUNCTION_Select(FUNCTION_Type_t Function) {
       gFM_RestoreCountdown = 500;
     }
 #endif
-    if (gDTMF_CallState == DTMF_CALL_STATE_CALL_OUT ||
-        gDTMF_CallState == DTMF_CALL_STATE_RECEIVED) {
-      gDTMF_AUTO_RESET_TIME = 1 + (gEeprom.DTMF_AUTO_RESET_TIME * 2);
-    }
     return;
 
   case FUNCTION_MONITOR:
