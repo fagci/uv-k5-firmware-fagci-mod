@@ -54,27 +54,6 @@ bool gDTMF_IsTx;
 uint8_t gDTMF_TxStopCountdown;
 bool gDTMF_IsGroupCall;
 
-bool DTMF_ValidateCodes(char *pCode, uint8_t Size)
-{
-	uint8_t i;
-
-	if (pCode[0] == 0xFF || pCode[0] == 0) {
-		return false;
-	}
-
-	for (i = 0; i < Size; i++) {
-		if (pCode[i] == 0xFF || pCode[i] == 0) {
-			pCode[i] = 0;
-			break;
-		}
-		if ((pCode[i] < '0' || pCode[i] > '9') && (pCode[i] < 'A' || pCode[i] > 'D') && pCode[i] != '*' && pCode[i] != '#') {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 bool DTMF_GetContact(uint8_t Index, char *pContact)
 {
 	EEPROM_ReadBuffer(0x1C00 + (Index * 0x10), pContact, 16);

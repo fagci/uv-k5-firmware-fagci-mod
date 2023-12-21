@@ -602,59 +602,6 @@ void BOARD_EEPROM_Init(void)
 	gEeprom.TX_VFO                     = (Data[3] <  2) ? Data[3] : 0;
 	gEeprom.BATTERY_TYPE                   = (Data[4] < BATTERY_TYPE_UNKNOWN) ? Data[4] : BATTERY_TYPE_1600_MAH;
 
-	// 0ED0..0ED7
-	EEPROM_ReadBuffer(0x0ED0, Data, 8);
-	gEeprom.DTMF_SIDE_TONE               = (Data[0] <   2) ? Data[0] : true;
-	gEeprom.DTMF_SEPARATE_CODE           = DTMF_ValidateCodes((char *)(Data + 1), 1) ? Data[1] : '*';
-	gEeprom.DTMF_GROUP_CALL_CODE         = DTMF_ValidateCodes((char *)(Data + 2), 1) ? Data[2] : '#';
-	gEeprom.DTMF_DECODE_RESPONSE         = (Data[3] <   4) ? Data[3] : 0;
-	gEeprom.DTMF_AUTO_RESET_TIME         = (Data[4] <  61) ? Data[4] : 5;
-	gEeprom.DTMF_PRELOAD_TIME            = (Data[5] < 101) ? Data[5] * 10 : 300;
-	gEeprom.DTMF_FIRST_CODE_PERSIST_TIME = (Data[6] < 101) ? Data[6] * 10 : 100;
-	gEeprom.DTMF_HASH_CODE_PERSIST_TIME  = (Data[7] < 101) ? Data[7] * 10 : 100;
-
-	// 0ED8..0EDF
-	EEPROM_ReadBuffer(0x0ED8, Data, 8);
-	gEeprom.DTMF_CODE_PERSIST_TIME  = (Data[0] < 101) ? Data[0] * 10 : 100;
-	gEeprom.DTMF_CODE_INTERVAL_TIME = (Data[1] < 101) ? Data[1] * 10 : 100;
-	gEeprom.PERMIT_REMOTE_KILL      = (Data[2] <   2) ? Data[2] : true;
-
-	// 0EE0..0EE7
-	EEPROM_ReadBuffer(0x0EE0, Data, 8);
-	if (DTMF_ValidateCodes((char *)Data, 8)) {
-		memcpy(gEeprom.ANI_DTMF_ID, Data, 8);
-	} else {
-		// Original firmware overflows into the next string
-		memcpy(gEeprom.ANI_DTMF_ID, "123\0\0\0\0", 8);
-	}
-
-	// 0EE8..0EEF
-    // Killcode removed
-
-	// 0EF0..0EF7
-	EEPROM_ReadBuffer(0x0EF0, Data, 8);
-	if (DTMF_ValidateCodes((char *)Data, 8)) {
-		memcpy(gEeprom.REVIVE_CODE, Data, 8);
-	} else {
-		memcpy(gEeprom.REVIVE_CODE, "9DCBA\0\0", 8);
-	}
-
-	// 0EF8..0F07
-	EEPROM_ReadBuffer(0x0EF8, Data, 16);
-	if (DTMF_ValidateCodes((char *)Data, 16)) {
-		memcpy(gEeprom.DTMF_UP_CODE, Data, 16);
-	} else {
-		memcpy(gEeprom.DTMF_UP_CODE, "12345\0\0\0\0\0\0\0\0\0\0", 16);
-	}
-
-	// 0F08..0F17
-	EEPROM_ReadBuffer(0x0F08, Data, 16);
-	if (DTMF_ValidateCodes((char *)Data, 16)) {
-		memcpy(gEeprom.DTMF_DOWN_CODE, Data, 16);
-	} else {
-		memcpy(gEeprom.DTMF_DOWN_CODE, "54321\0\0\0\0\0\0\0\0\0\0", 16);
-	}
-
 	// 0F18..0F1F
 	EEPROM_ReadBuffer(0x0F18, Data, 8);
 
